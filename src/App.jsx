@@ -1,0 +1,149 @@
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import Home from './components/Home';
+import Login from './auth/Login';
+import Dashboard from './components/Dashboard';
+import UserProfileForm from './components/Form';
+import Profile from './components/Profile';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import { auth, db } from './firebase/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+
+// Layout component to wrap protected routes with Navbar
+const MainLayout = ({ children }) => (
+  <div className="min-h-screen flex flex-col">
+    <header className="bg-white shadow-md">
+      <Navbar />
+    </header>
+    <main className="flex-1 bg-gradient-to-b from-blue-50 to-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {children}
+      </div>
+    </main>
+  </div>
+);
+
+// Component to handle redirection based on profile completion
+const AuthCheck = () => {
+  const [isProfileComplete, setIsProfileComplete] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      if (auth.currentUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+          if (userDoc.exists() && userDoc.data().profileCompleted) {
+            setIsProfileComplete(true);
+            navigate(location.state?.from?.pathname || '/dashboard', { replace: true });
+          } else {
+            setIsProfileComplete(false);
+          }
+        } catch (error) {
+          console.error('Error checking profile:', error);
+          setIsProfileComplete(false);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        navigate('/login', { state: { from: location }, replace: true });
+      }
+    };
+
+    checkProfile();
+  }, [navigate, location]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (isProfileComplete === false) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
+  return <Navigate to="/profile" replace />;
+};
+
+// Component to handle redirection after login
+const LoginRedirect = () => {
+  return <Navigate to="/check-profile" replace />;
+};
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route 
+            path="/login" 
+            element={user ? <LoginRedirect /> : <Login />} 
+          />
+          <Route 
+            path="/check-profile" 
+            element={<AuthCheck />} 
+          />
+          <Route 
+            path="/complete-profile"
+            element={
+              <ProtectedRoute>
+                <UserProfileForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Dashboard />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Profile />
+                </MainLayout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/auth-check" element={<AuthCheck />} />
+          <Route path="/login-redirect" element={<LoginRedirect />} />
+        </Routes>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
