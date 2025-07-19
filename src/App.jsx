@@ -9,17 +9,20 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+// Import quick action components
+import CreateEvent from './components/quick-actions/CreateEvent';
+import FindPlayers from './components/quick-actions/FindPlayers';
+import JoinGame from './components/quick-actions/JoinGame';
+import Schedule from './components/quick-actions/Schedule';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
   <div className="min-h-screen flex flex-col">
-    <header className="bg-white shadow-md">
+    <header className="bg-white shadow-md w-full">
       <Navbar />
     </header>
-    <main className="flex-1 bg-gradient-to-b from-blue-50 to-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {children}
-      </div>
+    <main className="flex-1 bg-gradient-to-b from-blue-50 to-gray-50 w-full">
+      {children}
     </main>
   </div>
 );
@@ -124,6 +127,47 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <Dashboard />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Quick Action Routes */}
+          <Route 
+            path="/create-event" 
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CreateEvent />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/find-players" 
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <FindPlayers />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/join-game" 
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <JoinGame />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/schedule" 
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Schedule />
                 </MainLayout>
               </ProtectedRoute>
             }

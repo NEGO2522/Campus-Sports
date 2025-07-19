@@ -32,7 +32,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700">
-              Sports Connect
+              Campus League
             </Link>
           </div>
           
@@ -55,11 +55,11 @@ const Navbar = () => {
             </Link>
             
             <Link
-              to="/explore"
-              className={`${isActive('/explore')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+              to="/join-game"
+              className={`${isActive('/join-game')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
             >
               <FaUsers className="mr-2" />
-              Explore
+              Explore Games
             </Link>
             
             <Link
@@ -119,12 +119,12 @@ const Navbar = () => {
           </Link>
           
           <Link
-            to="/explore"
-            className={`${isActive('/explore')} flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50`}
+            to="/join-game"
+            className={`${isActive('/join-game')} flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50`}
             onClick={toggleMenu}
           >
             <FaUsers className="mr-3 text-gray-500" />
-            Explore
+            Explore Games
           </Link>
           
           <Link

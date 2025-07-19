@@ -251,7 +251,7 @@ const Home = () => {
               transition={{ duration: 0.6, delay: 0.5 }}
             >
               <button 
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/dashboard')}
                 className="relative group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-8 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/30 flex items-center space-x-2 cursor-pointer mx-auto text-lg"
               >
                 <span className="relative z-10">Start Now</span>
