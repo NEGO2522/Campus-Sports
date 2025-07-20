@@ -53,9 +53,6 @@ const Dashboard = () => {
 
   const handleQuickAction = (action) => {
     switch(action) {
-      case 'Create Event':
-        navigate('/create-event');
-        break;
       case 'Find Players':
         navigate('/find-players');
         break;
@@ -121,7 +118,6 @@ const Dashboard = () => {
           <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 xs:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             {[
-              { name: 'Create Event', icon: '📅', color: 'bg-blue-100 text-blue-600' },
               { name: 'Find Players', icon: '👥', color: 'bg-green-100 text-green-600' },
               { name: 'Join Game', icon: '⚽', color: 'bg-purple-100 text-purple-600' },
               { name: 'View Schedule', icon: '📋', color: 'bg-yellow-100 text-yellow-600' },
@@ -144,12 +140,6 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg sm:rounded-xl shadow-xs sm:shadow-sm p-4 sm:p-6 mb-6 sm:mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
-            <button 
-              onClick={() => navigate('/create-event')}
-              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Create Event
-            </button>
           </div>
           <UpcomingEvents />
         </div>

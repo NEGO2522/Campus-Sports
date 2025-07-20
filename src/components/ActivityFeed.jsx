@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, limit, onSnapshot, or, and } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
 import { motion } from 'framer-motion';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isAfter } from 'date-fns';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUsers } from 'react-icons/fa';
 
 const ActivityFeed = () => {
   const [activities, setActivities] = useState([]);
@@ -10,76 +11,57 @@ const ActivityFeed = () => {
 
   useEffect(() => {
     const user = auth.currentUser;
+    const now = new Date();
     
-    // Create a query for public activities or activities related to the current user
-    const activitiesQuery = user
-      ? query(
-          collection(db, 'activities'),
-          and(
-            where('isPublic', '==', true),
-            or(
-              where('userId', '==', user.uid),
-              where('eventLocation', '==', 'Poornima University'),
-              where('eventType', '==', 'football')
-            )
-          ),
-          orderBy('timestamp', 'desc'),
-          limit(10)
-        )
-      : query(
-          collection(db, 'activities'),
-          where('isPublic', '==', true),
-          orderBy('timestamp', 'desc'),
-          limit(5)
-        );
+    // Query for upcoming events
+    const eventsQuery = query(
+      collection(db, 'events'),
+      where('status', '==', 'upcoming'),
+      orderBy('dateTime')
+    );
 
-    // Add Football Match at Poornima University as a default activity if no activities exist
-    const defaultActivity = {
-      id: 'football-poornima',
-      type: 'event_created',
-      message: 'New Football Match at Poornima University',
-      timestamp: new Date(),
-      eventType: 'football',
-      eventLocation: 'Poornima University',
-      isPublic: true
-    };
-
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates for events
     const unsubscribe = onSnapshot(
-      activitiesQuery,
+      eventsQuery,
       (snapshot) => {
-        let activitiesData = [];
-        
-        // Add default activity if no activities exist
-        if (snapshot.empty) {
-          activitiesData = [defaultActivity];
-        } else {
-          activitiesData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-            timestamp: doc.data().timestamp?.toDate()
-          }));
+        try {
+          const upcomingEvents = [];
+          const now = new Date();
           
-          // Add default activity if not already in the list
-          if (!activitiesData.some(activity => 
-            activity.eventLocation === 'Poornima University' && 
-            activity.eventType === 'football')) {
-            activitiesData = [defaultActivity, ...activitiesData];
-          }
+          // Process each event
+          snapshot.forEach((doc) => {
+            const eventData = doc.data();
+            const eventDate = eventData.dateTime?.toDate ? eventData.dateTime.toDate() : new Date(eventData.dateTime);
+            
+            // Only include future events
+            if (isAfter(eventDate, now)) {
+              upcomingEvents.push({
+                id: doc.id,
+                ...eventData,
+                type: 'upcoming_event',
+                timestamp: eventDate,
+                isPublic: true
+              });
+            }
+          });
+          
+          // Sort by date (nearest first)
+          const sortedEvents = upcomingEvents
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .slice(0, 10); // Limit to 10 upcoming events
+            
+          setActivities(sortedEvents);
+          setLoading(false);
+          
+        } catch (error) {
+          console.error('Error processing upcoming events:', error);
+          setActivities([]);
+          setLoading(false);
         }
-        
-        // Sort by timestamp and limit to 10 items
-        activitiesData = activitiesData
-          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-          .slice(0, 10);
-          
-        setActivities(activitiesData);
-        setLoading(false);
       },
       (error) => {
-        console.error('Error fetching activities:', error);
-        // Show default activity even if there's an error
-        setActivities([defaultActivity]);
+        console.error('Error fetching upcoming events:', error);
+        setActivities([]);
         setLoading(false);
       }
     );
@@ -88,32 +70,43 @@ const ActivityFeed = () => {
     return () => unsubscribe();
   }, []);
 
-  // Function to render activity icon based on type
+  // Function to render activity icon based on event type
   const renderActivityIcon = (activity) => {
-    if (activity.eventType === 'football' && activity.eventLocation === 'Poornima University') {
-      return '⚽';
-    }
+    const sportIcons = {
+      football: '⚽',
+      basketball: '🏀',
+      cricket: '🏏',
+      tennis: '🎾',
+      badminton: '🏸',
+      volleyball: '🏐',
+      default: '🏟️'
+    };
     
-    switch (activity.type) {
-      case 'event_created':
-        return '📅';
-      case 'event_joined':
-        return '👥';
-      case 'comment':
-        return '💬';
-      case 'like':
-        return '❤️';
-      default:
-        return '🔔';
-    }
+    return sportIcons[activity.sport?.toLowerCase()] || sportIcons.default;
   };
   
-  // Function to format the activity message
+  // Function to format the activity message for upcoming events
   const formatActivityMessage = (activity) => {
-    if (activity.eventType === 'football' && activity.eventLocation === 'Poornima University') {
-      return '⚽ Football Match at Poornima University';
+    if (activity.type === 'upcoming_event') {
+      return (
+        <div>
+          <span className="font-medium">{activity.eventName}</span>
+          <div className="flex items-center mt-1 text-xs text-gray-500">
+            <FaCalendarAlt className="mr-1.5 h-3 w-3 flex-shrink-0" />
+            <span>{format(activity.timestamp, 'MMM d, yyyy h:mm a')}</span>
+            <span className="mx-1.5">•</span>
+            <FaMapMarkerAlt className="mr-1 h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{activity.location}</span>
+          </div>
+          <div className="flex items-center mt-1 text-xs text-gray-500">
+            <FaUsers className="mr-1.5 h-3 w-3 flex-shrink-0" />
+            <span>{activity.participants?.length || 0} / {activity.playersNeeded} players</span>
+          </div>
+        </div>
+      );
     }
-    return activity.message || 'New activity';
+    
+    return activity.message || 'New event';
   };
 
   if (loading) {
@@ -127,7 +120,7 @@ const ActivityFeed = () => {
   if (activities.length === 0) {
     return (
       <div className="text-center p-6 text-gray-500">
-        <p>No activities yet. Start by creating or joining events!</p>
+        <p>No upcoming events found. Create a new event or check back later!</p>
       </div>
     );
   }
@@ -143,29 +136,16 @@ const ActivityFeed = () => {
           className="flex items-start p-2 sm:p-3 hover:bg-gray-50 rounded-lg transition-colors"
         >
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-lg flex-shrink-0">
-            {renderActivityIcon(activity.type)}
+            {renderActivityIcon(activity)}
           </div>
           <div className="ml-2 sm:ml-3 overflow-hidden">
-            <p className="text-xs sm:text-sm text-gray-700">
+            <div className="text-xs sm:text-sm text-gray-700">
               {formatActivityMessage(activity)}
-              {activity.eventLocation === 'Poornima University' && (
-                <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">
-                  Live
-                </span>
-              )}
-            </p>
-            <div className="flex items-center mt-0.5 sm:mt-1 flex-wrap">
-              <span className="text-[10px] xs:text-xs text-gray-500">
-                {activity.timestamp ? formatDistanceToNow(activity.timestamp, { addSuffix: true }) : 'Just now'}
+            </div>
+            <div className="mt-1">
+              <span className="text-[10px] xs:text-xs text-blue-600 font-medium">
+                {activity.timestamp ? `Starts ${formatDistanceToNow(activity.timestamp, { addSuffix: true })}` : 'Coming soon'}
               </span>
-              {activity.sport && (
-                <>
-                  <span className="mx-1.5 sm:mx-2 text-gray-300">•</span>
-                  <span className="text-[10px] xs:text-xs font-medium text-gray-700">
-                    {activity.sport}
-                  </span>
-                </>
-              )}
             </div>
           </div>
         </motion.div>

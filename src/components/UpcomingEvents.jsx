@@ -23,52 +23,32 @@ const UpcomingEvents = () => {
       orderBy('dateTime')
     );
 
-    // Create a default football match at Poornima University
-    const defaultFootballMatch = {
-      id: 'default-football-poornima',
-      eventName: 'Football Match',
-      sport: 'Football',
-      location: 'Poornima University',
-      dateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
-      playersNeeded: 22,
-      description: 'Friendly football match at the university grounds',
-      status: 'upcoming',
-      participants: [],
-      isDefault: true
-    };
-
     // Subscribe to query updates
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      let eventsData = [];
-      let hasFootballMatch = false;
+      const now = new Date();
+      const eventsData = [];
       
       querySnapshot.forEach((doc) => {
         const eventData = { id: doc.id, ...doc.data() };
-        // Check if this is a football match at Poornima University
-        if (eventData.sport?.toLowerCase() === 'football' && 
-            eventData.location?.toLowerCase().includes('poornima')) {
-          hasFootballMatch = true;
+        const eventDate = eventData.dateTime?.toDate ? eventData.dateTime.toDate() : new Date(eventData.dateTime);
+        
+        // Only include events that are in the future
+        if (eventDate >= now) {
+          eventsData.push({
+            ...eventData,
+            dateTime: eventDate // Ensure date is a Date object
+          });
         }
-        eventsData.push(eventData);
       });
       
-      // Add default football match if no football match exists at Poornima University
-      if (!hasFootballMatch) {
-        eventsData = [defaultFootballMatch, ...eventsData];
-      }
-      
-      // Sort by date
-      eventsData.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+      // Sort by date (nearest first)
+      eventsData.sort((a, b) => a.dateTime - b.dateTime);
       
       setEvents(eventsData);
       setLoading(false);
     }, (error) => {
       console.error('Error getting events:', error);
-      // Show default football match even if there's an error
-      setEvents([{
-        ...defaultFootballMatch,
-        id: 'error-default-football'
-      }]);
+      setEvents([]);
       setLoading(false);
     });
 
@@ -79,12 +59,23 @@ const UpcomingEvents = () => {
   // Check if current user is participating in each event
   useEffect(() => {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+      // If user is not logged in, clear all participation statuses
+      setParticipatingEvents({});
+      return;
+    }
 
     const updatedParticipating = {};
+    const now = new Date();
+    
     events.forEach(event => {
-      updatedParticipating[event.id] = event.participants?.includes(user.uid) || false;
+      // Only set participation status for future events
+      const eventDate = event.dateTime?.toDate ? event.dateTime.toDate() : new Date(event.dateTime);
+      if (eventDate >= now) {
+        updatedParticipating[event.id] = event.participants?.includes(user.uid) || false;
+      }
     });
+    
     setParticipatingEvents(updatedParticipating);
   }, [events]);
 
