@@ -13,16 +13,21 @@ import {
 } from "firebase/auth";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
-
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID,
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
+  // Your web app's Firebase configuration
+  // Replace these values with your actual Firebase config
+  apiKey: "AIzaSyCzkMaz4LGbWfR8QhEcNFIVAFjJ3ZDMkaA",
+  authDomain: "sports-app-4d03e.firebaseapp.com",
+  projectId: "sports-app-4d03e",
+  storageBucket: "sports-app-4d03e.firebasestorage.app",
+  messagingSenderId: "522436405774",
+  appId: "1:522436405774:web:e83f365063d986a1092a5f",
+  measurementId: "G-GC8NXKLSTN"
 };
+
+// Log the Firebase config (without sensitive data)
+console.log('Firebase initialized with project:', firebaseConfig.projectId);
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
