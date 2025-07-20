@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase/firebase';
 import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes } from 'react-icons/fa';
@@ -9,8 +9,23 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    const newIsMenuOpen = !isMenuOpen;
+    setIsMenuOpen(newIsMenuOpen);
+    
+    // Toggle overflow hidden on body when menu is open/closed
+    if (newIsMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
   };
+
+  // Clean up the effect when component unmounts
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -26,9 +41,18 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="w-full">
+    <>
+      {/* Blur overlay */}
+      {isMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden"
+          onClick={toggleMenu}
+        />
+      )}
+      
+      <nav className="w-full relative z-50 bg-transparent md:bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-16 bg-transparent">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700">
@@ -98,11 +122,11 @@ const Navbar = () => {
       </div>
 
       {/* Mobile menu, show/hide based on menu state */}
-      <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
-        <div className="pt-2 pb-3 space-y-1 bg-white shadow-lg rounded-md mt-2">
+      <div className={`fixed inset-0 top-16 bottom-0 left-0 right-0 transform ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out z-50 md:hidden`}>
+        <div className="h-full overflow-y-auto bg-white/10 backdrop-blur-lg">
           <Link
             to="/dashboard"
-            className={`${isActive('/dashboard')} flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50`}
+            className={`${isActive('/dashboard')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
             onClick={toggleMenu}
           >
             <FaHome className="mr-3 text-gray-500" />
@@ -111,7 +135,7 @@ const Navbar = () => {
           
           <Link
             to="/create-event"
-            className={`${isActive('/create-event')} flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50`}
+            className={`${isActive('/create-event')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
             onClick={toggleMenu}
           >
             <FaPlusCircle className="mr-3 text-gray-500" />
@@ -120,7 +144,7 @@ const Navbar = () => {
           
           <Link
             to="/join-game"
-            className={`${isActive('/join-game')} flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50`}
+            className={`${isActive('/join-game')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
             onClick={toggleMenu}
           >
             <FaUsers className="mr-3 text-gray-500" />
@@ -129,7 +153,7 @@ const Navbar = () => {
           
           <Link
             to="/profile"
-            className={`${isActive('/profile')} flex items-center px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50`}
+            className={`${isActive('/profile')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
             onClick={toggleMenu}
           >
             <FaUser className="mr-3 text-gray-500" />
@@ -142,7 +166,7 @@ const Navbar = () => {
                 handleLogout();
                 toggleMenu();
               }}
-              className="w-full text-left px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 flex items-center"
+              className="w-full text-left px-4 py-3 text-base font-medium text-red-400 hover:bg-white/10 flex items-center"
             >
               <FaSignOutAlt className="mr-3" />
               Logout
@@ -150,7 +174,8 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </nav>
+      </nav>
+    </>
   );
 };
 
