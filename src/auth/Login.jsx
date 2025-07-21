@@ -14,6 +14,17 @@ const Login = () => {
   const location = useLocation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const containerRef = useRef(null);
+  
+  // List of allowed organizer emails
+  const organizerEmails = [
+    '2024btechaimlkshitij18489@poornima.edu.in',
+    '2023csharsh13954@poornima.edu.in'
+  ];
+  
+  // Check if the current email is an organizer email
+  const isOrganizerEmail = (email) => {
+    return organizerEmails.includes(email.trim().toLowerCase());
+  };
 
   // Background images
   const backgroundImages = [
@@ -196,8 +207,9 @@ const Login = () => {
                     whileTap={{ scale: 0.98 }}
                     disabled={isLoading || !email}
                     className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isLoading || !email ? 'opacity-75 cursor-not-allowed' : ''
+                      isLoading || !email || !isOrganizerEmail(email) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:opacity-90'
                     }`}
+                    title={!isOrganizerEmail(email) ? 'Only specific emails can log in as organizers' : ''}
                   >
                     <span>Login as Organizer</span>
                     <FaArrowRight />
