@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 
-const UpcomingEvents = () => {
+const UpcomingEvents = ({ onEventClick }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [participatingEvents, setParticipatingEvents] = useState({});
@@ -174,7 +174,8 @@ const UpcomingEvents = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all"
+            className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 active:ring-blue-200"
+            onClick={() => onEventClick && onEventClick(event)}
           >
             <div className="p-4 sm:p-5">
               <div className="flex justify-between items-start">
@@ -219,7 +220,10 @@ const UpcomingEvents = () => {
               <div className="mt-4 flex justify-end space-x-2">
                 <button
                   type="button"
-                  onClick={() => handleViewSchedule(event)}
+                  onClick={(e) => {
+              e.stopPropagation();
+              handleViewSchedule(event);
+            }}
                   className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <FaClock className="mr-1.5 h-3 w-3" />
@@ -227,7 +231,10 @@ const UpcomingEvents = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleParticipate(event.id)}
+                  onClick={(e) => {
+              e.stopPropagation();
+              handleParticipate(event.id);
+            }}
                   disabled={isParticipating || isFull}
                   className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
                     isParticipating 
