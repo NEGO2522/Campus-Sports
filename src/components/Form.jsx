@@ -3,66 +3,65 @@ import { useNavigate } from 'react-router-dom';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaPhone, FaVenusMars, FaChevronLeft } from 'react-icons/fa';
-import { GiTennisBall, GiSoccerBall, GiBasketballBasket, GiCricketBat, GiVolleyballBall } from 'react-icons/gi';
+import { FaUser, FaPhone, FaVenusMars, FaChevronLeft, FaSwimmer } from 'react-icons/fa';
+import { GiSoccerBall, GiBasketballBasket, GiCricketBat, GiTennisBall, GiVolleyballBall, GiTennisRacket } from 'react-icons/gi';
 
 const sportsOptions = [
   { 
     id: 'football', 
     name: 'Football', 
-    icon: <GiSoccerBall className="text-2xl" />,
-    bg: 'hover:bg-green-500/10 border-green-500/50',
-    selectedBg: 'bg-green-500/20 border-green-500',
-    color: 'text-green-500'
+    icon: <GiSoccerBall className="text-3xl" />,
+    bg: 'hover:bg-green-500/10 hover:border-green-500/70',
+    selectedBg: 'bg-gradient-to-br from-green-500/90 to-emerald-500/90 border-transparent',
+    color: 'text-green-500',
+    shadow: 'shadow-green-500/20'
   },
   { 
     id: 'basketball', 
     name: 'Basketball', 
-    icon: <GiBasketballBasket className="text-2xl" />,
-    bg: 'hover:bg-orange-500/10 border-orange-500/50',
-    selectedBg: 'bg-orange-500/20 border-orange-500',
-    color: 'text-orange-500'
+    icon: <GiBasketballBasket className="text-3xl" />,
+    bg: 'hover:bg-orange-500/10 hover:border-orange-500/70',
+    selectedBg: 'bg-gradient-to-br from-orange-500/90 to-amber-500/90 border-transparent',
+    color: 'text-orange-500',
+    shadow: 'shadow-orange-500/20'
   },
   { 
     id: 'cricket', 
     name: 'Cricket', 
-    icon: <GiCricketBat className="text-2xl" />,
-    bg: 'hover:bg-amber-500/10 border-amber-500/50',
-    selectedBg: 'bg-amber-500/20 border-amber-500',
-    color: 'text-amber-500'
+    icon: <GiCricketBat className="text-3xl" />,
+    bg: 'hover:bg-amber-500/10 hover:border-amber-500/70',
+    selectedBg: 'bg-gradient-to-br from-amber-500/90 to-yellow-500/90 border-transparent',
+    color: 'text-amber-500',
+    shadow: 'shadow-amber-500/20'
   },
   { 
     id: 'badminton', 
     name: 'Badminton', 
-    icon: <GiTennisBall className="text-2xl" />,
-    bg: 'hover:bg-purple-500/10 border-purple-500/50',
-    selectedBg: 'bg-purple-500/20 border-purple-500',
-    color: 'text-purple-500'
+    icon: <GiTennisRacket className="text-3xl" />,
+    bg: 'hover:bg-purple-500/10 hover:border-purple-500/70',
+    selectedBg: 'bg-gradient-to-br from-purple-500/90 to-fuchsia-500/90 border-transparent',
+    color: 'text-purple-500',
+    shadow: 'shadow-purple-500/20'
   },
   { 
     id: 'volleyball', 
     name: 'Volleyball', 
-    icon: <GiVolleyballBall className="text-2xl" />,
-    bg: 'hover:bg-indigo-500/10 border-indigo-500/50',
-    selectedBg: 'bg-indigo-500/20 border-indigo-500',
-    color: 'text-indigo-500'
+    icon: <GiVolleyballBall className="text-3xl" />,
+    bg: 'hover:bg-indigo-500/10 hover:border-indigo-500/70',
+    selectedBg: 'bg-gradient-to-br from-indigo-500/90 to-blue-500/90 border-transparent',
+    color: 'text-indigo-500',
+    shadow: 'shadow-indigo-500/20'
   },
   { 
     id: 'table_tennis', 
     name: 'Table Tennis', 
-    icon: <GiTennisBall className="text-2xl" />,
-    bg: 'hover:bg-yellow-500/10 border-yellow-500/50',
-    selectedBg: 'bg-yellow-500/20 border-yellow-500',
-    color: 'text-yellow-500'
+    icon: <GiTennisRacket className="text-3xl" />,
+    bg: 'hover:bg-rose-500/10 hover:border-rose-500/70',
+    selectedBg: 'bg-gradient-to-br from-rose-500/90 to-pink-500/90 border-transparent',
+    color: 'text-rose-500',
+    shadow: 'shadow-rose-500/20'
   },
-  { 
-    id: 'swimming', 
-    name: 'Swimming', 
-    icon: '🏊',
-    bg: 'hover:bg-blue-500/10 border-blue-500/50',
-    selectedBg: 'bg-blue-500/20 border-blue-500',
-    color: 'text-blue-500'
-  },
+
 ];
 
 const UserProfileForm = () => {
@@ -174,33 +173,52 @@ const UserProfileForm = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="flex flex-col items-center">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <GiSoccerBall className="w-8 h-8 text-blue-400 animate-pulse" />
+            </div>
+          </div>
+          <p className="mt-4 text-slate-300 font-medium">Loading your profile...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-white rounded-2xl shadow-xl overflow-hidden"
+          className="text-center mb-10"
         >
-          <div className="p-6 sm:p-8">
-            <div className="flex items-center mb-8">
-              <button
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h1>
+          <p className="text-gray-600">Let's get to know you better to enhance your experience</p>
+        </motion.div>
+
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
+          <div className="p-6 sm:p-10">
+            <div className="flex items-start mb-10">
+              <motion.button
+                whileHover={{ x: -2 }}
+                whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => navigate(-1)}
-                className="p-2 rounded-full hover:bg-gray-100 mr-4 transition-colors duration-200"
+                className="p-2 rounded-xl bg-gray-200 hover:bg-gray-300 mr-4 transition-all duration-300 text-gray-600 hover:text-gray-900"
               >
-                <FaChevronLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {formData.fullName ? 'Edit Profile' : 'Complete Your Profile'}
-              </h1>
+                <FaChevronLeft className="w-5 h-5" />
+              </motion.button>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {formData.fullName ? 'Edit Profile' : 'Complete Your Profile'}
+                </h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  {formData.fullName ? 'Update your profile information' : 'Tell us more about yourself'}
+                </p>
+              </div>
             </div>
 
             <AnimatePresence>
@@ -209,18 +227,23 @@ const UserProfileForm = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700"
+                  className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 rounded-r-lg"
                 >
-                  <p>{error}</p>
+                  <p className="text-red-600">{error}</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-gray-400" />
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="relative group"
+                >
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FaUser className="h-5 w-5" />
                   </div>
                   <input
                     type="text"
@@ -228,15 +251,20 @@ const UserProfileForm = () => {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="John Doe"
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 bg-white rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Full Name"
                     required
                   />
-                </div>
+                </motion.div>
 
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaPhone className="h-5 w-5 text-gray-400" />
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="relative group"
+                >
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FaPhone className="h-5 w-5" />
                   </div>
                   <input
                     type="tel"
@@ -244,39 +272,42 @@ const UserProfileForm = () => {
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="+1 (555) 000-0000"
-                    required
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 bg-white rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Phone Number"
                   />
-                </div>
+                </motion.div>
 
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaVenusMars className="h-5 w-5 text-gray-400" />
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="relative group"
+                >
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FaVenusMars className="h-5 w-5" />
                   </div>
                   <select
                     id="gender"
                     name="gender"
                     value={formData.gender}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white"
-                    style={{
-                      backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 0.75rem center',
-                      backgroundSize: '8px 10px'
-                    }}
+                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 bg-white rounded-lg text-gray-800 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     required
                   >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
+                    <option value="" className="bg-white text-gray-800">Select Gender</option>
+                    <option value="male" className="bg-white text-gray-800">Male</option>
+                    <option value="female" className="bg-white text-gray-800">Female</option>
+                    <option value="other" className="bg-white text-gray-800">Other</option>
+                    <option value="prefer-not-to-say" className="bg-white text-gray-800">Prefer not to say</option>
                   </select>
-                </div>
+                </motion.div>
 
-                <div className="relative">
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="relative"
+                >
                   <input
                     type="number"
                     id="age"
@@ -285,101 +316,163 @@ const UserProfileForm = () => {
                     onChange={handleInputChange}
                     min="10"
                     max="100"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                    placeholder="Age"
+                    className="block w-full px-4 py-3 border border-gray-300 bg-white rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Your Age"
                     required
                   />
-                </div>
+                </motion.div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Select Your Favorite Sports (Max 2)
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <label className="block text-sm font-medium text-gray-600 mb-4">
+                  Select Your Favorite Sports <span className="text-gray-500">(Max 2)</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                  {sportsOptions.map((sport) => {
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                  {sportsOptions.map((sport, index) => {
                     const isSelected = formData.selectedSports.some(s => s.id === sport.id);
                     return (
                       <motion.div 
                         key={sport.id}
-                        whileHover={{ scale: 1.03 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.35 + (index * 0.05) }}
+                        whileHover={{ 
+                          scale: 1.05,
+                          boxShadow: isSelected ? '0 10px 25px -5px rgba(0, 0, 0, 0.4)' : '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
+                        }}
                         whileTap={{ scale: 0.98 }}
-                        className={`relative flex items-center justify-center p-3 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                        className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
                           isSelected 
-                            ? `${sport.selectedBg} ${sport.color} border-2`
-                            : `bg-white ${sport.bg} border-gray-200`
+                            ? `${sport.selectedBg} text-white shadow-md`
+                            : `bg-white border-gray-200 text-gray-700 hover:border-${sport.color.split('-')[1]}-300 hover:bg-gray-50`
                         }`}
                         onClick={() => toggleSport(sport)}
                       >
                         <div className="flex flex-col items-center">
-                          <span className={`text-2xl mb-1 ${isSelected ? sport.color : 'text-gray-600'}`}>
+                          <span className={`text-3xl mb-2 transition-all duration-300 ${isSelected ? 'scale-110' : 'scale-100'}`}>
                             {sport.icon}
                           </span>
-                          <span className={`text-sm font-medium ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                          <span className={`text-xs font-semibold text-center transition-colors ${isSelected ? 'text-white' : sport.color}`}>
                             {sport.name}
                           </span>
                         </div>
                         {isSelected && (
-                          <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
+                          <motion.div 
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md"
+                          >
+                            ✓
+                          </motion.div>
                         )}
                       </motion.div>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="mt-8">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Experience Level</h3>
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="mt-10"
+              >
+                <h3 className="text-lg font-medium text-gray-800 mb-4">Experience Level</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {['beginner', 'intermediate', 'advanced'].map((level) => (
+                  {[
+                    { 
+                      level: 'beginner', 
+                      label: 'Beginner', 
+                      desc: 'Just starting out',
+                      icon: '👶',
+                      color: 'from-blue-500/90 to-cyan-500/90',
+                      border: 'border-blue-500/30',
+                      hover: 'hover:border-blue-500/50'
+                    },
+                    { 
+                      level: 'intermediate', 
+                      label: 'Intermediate', 
+                      desc: 'Play regularly',
+                      icon: '👍',
+                      color: 'from-purple-500/90 to-fuchsia-500/90',
+                      border: 'border-purple-500/30',
+                      hover: 'hover:border-purple-500/50'
+                    },
+                    { 
+                      level: 'advanced', 
+                      label: 'Advanced', 
+                      desc: 'Competitive player',
+                      icon: '🏆',
+                      color: 'from-amber-500/90 to-orange-500/90',
+                      border: 'border-amber-500/30',
+                      hover: 'hover:border-amber-500/50'
+                    }
+                  ].map(({ level, label, desc, icon, color, border, hover }) => (
                     <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                       key={level}
-                      className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                      whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`p-5 rounded-xl cursor-pointer transition-all duration-200 ${
                         formData.experienceLevel === level
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? `bg-gradient-to-br ${color} border-transparent text-white shadow-lg`
+                          : `bg-white border ${border} text-gray-700 ${hover} hover:shadow-lg`
                       }`}
                       onClick={() => setFormData(prev => ({ ...prev, experienceLevel: level }))}
                     >
-                      <div className="flex items-center">
-                        <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center mr-3 ${
-                          formData.experienceLevel === level
-                            ? 'border-blue-500 bg-blue-500'
-                            : 'border-gray-300'
-                        }`}>
-                          {formData.experienceLevel === level && (
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
-                          )}
+                      <div className="flex items-start">
+                        <div className="text-2xl mr-3">{icon}</div>
+                        <div>
+                          <div className="font-medium">{label}</div>
+                          <div className="text-sm text-gray-600">{desc}</div>
                         </div>
-                        <span className="capitalize">{level}</span>
+                        {formData.experienceLevel === level && (
+                          <div className="ml-auto bg-white/20 rounded-full p-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="mt-8">
-                <button
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-12"
+              >
+                <motion.button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`w-full py-3 px-6 rounded-lg text-white font-medium text-lg transition-all duration-200 ${
+                  whileHover={!isSubmitting ? { scale: 1.02, boxShadow: '0 10px 25px -5px rgba(56, 189, 248, 0.4)' } : {}}
+                  whileTap={!isSubmitting ? { scale: 0.98 } : {}}
+                  className={`w-full py-4 px-6 rounded-xl font-medium text-lg transition-all duration-200 ${
                     isSubmitting
-                      ? 'bg-blue-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700 transform hover:scale-[1.02]'
+                      ? 'bg-blue-500/70 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/20'
                   }`}
                 >
-                  {isSubmitting ? 'Saving...' : 'Save Profile'}
-                </button>
-              </div>
+                  {isSubmitting ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : 'Save Profile'}
+                </motion.button>
+              </motion.div>
             </form>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

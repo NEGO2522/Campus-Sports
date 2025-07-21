@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase/firebase';
-import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -19,6 +20,24 @@ const Navbar = () => {
       document.body.style.overflow = 'auto';
     }
   };
+
+  const toggleProfile = () => {
+    setIsProfileOpen(!isProfileOpen);
+  };
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isProfileOpen && !event.target.closest('.profile-dropdown')) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen]);
 
   // Clean up the effect when component unmounts
   useEffect(() => {
@@ -41,18 +60,18 @@ const Navbar = () => {
   };
 
   return (
-    <>
-      {/* Blur overlay */}
-      {isMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 md:hidden"
-          onClick={toggleMenu}
-        />
-      )}
+    <div>
+      {/* Mobile menu overlay */}
+      <div 
+        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300 ${
+          isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={toggleMenu}
+      />
       
-      <nav className="w-full relative z-50 bg-transparent md:bg-white">
+      <nav className="w-full relative z-50 bg-white shadow-sm md:shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 bg-transparent">
+        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700">
@@ -85,25 +104,42 @@ const Navbar = () => {
               <FaUsers className="mr-2" />
               Explore Games
             </Link>
-            
-            <Link
-              to="/profile"
-              className={`${isActive('/profile')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-            >
-              <FaUser className="mr-2" />
-              Profile
-            </Link>
           </div>
 
-          {/* Logout Button - Desktop */}
-          <div className="hidden md:ml-6 md:flex md:items-center">
+          {/* Profile Dropdown - Desktop */}
+          <div className="hidden md:ml-6 md:flex md:items-center relative">
             <button
-              onClick={handleLogout}
-              className="text-red-600 hover:text-red-800 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center"
+              onClick={toggleProfile}
+              className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <FaSignOutAlt className="mr-2" />
-              Logout
+              <FaUser className="h-6 w-6" />
             </button>
+            
+            {/* Dropdown menu */}
+            {isProfileOpen && (
+              <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown">
+                <div className="py-1" role="none">
+                  <Link
+                    to="/form"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                  >
+                    <FaEdit className="mr-2 text-gray-500" />
+                    Edit Interested Sports
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsProfileOpen(false);
+                    }}
+                    className="w-full text-left text-red-600 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                  >
+                    <FaSignOutAlt className="mr-2" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -121,61 +157,86 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu, show/hide based on menu state */}
-      <div className={`fixed inset-0 top-16 bottom-0 left-0 right-0 transform ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out z-50 md:hidden`}>
-        <div className="h-full overflow-y-auto bg-white/10 backdrop-blur-lg">
-          <Link
-            to="/dashboard"
-            className={`${isActive('/dashboard')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
-            onClick={toggleMenu}
-          >
-            <FaHome className="mr-3 text-gray-500" />
-            Dashboard
-          </Link>
-          
-          <Link
-            to="/create-event"
-            className={`${isActive('/create-event')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
-            onClick={toggleMenu}
-          >
-            <FaPlusCircle className="mr-3 text-gray-500" />
-            Create Event
-          </Link>
-          
-          <Link
-            to="/join-game"
-            className={`${isActive('/join-game')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
-            onClick={toggleMenu}
-          >
-            <FaUsers className="mr-3 text-gray-500" />
-            Explore Games
-          </Link>
-          
-          <Link
-            to="/profile"
-            className={`${isActive('/profile')} flex items-center px-4 py-3 text-base font-medium text-white hover:bg-white/20`}
-            onClick={toggleMenu}
-          >
-            <FaUser className="mr-3 text-gray-500" />
-            Profile
-          </Link>
-          
-          <div className="border-t border-gray-200">
-            <button
-              onClick={() => {
-                handleLogout();
-                toggleMenu();
-              }}
-              className="w-full text-left px-4 py-3 text-base font-medium text-red-400 hover:bg-white/10 flex items-center"
+          {/* Mobile menu, show/hide based on menu state */}
+      <div 
+        className={`fixed inset-0 top-16 bottom-0 left-0 right-0 transform ${
+          isMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+        } transition-all duration-300 ease-in-out z-40 md:hidden`}
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}
+      >
+        <div className="h-full overflow-y-auto">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            <Link
+              to="/dashboard"
+              className={`${
+                isActive('/dashboard')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-100 hover:bg-white/10'
+              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
+              onClick={toggleMenu}
             >
-              <FaSignOutAlt className="mr-3" />
-              Logout
-            </button>
+              <FaHome className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
+              Dashboard
+            </Link>
+
+            <Link
+              to="/create-event"
+              className={`${
+                isActive('/create-event')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-100 hover:bg-white/10'
+              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
+              onClick={toggleMenu}
+            >
+              <FaPlusCircle className="mr-3 flex-shrink-0 h-6 w-6 text-green-500" />
+              Create Event
+            </Link>
+
+            <Link
+              to="/join-game"
+              className={`${
+                isActive('/join-game')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-100 hover:bg-white/10'
+              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
+              onClick={toggleMenu}
+            >
+              <FaUsers className="mr-3 flex-shrink-0 h-6 w-6 text-purple-500" />
+              Explore Games
+            </Link>
+          </div>
+
+          <div className="pt-4 pb-3 border-t border-gray-700">
+            <div className="space-y-1">
+              <Link
+                to="/form"
+                className="group flex items-center px-4 py-3 text-base font-medium text-gray-100 hover:bg-white/10 rounded-md transition-colors duration-200"
+                onClick={toggleMenu}
+              >
+                <FaEdit className="mr-3 flex-shrink-0 h-6 w-6 text-amber-500" />
+                Edit Interested Sports
+              </Link>
+              
+              <button
+                onClick={() => {
+                  handleLogout();
+                  toggleMenu();
+                }}
+                className="w-full group flex items-center px-4 py-3 text-base font-medium text-red-400 hover:bg-red-900/20 rounded-md transition-colors duration-200 text-left"
+              >
+                <FaSignOutAlt className="mr-3 flex-shrink-0 h-6 w-6" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      </nav>
-    </>
+    </nav>
+    </div>
   );
 };
 

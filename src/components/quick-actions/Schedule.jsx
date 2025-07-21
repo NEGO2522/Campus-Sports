@@ -354,16 +354,7 @@ const Schedule = () => {
         </div>
       )}
       
-      {/* Add Event Button */}
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="fixed bottom-6 right-4 sm:bottom-8 sm:right-8 bg-blue-600 text-white p-3 sm:p-4 rounded-full shadow-lg hover:bg-blue-700 transition-colors z-10"
-        onClick={() => console.log('Add new event')}
-        aria-label="Add new event"
-      >
-        <FaPlus className="h-5 w-5 sm:h-6 sm:w-6" />
-      </motion.button>
+      {/* Add Event Button - Removed as per user request */}
     </div>
   );
 };

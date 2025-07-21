@@ -6,7 +6,7 @@ import Home from './components/Home';
 import Login from './auth/Login';
 import Dashboard from './components/Dashboard';
 import UserProfileForm from './components/Form';
-import Profile from './components/Profile';
+
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/firebase';
@@ -73,7 +73,7 @@ const AuthCheck = () => {
     return <Navigate to="/complete-profile" replace />;
   }
 
-  return <Navigate to="/profile" replace />;
+  return <Navigate to="/dashboard" replace />;
 };
 
 // Component to handle redirection after login
@@ -187,11 +187,11 @@ function App() {
             }
           />
           <Route 
-            path="/profile" 
+            path="/form" 
             element={
               <ProtectedRoute>
                 <MainLayout>
-                  <Profile />
+                  <UserProfileForm />
                 </MainLayout>
               </ProtectedRoute>
             } 
