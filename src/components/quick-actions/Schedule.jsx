@@ -117,8 +117,6 @@ const CustomToolbar = (toolbar) => {
 
 const Schedule = () => {
   const [view, setView] = useState('week');
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [showEventDetails, setShowEventDetails] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -173,11 +171,6 @@ const Schedule = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
-    setShowEventDetails(true);
-  };
-
   const handleNavigate = (newDate) => {
     setSelectedDate(newDate);
   };
@@ -191,6 +184,7 @@ const Schedule = () => {
         color: 'white',
         border: '0px',
         display: 'block',
+        cursor: 'default', 
       },
     };
   };
@@ -224,7 +218,6 @@ const Schedule = () => {
                 }}
                 view={view}
                 onView={setView}
-                onSelectEvent={handleSelectEvent}
                 onNavigate={handleNavigate}
                 date={selectedDate}
                 components={{
@@ -246,117 +239,9 @@ const Schedule = () => {
           </div>
         </div>
       </div>
-      
-      {/* Event Details Modal */}
-      {selectedEvent && showEventDetails && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white rounded-lg sm:rounded-xl shadow-xl w-full max-w-md my-4 sm:my-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div 
-              className="h-2 w-full rounded-t-xl"
-              style={{ backgroundColor: selectedEvent.color }}
-            ></div>
-            
-            <div className="p-4 sm:p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">{selectedEvent.title}</h3>
-                  <span 
-                    className="px-2 py-1 text-xs font-medium rounded-full"
-                    style={{ backgroundColor: `${selectedEvent.color}20`, color: selectedEvent.color }}
-                  >
-                    {selectedEvent.sport}
-                  </span>
-                </div>
-                <button 
-                  onClick={() => setShowEventDetails(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <FaCalendarAlt className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
-                      {moment(selectedEvent.start).format('dddd, MMMM D, YYYY')}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {moment(selectedEvent.start).format('h:mm A')} - {moment(selectedEvent.end).format('h:mm A')}
-                    </p>
-                  </div>
-                </div>
-                
-                {selectedEvent.description && (
-                  <div className="mt-3">
-                    <p className="text-sm text-gray-700">{selectedEvent.description}</p>
-                  </div>
-                )}
-                
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-6 w-6 text-gray-400">
-                    <FaMapMarkerAlt className="h-5 w-5" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
-                      {selectedEvent.location}
-                    </p>
-                    <p className="text-sm text-blue-600 hover:underline cursor-pointer">
-                      View on map
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-6 w-6 text-gray-400">
-                    <FaUsers className="h-5 w-5" />
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm font-medium text-gray-900">
-                      Organized by {selectedEvent.organizer}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {selectedEvent.players} players joined
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                  <button
-                    type="button"
-                    className="w-full sm:flex-1 bg-blue-600 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Join Event
-                  </button>
-                  <button
-                    type="button"
-                    className="w-full sm:flex-1 bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Message Organizer
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-      
-      {/* Add Event Button - Removed as per user request */}
     </div>
   );
 };
 
 export default Schedule;
+
