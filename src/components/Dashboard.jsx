@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCalendarAlt, FaUsers, FaTrophy, FaRunning } from 'react-icons/fa';
 import { motion } from 'framer-motion';
-import { collection, query, where, getCountFromServer } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
 import UpcomingEvents from './UpcomingEvents';
 import ActivityFeed from './ActivityFeed';
@@ -18,37 +18,41 @@ const Dashboard = () => {
     { id: 4, name: 'Activities', value: '0', icon: FaRunning, change: '0', changeType: 'neutral' },
   ]);
 
-  // Fetch real stats from Firestore
+  // Set up real-time listener for upcoming events count
   useEffect(() => {
-    const fetchStats = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-      try {
-        // Fetch upcoming events count
-        const eventsQuery = query(
-          collection(db, 'events'),
-          where('participants', 'array-contains', user.uid),
-          where('status', '==', 'upcoming')
-        );
-        const eventsSnapshot = await getCountFromServer(eventsQuery);
-        const eventsCount = eventsSnapshot.data().count;
+    // Get current time
+    const now = Timestamp.now();
+    
+    // Query for upcoming events where user is a participant
+    const eventsQuery = query(
+      collection(db, 'events'),
+      where('participants', 'array-contains', user.uid),
+      where('status', '==', 'upcoming'),
+      where('dateTime', '>=', now)
+    );
 
-        // Update stats with real data
-        setStats(prevStats => 
-          prevStats.map(stat => {
-            if (stat.name === 'Upcoming Events') {
-              return { ...stat, value: eventsCount.toString() };
-            }
-            return stat;
-          })
-        );
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(eventsQuery, (querySnapshot) => {
+      const eventsCount = querySnapshot.size;
+      
+      // Update stats with real-time data
+      setStats(prevStats => 
+        prevStats.map(stat => {
+          if (stat.name === 'Upcoming Events') {
+            return { ...stat, value: eventsCount.toString() };
+          }
+          return stat;
+        })
+      );
+    }, (error) => {
+      console.error('Error listening to events:', error);
+    });
 
-    fetchStats();
+    // Clean up the listener when component unmounts
+    return () => unsubscribe();
   }, []);
 
   const handleQuickAction = (action) => {
@@ -140,12 +144,6 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
-            <button 
-              onClick={() => navigate('/schedule')}
-              className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              View All
-            </button>
           </div>
           <UpcomingEvents onEventClick={() => navigate('/schedule')} />
         </div>
@@ -154,7 +152,6 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg sm:rounded-xl shadow-xs sm:shadow-sm p-4 sm:p-6">
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-800">View All</button>
           </div>
           <ActivityFeed />
         </div>

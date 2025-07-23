@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase/firebase';
-import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit } from 'react-icons/fa';
+import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userRole, setUserRole] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Get user role from sessionStorage on component mount
+  useEffect(() => {
+    const role = sessionStorage.getItem('userRole') || '';
+    setUserRole(role);
+  }, []);
 
   const toggleMenu = () => {
     const newIsMenuOpen = !isMenuOpen;
@@ -89,13 +96,15 @@ const Navbar = () => {
               Dashboard
             </Link>
             
-            <Link
-              to="/create-event"
-              className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-            >
-              <FaPlusCircle className="mr-2" />
-              Create Event
-            </Link>
+            {userRole === 'organizer' && (
+              <Link
+                to="/create-event"
+                className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+              >
+                <FaPlusCircle className="mr-2" />
+                Create Event
+              </Link>
+            )}
             
             <Link
               to="/join-game"
@@ -103,6 +112,13 @@ const Navbar = () => {
             >
               <FaUsers className="mr-2" />
               Explore Games
+            </Link>
+            <Link
+              to="/schedule"
+              className={`${isActive('/schedule')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+            >
+              <FaCalendarAlt className="mr-2" />
+              Schedule
             </Link>
           </div>
 
@@ -183,18 +199,20 @@ const Navbar = () => {
               Dashboard
             </Link>
 
-            <Link
-              to="/create-event"
-              className={`${
-                isActive('/create-event')
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-100 hover:bg-white/10'
-              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
-              onClick={toggleMenu}
-            >
-              <FaPlusCircle className="mr-3 flex-shrink-0 h-6 w-6 text-green-500" />
-              Create Event
-            </Link>
+            {userRole === 'organizer' && (
+              <Link
+                to="/create-event"
+                className={`${
+                  isActive('/create-event')
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-100 hover:bg-white/10'
+                } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
+                onClick={toggleMenu}
+              >
+                <FaPlusCircle className="mr-3 flex-shrink-0 h-6 w-6 text-green-500" />
+                Create Event
+              </Link>
+            )}
 
             <Link
               to="/join-game"
@@ -205,8 +223,20 @@ const Navbar = () => {
               } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
               onClick={toggleMenu}
             >
-              <FaUsers className="mr-3 flex-shrink-0 h-6 w-6 text-purple-500" />
+              <FaUsers className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
               Explore Games
+            </Link>
+            <Link
+              to="/schedule"
+              className={`${
+                isActive('/schedule')
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-100 hover:bg-white/10'
+              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
+              onClick={toggleMenu}
+            >
+              <FaCalendarAlt className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
+              Schedule
             </Link>
           </div>
 
