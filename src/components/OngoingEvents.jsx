@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
 import { logActivity, ACTIVITY_TYPES } from '../utils/activityLogger';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaCheck, FaClock, FaPlay, FaSpinner } from 'react-icons/fa';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaCheck, FaClock, FaPlay, FaSpinner, FaChevronDown, FaChevronUp, FaTrophy, FaCrown } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import { format, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
@@ -14,44 +14,47 @@ const OngoingEvents = ({ onEventClick }) => {
   const [showSchedule, setShowSchedule] = useState(null);
   const [eventSchedule, setEventSchedule] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [isFootballExpanded, setIsFootballExpanded] = useState(true);
 
   useEffect(() => {
-    // Create a query against the collection for ongoing events
-    const q = query(
-      collection(db, 'events'),
-      where('status', '==', 'ongoing'),
-      orderBy('dateTime')
-    );
-
-    // Subscribe to query updates
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const now = new Date();
-      const eventsData = [];
-      
-      querySnapshot.forEach((doc) => {
-        const eventData = { id: doc.id, ...doc.data() };
-        const eventDate = eventData.dateTime?.toDate ? eventData.dateTime.toDate() : new Date(eventData.dateTime);
-        
-        // Include all ongoing events regardless of time
-        eventsData.push({
-          ...eventData,
-          dateTime: eventDate // Ensure date is a Date object
-        });
-      });
-      
-      // Sort by date (most recent first for ongoing events)
-      eventsData.sort((a, b) => a.dateTime - b.dateTime);
-      
-      setEvents(eventsData);
-      setLoading(false);
-    }, (error) => {
-      console.error('Error getting ongoing events:', error);
-      setEvents([]);
-      setLoading(false);
-    });
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    // STATIC DATA for demo purposes
+    const staticEvents = [
+      {
+        id: '1',
+        sport: 'Football (5v5)',
+        matchName: 'Semifinal 1',
+        team1: { name: 'Thunder Bolts' },
+        team2: { name: 'Eagles' },
+        location: 'Main Stadium',
+        dateTime: new Date(Date.now() - 90 * 60 * 1000), // 1.5 hours ago
+        eventName: 'Football 5v5 Semifinal',
+        description: 'Exciting semifinal match between Thunder Bolts and Eagles.'
+      },
+      {
+        id: '3',
+        sport: 'Football (5v5)',
+        matchName: 'Final',
+        team1: { name: 'Lions' },
+        team2: { name: 'Warriors' },
+        location: 'Main Stadium',
+        dateTime: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
+        eventName: 'Football 5v5 Final',
+        description: 'Championship final match between Lions and Warriors.'
+      },
+      {
+        id: '4',
+        sport: 'Football (5v5)',
+        matchName: 'Semifinal 2',
+        team1: { name: 'Sharks' },
+        team2: { name: 'Phoenix' },
+        location: 'Stadium B',
+        dateTime: new Date(Date.now() - 120 * 60 * 1000), // 2 hours ago
+        eventName: 'Football 5v5 Semifinal 2',
+        description: 'Second semifinal match between Sharks and Phoenix.'
+      },
+    ];
+    setEvents(staticEvents);
+    setLoading(false);
   }, []);
 
   // Check if current user is participating in each event
@@ -127,11 +130,11 @@ const OngoingEvents = ({ onEventClick }) => {
       
       let elapsedTime = '';
       if (daysElapsed > 0) {
-        elapsedTime = `${daysElapsed} day${daysElapsed > 1 ? 's' : ''} ago`;
-      } else if (hoursElapsed > 0) {
-        elapsedTime = `${hoursElapsed} hour${hoursElapsed > 1 ? 's' : ''} ago`;
+        elapsedTime = `${daysElapsed}d ago`;
+      } else if (minutesElapsed >= 60) {
+        elapsedTime = `${hoursElapsed}h ago`;
       } else {
-        elapsedTime = `${minutesElapsed} minute${minutesElapsed > 1 ? 's' : ''} ago`;
+        elapsedTime = `${minutesElapsed}m ago`;
       }
 
       const mockSchedule = {
@@ -159,17 +162,22 @@ const OngoingEvents = ({ onEventClick }) => {
   const getElapsedTime = (startDate) => {
     const now = new Date();
     const minutesElapsed = differenceInMinutes(now, startDate);
-    const hoursElapsed = differenceInHours(now, startDate);
     const daysElapsed = differenceInDays(now, startDate);
     
     if (daysElapsed > 0) {
       return `${daysElapsed}d ago`;
-    } else if (hoursElapsed > 0) {
-      return `${hoursElapsed}h ago`;
+    } else if (minutesElapsed >= 60) {
+      const hours = (minutesElapsed / 60).toFixed(1).replace(/\.0$/, '');
+      return `${hours}h ago`;
     } else {
       return `${minutesElapsed}m ago`;
     }
   };
+
+  // Separate football and non-football events
+  const footballMatches = events.filter(event => event.sport?.toLowerCase() === 'football (5v5)');
+  const nonFootballEvents = events.filter(event => event.sport?.toLowerCase() !== 'football (5v5)');
+
 
   if (loading) {
     return (
@@ -179,7 +187,7 @@ const OngoingEvents = ({ onEventClick }) => {
     );
   }
 
-  if (events.length === 0) {
+  if (events.length === 0) {  
     return (
       <div className="text-center p-6 bg-white rounded-lg shadow-sm">
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Ongoing Events</h3>
@@ -189,8 +197,294 @@ const OngoingEvents = ({ onEventClick }) => {
   }
 
   return (
-    <div className="space-y-4">
-      {events.map((event, index) => {
+    <div className="space-y-6">
+      {/* Football (5 v 5) Section */}
+      {footballMatches.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {/* Football Section Header with Dropdown Arrow */}
+          <div 
+            className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => setIsFootballExpanded(!isFootballExpanded)}
+          >
+            <div className="flex items-center">
+              <span className="text-xl font-bold text-gray-800">Football (5 v 5)</span>
+              <span className="ml-2 text-sm text-gray-500">({footballMatches.length} matches)</span>
+            </div>
+            <div className="text-gray-400">
+              {isFootballExpanded ? <FaChevronUp /> : <FaChevronDown />}
+            </div>
+          </div>
+          
+          {/* Football Matches - Collapsible */}
+          {isFootballExpanded && (
+            <div className="border-t border-gray-200">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
+                {/* Live Matches Section - Takes 2/3 of the width */}
+                <div className="lg:col-span-2">
+                  <div className="space-y-4">
+                {footballMatches
+                  .filter(event => ["semifinal 1", "semifinal 2"].includes((event.matchName || event.title || '').toLowerCase()))
+                  .slice(0, 2)
+                  .map((event, index) => {
+                  const isParticipating = participatingEvents[event.id];
+                  const isFull = event.participants?.length >= event.playersNeeded;
+                  
+                  return (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-gray-50 rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-gray-100 active:ring-gray-200"
+                      onClick={() => onEventClick && onEventClick(event)}
+                    >
+                      <div className="p-4 sm:p-5">
+                        {/* Live indicator */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                             <div className="flex items-center justify-between mb-1">
+                              <div className="font-semibold text-green-900 text-base">
+                                {event.matchName || event.title || 'Match'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Match Details */}
+                        <div className="flex flex-col space-y-3">
+                          {/* Sports name */}
+                          <div className="flex items-center">
+                            {isParticipating && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <FaCheck className="mr-1" /> Participating
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Match details */}
+                          <div className="mt-2 mb-2 p-3 bg-white rounded border border-green-300">
+                           
+                            <div className="text-lg text-black font-medium mt-1 mb-2">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>{(event.team1?.name || event.team1) || 'Team 1'}</div>
+                                <div className="flex items-center ml-4">
+                                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                                  <span className="text-xs font-bold text-red-600">LIVE</span>
+                                </div>
+                              </div>
+                              <div>{(event.team2?.name || event.team2) || 'Team 2'}</div>
+                            </div>
+                            <div className="text-xs text-gray-700">
+                              Location: {event.location}
+                            </div>
+                          </div>
+
+                         
+                        </div>
+
+                        {/* Schedule/Details Section */}
+                        {showSchedule === event.id && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <h4 className="text-sm font-medium text-gray-900 mb-3">Event Details</h4>
+                            {scheduleLoading ? (
+                              <div className="flex justify-center p-4">
+                                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-orange-500"></div>
+                              </div>
+                            ) : eventSchedule ? (
+                              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <p className="text-sm text-gray-500">Started</p>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {format(new Date(eventSchedule.date), 'EEEE, MMMM d, yyyy')} at {format(new Date(eventSchedule.date), 'h:mm a')}
+                                    </p>
+                                    <p className="text-xs text-orange-600 mt-1">({eventSchedule.startedTime})</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500">Location</p>
+                                    <p className="text-sm font-medium text-gray-900">{eventSchedule.location}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500">Status</p>
+                                    <p className="text-sm font-medium text-orange-600 flex items-center">
+                                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                                      {eventSchedule.status}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm text-gray-500">Participants</p>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {eventSchedule.participants} / {eventSchedule.maxParticipants} players
+                                    </p>
+                                  </div>
+                                </div>
+                                {eventSchedule.description && (
+                                  <div className="mt-4">
+                                    <p className="text-sm text-gray-500 mb-1">Additional Details</p>
+                                    <p className="text-sm text-gray-700">{eventSchedule.description}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500">No details available.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                  })}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                <button
+                  onClick={() => navigate('/schedule')}
+                  className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
+                >
+                  See All →
+                </button>
+              </div>
+                </div>
+                
+                {/* Tournament Standings Section - Takes 1/3 of the width */}
+                <div className="lg:col-span-1">
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 sticky top-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-base font-semibold text-gray-900 flex items-center">
+                        <FaTrophy className="mr-2 text-yellow-500" />
+                        Tournament Standing
+                      </h3>
+                    </div>
+                    
+                    {/* Tournament Bracket */}
+                    <div className="space-y-4">
+                      {/* Winner at Top */}
+                      <div className="text-center">
+                        <div className="bg-yellow-500 text-white rounded-lg p-2 shadow-lg mb-2">
+                          <div className="text-xs font-bold">WINNER</div>
+                          <div className="text-sm font-bold">Thunder Bolts</div>
+                        </div>
+                      </div>
+                      
+                      {/* Final Match */}
+                      <div className="bg-white rounded-lg p-3 border-2 border-blue-300 shadow-sm">
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-1">FINAL</div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center p-2 bg-green-50 rounded border">
+                              <span className="text-sm font-medium text-gray-900">Thunder Bolts</span>
+                              <span className="text-sm font-bold text-green-600">3</span>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-red-50 rounded border">
+                              <span className="text-sm font-medium text-gray-900">Lightning FC</span>
+                              <span className="text-sm font-bold text-red-600">1</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Semi-Finals */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-white rounded p-2 border shadow-sm">
+                          <div className="text-xs text-gray-500 text-center mb-1">SEMI 1</div>
+                          <div className="space-y-1">
+                            <div className="text-xs bg-green-50 p-1 rounded flex justify-between">
+                              <span>Thunder</span>
+                              <span className="font-bold text-green-600">2</span>
+                            </div>
+                            <div className="text-xs bg-gray-50 p-1 rounded flex justify-between">
+                              <span>Storm</span>
+                              <span className="font-bold text-gray-500">0</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded p-2 border shadow-sm">
+                          <div className="text-xs text-gray-500 text-center mb-1">SEMI 2</div>
+                          <div className="space-y-1">
+                            <div className="text-xs bg-green-50 p-1 rounded flex justify-between">
+                              <span>Lightning</span>
+                              <span className="font-bold text-green-600">3</span>
+                            </div>
+                            <div className="text-xs bg-gray-50 p-1 rounded flex justify-between">
+                              <span>Fire</span>
+                              <span className="font-bold text-gray-500">2</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Quarter-Finals */}
+                      <div className="grid grid-cols-2 gap-1">
+                        <div className="bg-white rounded p-1.5 border shadow-sm">
+                          <div className="text-xs text-gray-400 text-center">QF1</div>
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex justify-between">
+                              <span>Thunder</span>
+                              <span className="font-bold">1</span>
+                            </div>
+                            <div className="flex justify-between text-gray-500">
+                              <span>Eagles</span>
+                              <span>0</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded p-1.5 border shadow-sm">
+                          <div className="text-xs text-gray-400 text-center">QF2</div>
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex justify-between">
+                              <span>Storm</span>
+                              <span className="font-bold">2</span>
+                            </div>
+                            <div className="flex justify-between text-gray-500">
+                              <span>Wolves</span>
+                              <span>1</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded p-1.5 border shadow-sm">
+                          <div className="text-xs text-gray-400 text-center">QF3</div>
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex justify-between">
+                              <span>Lightning</span>
+                              <span className="font-bold">4</span>
+                            </div>
+                            <div className="flex justify-between text-gray-500">
+                              <span>Knights</span>
+                              <span>1</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded p-1.5 border shadow-sm">
+                          <div className="text-xs text-gray-400 text-center">QF4</div>
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex justify-between">
+                              <span>Fire</span>
+                              <span className="font-bold">3</span>
+                            </div>
+                            <div className="flex justify-between text-gray-500">
+                              <span>Tigers</span>
+                              <span>2</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Other Sports Events */}
+      {nonFootballEvents.length > 0 && (
+        <div className="space-y-4">
+          {nonFootballEvents.map((event, index) => {
         const isParticipating = participatingEvents[event.id];
         const isFull = event.participants?.length >= event.playersNeeded;
         
@@ -220,8 +514,8 @@ const OngoingEvents = ({ onEventClick }) => {
                 {/* Sports name */}
                 <div className="flex items-center">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    event.sport?.toLowerCase() === 'football' 
-                      ? 'bg-green-100 text-green-800' 
+                    event.sport?.toLowerCase() === 'football (5v5)'
+                      ? 'bg-green-100 text-green-800'
                       : 'bg-orange-100 text-orange-800'
                   }`}>
                     {event.sport}
@@ -236,14 +530,31 @@ const OngoingEvents = ({ onEventClick }) => {
                   )}
                 </div>
 
-                {/* Event name */}
-                <h3 className="text-lg font-semibold text-gray-900">{event.eventName}</h3>
+                {/* Football (5v5) match details */}
+                {event.sport?.toLowerCase() === 'football (5v5)' && (
+                  <div className="mt-2 mb-2 p-2 bg-green-50 rounded border border-green-200">
+                    <div className="font-semibold text-green-900 text-sm">
+                      {event.matchName || event.title || 'Match'}
+                    </div>
+                    <div className="text-xs text-green-800 font-medium mt-1 mb-1">
+                      {(event.team1?.name || event.team1) || 'Team 1'} vs {(event.team2?.name || event.team2) || 'Team 2'}
+                    </div>
+                    <div className="text-xs text-gray-700">
+                      Location: {event.location}
+                    </div>
+                    </div>
+                )}
 
-                {/* Location */}
-                <div className="flex items-center text-sm text-gray-600">
-                  <FaMapMarkerAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{event.location}</span>
-                </div>
+                {/* Event name and location for non-Football (5v5) events */}
+                {event.sport?.toLowerCase() !== 'football (5v5)' && (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-900">{event.eventName}</h3>
+                    <div className="flex items-center text-sm text-gray-600">
+                      <FaMapMarkerAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                  </>
+                )}
 
                 {/* Started time */}
                 <div className="flex items-center text-sm text-gray-600">
@@ -252,10 +563,7 @@ const OngoingEvents = ({ onEventClick }) => {
                 </div>
 
                 {/* Additional info */}
-                <div className="flex items-center text-sm text-gray-500">
-                  <FaUsers className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                  <span>{event.participants?.length || 0} / {event.playersNeeded} players</span>
-                </div>
+                {/* Player count removed as requested */}
 
                 {event.description && (
                   <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
@@ -313,7 +621,9 @@ const OngoingEvents = ({ onEventClick }) => {
             </div>
           </motion.div>
         );
-      })}
+          })}
+        </div>
+      )}
     </div>
   );
 };

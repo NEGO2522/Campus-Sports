@@ -138,167 +138,17 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
           <div className="mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
               Ongoing Events
             </h2>
           </div>
           
           {/* Sidebar Layout: Events on left, Standings on right */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="p-7">
             {/* Events Section - Takes 2/3 of the width on large screens */}
             <div className="lg:col-span-2">
               <OngoingEvents onEventClick={() => navigate('/schedule')} />
               
-              {/* See All Button */}
-              <div className="mt-4 pt-3 border-t border-gray-200">
-                <button
-                  onClick={() => navigate('/schedule')}
-                  className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-                >
-                  See All →
-                </button>
-              </div>
-            </div>
-            
-            {/* Tournament Bracket Section - Takes 1/3 of the width on large screens */}
-            <div className="lg:col-span-1">
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold text-gray-900 flex items-center">
-                    <FaTrophy className="mr-2 text-yellow-500" />
-                    Tournament Bracket
-                  </h3>
-                  <span className="text-xs text-gray-500">Live</span>
-                </div>
-                
-                {/* Tournament Bracket */}
-                <div className="space-y-4">
-                  {/* Winner at Top */}
-                  <div className="text-center">
-                    <div className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white rounded-lg p-2 shadow-lg mb-2">
-                      <div className="text-xs font-bold">WINNER</div>
-                      <div className="text-sm font-bold">Thunder Bolts</div>
-                    </div>
-                  </div>
-                  
-                  {/* Final Match */}
-                  <div className="bg-white rounded-lg p-3 border-2 border-blue-300 shadow-sm">
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-1">FINAL</div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center p-2 bg-green-50 rounded border">
-                          <span className="text-sm font-medium text-gray-900">Thunder Bolts</span>
-                          <span className="text-sm font-bold text-green-600">3</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-red-50 rounded border">
-                          <span className="text-sm font-medium text-gray-900">Lightning FC</span>
-                          <span className="text-sm font-bold text-red-600">1</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Semi-Finals */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-white rounded p-2 border shadow-sm">
-                      <div className="text-xs text-gray-500 text-center mb-1">SEMI 1</div>
-                      <div className="space-y-1">
-                        <div className="text-xs bg-green-50 p-1 rounded flex justify-between">
-                          <span>Thunder</span>
-                          <span className="font-bold text-green-600">2</span>
-                        </div>
-                        <div className="text-xs bg-gray-50 p-1 rounded flex justify-between">
-                          <span>Storm</span>
-                          <span className="font-bold text-gray-500">0</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded p-2 border shadow-sm">
-                      <div className="text-xs text-gray-500 text-center mb-1">SEMI 2</div>
-                      <div className="space-y-1">
-                        <div className="text-xs bg-green-50 p-1 rounded flex justify-between">
-                          <span>Lightning</span>
-                          <span className="font-bold text-green-600">3</span>
-                        </div>
-                        <div className="text-xs bg-gray-50 p-1 rounded flex justify-between">
-                          <span>Fire</span>
-                          <span className="font-bold text-gray-500">2</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Quarter-Finals */}
-                  <div className="grid grid-cols-2 gap-1">
-                    <div className="bg-white rounded p-1.5 border shadow-sm">
-                      <div className="text-xs text-gray-400 text-center">QF1</div>
-                      <div className="text-xs space-y-0.5">
-                        <div className="flex justify-between">
-                          <span>Thunder</span>
-                          <span className="font-bold">1</span>
-                        </div>
-                        <div className="flex justify-between text-gray-500">
-                          <span>Eagles</span>
-                          <span>0</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded p-1.5 border shadow-sm">
-                      <div className="text-xs text-gray-400 text-center">QF2</div>
-                      <div className="text-xs space-y-0.5">
-                        <div className="flex justify-between">
-                          <span>Storm</span>
-                          <span className="font-bold">2</span>
-                        </div>
-                        <div className="flex justify-between text-gray-500">
-                          <span>Wolves</span>
-                          <span>1</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded p-1.5 border shadow-sm">
-                      <div className="text-xs text-gray-400 text-center">QF3</div>
-                      <div className="text-xs space-y-0.5">
-                        <div className="flex justify-between">
-                          <span>Lightning</span>
-                          <span className="font-bold">4</span>
-                        </div>
-                        <div className="flex justify-between text-gray-500">
-                          <span>Knights</span>
-                          <span>1</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-white rounded p-1.5 border shadow-sm">
-                      <div className="text-xs text-gray-400 text-center">QF4</div>
-                      <div className="text-xs space-y-0.5">
-                        <div className="flex justify-between">
-                          <span>Fire</span>
-                          <span className="font-bold">3</span>
-                        </div>
-                        <div className="flex justify-between text-gray-500">
-                          <span>Tigers</span>
-                          <span>2</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* View Full Bracket Link */}
-                <div className="mt-4 pt-3 border-t border-gray-200">
-                  <button
-                    onClick={() => navigate('/tournament-bracket')}
-                    className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-                  >
-                    View Full Bracket →
-                  </button>
-                </div>
-              </div>
+              
             </div>
           </div>
         </div>
