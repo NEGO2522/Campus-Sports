@@ -5,6 +5,7 @@ import { GiSoccerBall, GiBasketballBasket, GiTennisBall, GiVolleyballBall, GiCri
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase/firebase';
 import { format, parseISO, isAfter } from 'date-fns';
+import { toast } from 'react-toastify';
 
 // Sport icons mapping
 const sportIcons = {
@@ -38,38 +39,40 @@ const JoinGame = () => {
   useEffect(() => {
     setLoading(true);
     
-    // Create a query against the collection
-    const q = query(
-      collection(db, 'events'),
-      where('status', '==', 'upcoming'),
-      orderBy('dateTime')
-    );
-
-    // Subscribe to query updates
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+    let allEvents = [];
+    let loadingCount = 2;
+    
+    const checkComplete = () => {
+      loadingCount--;
+      if (loadingCount === 0) {
+        // Sort all events by date (nearest first)
+        allEvents.sort((a, b) => a.rawDateTime - b.rawDateTime);
+        setGames(allEvents);
+        setFilteredGames(allEvents);
+        setLoading(false);
+      }
+    };
+    
+    // Process events function
+    const processEvents = async (querySnapshot, status) => {
       const now = new Date();
-      const eventsData = [];
       
       // Process events in parallel
-      const eventsPromises = querySnapshot.docs.map(async (doc) => {
-        const event = { id: doc.id, ...doc.data() };
+      const eventsPromises = querySnapshot.docs.map(async (docSnapshot) => {
+        const event = { id: docSnapshot.id, ...docSnapshot.data() };
         const eventDate = event.dateTime?.toDate ? event.dateTime.toDate() : new Date(event.dateTime);
         
-        // Only include events that are in the future
-        if (eventDate >= now) {
+        // For upcoming events, only include future events; for ongoing, include all
+        if (status === 'ongoing' || eventDate >= now) {
           // Get organizer's display name if available
           let organizerName = 'Organizer';
-          console.log('Event data:', event); // Debug log
           
           if (event.createdBy) {
             try {
-              console.log('Fetching user data for:', event.createdBy); // Debug log
               const userDoc = await getDoc(doc(db, 'users', event.createdBy));
-              console.log('User doc exists:', userDoc.exists()); // Debug log
               
               if (userDoc.exists()) {
                 const userData = userDoc.data();
-                console.log('User data:', userData); // Debug log
                 
                 // Try different possible fields for the name
                 organizerName = userData.displayName || 
@@ -105,7 +108,8 @@ const JoinGame = () => {
             participants: event.participants || [],
             playersNeeded: event.playersNeeded || 0,
             rawDateTime: eventDate,
-            isFull: event.participants?.length >= event.playersNeeded
+            isFull: event.participants?.length >= event.playersNeeded,
+            status: status
           };
         }
         return null;
@@ -113,22 +117,46 @@ const JoinGame = () => {
       
       // Wait for all events to be processed
       const events = (await Promise.all(eventsPromises)).filter(Boolean);
-      
-      // Sort by date (nearest first)
-      events.sort((a, b) => a.rawDateTime - b.rawDateTime);
-      
-      setGames(events);
-      setFilteredGames(events);
-      setLoading(false);
+      allEvents = [...allEvents, ...events];
+      checkComplete();
+    };
+    
+    // Create queries for both upcoming and ongoing events
+    const upcomingQ = query(
+      collection(db, 'events'),
+      where('status', '==', 'upcoming'),
+      orderBy('dateTime')
+    );
+    
+    const ongoingQ = query(
+      collection(db, 'events'),
+      where('status', '==', 'ongoing'),
+      orderBy('dateTime')
+    );
+
+    // Subscribe to upcoming events
+    const unsubscribeUpcoming = onSnapshot(upcomingQ, async (querySnapshot) => {
+      allEvents = allEvents.filter(event => event.status !== 'upcoming');
+      await processEvents(querySnapshot, 'upcoming');
     }, (error) => {
-      console.error('Error getting events:', error);
-      setGames([]);
-      setFilteredGames([]);
-      setLoading(false);
+      console.error('Error getting upcoming events:', error);
+      checkComplete();
+    });
+    
+    // Subscribe to ongoing events
+    const unsubscribeOngoing = onSnapshot(ongoingQ, async (querySnapshot) => {
+      allEvents = allEvents.filter(event => event.status !== 'ongoing');
+      await processEvents(querySnapshot, 'ongoing');
+    }, (error) => {
+      console.error('Error getting ongoing events:', error);
+      checkComplete();
     });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    // Cleanup subscriptions on unmount
+    return () => {
+      unsubscribeUpcoming();
+      unsubscribeOngoing();
+    };
   }, []);
 
   // Handle joining a game

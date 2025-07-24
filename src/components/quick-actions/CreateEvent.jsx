@@ -117,8 +117,8 @@ const CreateEvent = () => {
         ...formData,
         createdBy: user.uid,
         createdAt: serverTimestamp(),
-        participants: [user.uid], // Add creator as first participant
-        status: 'upcoming'
+        participants: [], // Start with empty participants array
+        status: formData.status
       };
 
       // Add a new document with a generated ID
@@ -144,9 +144,9 @@ const CreateEvent = () => {
         location: '',
         description: '',
         playersNeeded: 10,
-        createdBy: user.uid,
-        createdAt: serverTimestamp(),
-        participants: [user.uid],
+        createdBy: '',
+        createdAt: null,
+        participants: [],
         status: 'upcoming'
       });
       
@@ -303,6 +303,7 @@ const CreateEvent = () => {
                           required
                         />
                       </div>
+                      
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>

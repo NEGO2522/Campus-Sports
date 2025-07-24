@@ -1,22 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaUsers, FaTrophy, FaRunning } from 'react-icons/fa';
+import { FaCalendarAlt, FaUsers, FaTrophy, FaRunning, FaMedal, FaCrown, FaFire } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
 import UpcomingEvents from './UpcomingEvents';
+import OngoingEvents from './OngoingEvents';
 import ActivityFeed from './ActivityFeed';
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
-
-  const [stats, setStats] = useState([
-    { id: 1, name: 'Upcoming Events', value: '0', icon: FaCalendarAlt, change: '0', changeType: 'neutral' },
-    { id: 2, name: 'Active Members', value: '0', icon: FaUsers, change: '0', changeType: 'neutral' },
-    { id: 3, name: 'Tournaments', value: '0', icon: FaTrophy, change: '0', changeType: 'neutral' },
-    { id: 4, name: 'Activities', value: '0', icon: FaRunning, change: '0', changeType: 'neutral' },
+  // Sample leaderboard data - you can customize this
+  const [leaderboardData] = useState([
+    { id: 1, name: 'John Smith', points: 2850, position: 1, avatar: '👨‍💼', sport: 'Football', streak: 12 },
+    { id: 2, name: 'Sarah Johnson', points: 2720, position: 2, avatar: '👩‍💼', sport: 'Basketball', streak: 8 },
+    { id: 3, name: 'Mike Wilson', points: 2650, position: 3, avatar: '🧑‍💼', sport: 'Tennis', streak: 15 },
+    { id: 4, name: 'Emma Davis', points: 2580, position: 4, avatar: '👩‍🦰', sport: 'Volleyball', streak: 6 },
+    { id: 5, name: 'Alex Brown', points: 2490, position: 5, avatar: '🧑‍🦱', sport: 'Cricket', streak: 9 },
   ]);
+
+  const [stats, setStats] = useState([]);
 
   // Set up real-time listener for upcoming events count
   useEffect(() => {
@@ -74,13 +78,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-1 text-xs sm:text-sm md:text-base text-gray-600">Welcome back! Here's what's happening today.</p>
-          </div>
-        </div>
+        
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
@@ -138,6 +136,17 @@ const Dashboard = () => {
               </motion.button>
             ))}
           </div>
+        </div>
+
+        {/* Ongoing Events */}
+        <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
+          <div className="flex justify-between items-center mb-3 sm:mb-4">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
+              Ongoing Events
+            </h2>
+          </div>
+          <OngoingEvents onEventClick={() => navigate('/schedule')} />
         </div>
 
         {/* Upcoming Events */}

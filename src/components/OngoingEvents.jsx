@@ -1,0 +1,351 @@
+import React, { useState, useEffect } from 'react';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
+import { db, auth } from '../firebase/firebase';
+import { logActivity, ACTIVITY_TYPES } from '../utils/activityLogger';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaCheck, FaClock, FaPlay, FaSpinner } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
+import { format, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
+
+const OngoingEvents = ({ onEventClick }) => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [participatingEvents, setParticipatingEvents] = useState({});
+  const [showSchedule, setShowSchedule] = useState(null);
+  const [eventSchedule, setEventSchedule] = useState(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+
+  useEffect(() => {
+    // Create a query against the collection for ongoing events
+    const q = query(
+      collection(db, 'events'),
+      where('status', '==', 'ongoing'),
+      orderBy('dateTime')
+    );
+
+    // Subscribe to query updates
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const now = new Date();
+      const eventsData = [];
+      
+      querySnapshot.forEach((doc) => {
+        const eventData = { id: doc.id, ...doc.data() };
+        const eventDate = eventData.dateTime?.toDate ? eventData.dateTime.toDate() : new Date(eventData.dateTime);
+        
+        // Include all ongoing events regardless of time
+        eventsData.push({
+          ...eventData,
+          dateTime: eventDate // Ensure date is a Date object
+        });
+      });
+      
+      // Sort by date (most recent first for ongoing events)
+      eventsData.sort((a, b) => a.dateTime - b.dateTime);
+      
+      setEvents(eventsData);
+      setLoading(false);
+    }, (error) => {
+      console.error('Error getting ongoing events:', error);
+      setEvents([]);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  // Check if current user is participating in each event
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) {
+      // If user is not logged in, clear all participation statuses
+      setParticipatingEvents({});
+      return;
+    }
+
+    const updatedParticipating = {};
+    
+    events.forEach(event => {
+      updatedParticipating[event.id] = event.participants?.includes(user.uid) || false;
+    });
+    
+    setParticipatingEvents(updatedParticipating);
+  }, [events]);
+
+  const handleParticipate = async (eventId) => {
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error('Please log in to participate in events');
+      return;
+    }
+
+    try {
+      const eventRef = doc(db, 'events', eventId);
+      const eventDoc = await getDoc(eventRef);
+      const eventData = eventDoc.data();
+      
+      // Update the event with the new participant
+      await updateDoc(eventRef, {
+        participants: arrayUnion(user.uid)
+      });
+      
+      // Log the participation activity
+      await logActivity({
+        type: ACTIVITY_TYPES.EVENT_JOINED,
+        eventId,
+        eventName: eventData.eventName,
+        eventType: eventData.sport,
+        eventLocation: eventData.location,
+        message: `Joined ongoing ${eventData.sport} event: ${eventData.eventName}`,
+        isPublic: true
+      });
+      
+      // Update local state to reflect participation
+      setParticipatingEvents(prev => ({
+        ...prev,
+        [eventId]: true
+      }));
+      
+      toast.success('Successfully joined the ongoing event!');
+    } catch (error) {
+      console.error('Error joining event:', error);
+      toast.error('Failed to join event. Please try again.');
+    }
+  };
+
+  const handleViewSchedule = async (event) => {
+    setShowSchedule(event.id);
+    setScheduleLoading(true);
+    
+    try {
+      // Calculate how long the event has been running
+      const now = new Date();
+      const eventStart = event.dateTime;
+      const minutesElapsed = differenceInMinutes(now, eventStart);
+      const hoursElapsed = differenceInHours(now, eventStart);
+      const daysElapsed = differenceInDays(now, eventStart);
+      
+      let elapsedTime = '';
+      if (daysElapsed > 0) {
+        elapsedTime = `${daysElapsed} day${daysElapsed > 1 ? 's' : ''} ago`;
+      } else if (hoursElapsed > 0) {
+        elapsedTime = `${hoursElapsed} hour${hoursElapsed > 1 ? 's' : ''} ago`;
+      } else {
+        elapsedTime = `${minutesElapsed} minute${minutesElapsed > 1 ? 's' : ''} ago`;
+      }
+
+      const mockSchedule = {
+        date: event.dateTime,
+        location: event.location,
+        duration: '2 hours (estimated)',
+        organizer: event.createdBy || 'Event Organizer',
+        participants: event.participants?.length || 0,
+        maxParticipants: event.playersNeeded || 10,
+        description: event.description || 'No additional details provided.',
+        status: 'Currently in progress',
+        startedTime: elapsedTime
+      };
+      
+      setEventSchedule(mockSchedule);
+    } catch (error) {
+      console.error('Error fetching schedule:', error);
+      toast.error('Failed to load event schedule');
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  // Helper function to calculate elapsed time
+  const getElapsedTime = (startDate) => {
+    const now = new Date();
+    const minutesElapsed = differenceInMinutes(now, startDate);
+    const hoursElapsed = differenceInHours(now, startDate);
+    const daysElapsed = differenceInDays(now, startDate);
+    
+    if (daysElapsed > 0) {
+      return `${daysElapsed}d ago`;
+    } else if (hoursElapsed > 0) {
+      return `${hoursElapsed}h ago`;
+    } else {
+      return `${minutesElapsed}m ago`;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="text-center p-6 bg-white rounded-lg shadow-sm">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Ongoing Events</h3>
+        <p className="text-gray-500">There are currently no ongoing tournaments or events.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {events.map((event, index) => {
+        const isParticipating = participatingEvents[event.id];
+        const isFull = event.participants?.length >= event.playersNeeded;
+        
+        return (
+          <motion.div
+            key={event.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            className="bg-white rounded-lg shadow-sm overflow-hidden border border-orange-200 hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-orange-100 active:ring-orange-200"
+            onClick={() => onEventClick && onEventClick(event)}
+          >
+            <div className="p-4 sm:p-5">
+              {/* Live indicator */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center">
+                  <div className="flex items-center mr-3">
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                    <span className="text-sm font-medium text-red-600">LIVE</span>
+                  </div>
+                  <span className="text-xs text-gray-500">Started {getElapsedTime(event.dateTime)}</span>
+                </div>
+              </div>
+
+              {/* Left side - Sports name, Location, Started time */}
+              <div className="flex flex-col space-y-3">
+                {/* Sports name */}
+                <div className="flex items-center">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    event.sport?.toLowerCase() === 'football' 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-orange-100 text-orange-800'
+                  }`}>
+                    {event.sport}
+                    {event.location?.toLowerCase().includes('poornima') && (
+                      <span className="ml-1 text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1.5">Featured</span>
+                    )}
+                  </span>
+                  {isParticipating && (
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <FaCheck className="mr-1" /> Participating
+                    </span>
+                  )}
+                </div>
+
+                {/* Event name */}
+                <h3 className="text-lg font-semibold text-gray-900">{event.eventName}</h3>
+
+                {/* Location */}
+                <div className="flex items-center text-sm text-gray-600">
+                  <FaMapMarkerAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{event.location}</span>
+                </div>
+
+                {/* Started time */}
+                <div className="flex items-center text-sm text-gray-600">
+                  <FaCalendarAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                  <span>Started {format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')} at {format(new Date(event.dateTime), 'h:mm a')}</span>
+                </div>
+
+                {/* Additional info */}
+                <div className="flex items-center text-sm text-gray-500">
+                  <FaUsers className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                  <span>{event.participants?.length || 0} / {event.playersNeeded} players</span>
+                </div>
+
+                {event.description && (
+                  <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
+                )}
+              </div>
+              <div className="mt-4 flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewSchedule(event);
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
+                  <FaClock className="mr-1.5 h-3 w-3" />
+                  View Details
+                </button>
+                {!isFull && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleParticipate(event.id);
+                    }}
+                    disabled={isParticipating}
+                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
+                      isParticipating 
+                        ? 'bg-gray-400 cursor-not-allowed' 
+                        : 'bg-orange-600 hover:bg-orange-700'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500`}
+                  >
+                    {isParticipating ? 'Already Joined' : 'Join Now'}
+                  </button>
+                )}
+              </div>
+
+              {/* Schedule/Details Section */}
+              {showSchedule === event.id && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Event Details</h4>
+                  {scheduleLoading ? (
+                    <div className="flex justify-center p-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-orange-500"></div>
+                    </div>
+                  ) : eventSchedule ? (
+                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Started</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {format(new Date(eventSchedule.date), 'EEEE, MMMM d, yyyy')} at {format(new Date(eventSchedule.date), 'h:mm a')}
+                          </p>
+                          <p className="text-xs text-orange-600 mt-1">({eventSchedule.startedTime})</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Location</p>
+                          <p className="text-sm font-medium text-gray-900">{eventSchedule.location}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Status</p>
+                          <p className="text-sm font-medium text-orange-600 flex items-center">
+                            <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                            {eventSchedule.status}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Participants</p>
+                          <p className="text-sm font-medium text-gray-900">
+                            {eventSchedule.participants} / {eventSchedule.maxParticipants} players
+                          </p>
+                        </div>
+                      </div>
+                      {eventSchedule.description && (
+                        <div className="mt-4">
+                          <p className="text-sm text-gray-500 mb-1">Additional Details</p>
+                          <p className="text-sm text-gray-700">{eventSchedule.description}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">No details available.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default OngoingEvents;

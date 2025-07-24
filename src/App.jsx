@@ -16,6 +16,7 @@ import CreateEvent from './components/quick-actions/CreateEvent';
 import FindPlayers from './components/quick-actions/FindPlayers';
 import JoinGame from './components/quick-actions/JoinGame';
 import Schedule from './components/quick-actions/Schedule';
+import ManageEvents from './components/quick-actions/ManageEvents';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -81,6 +82,61 @@ const LoginRedirect = () => {
   return <Navigate to="/check-profile" replace />;
 };
 
+// Component to handle root route based on authentication status
+const RootRoute = () => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [profileCheck, setProfileCheck] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      setUser(currentUser);
+      
+      if (currentUser) {
+        try {
+          // Check if user profile is complete
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data().profileCompleted) {
+            setProfileCheck('complete');
+          } else {
+            setProfileCheck('incomplete');
+          }
+        } catch (error) {
+          console.error('Error checking profile:', error);
+          setProfileCheck('incomplete');
+        }
+      }
+      
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // If user is logged in
+  if (user) {
+    // If profile is incomplete, redirect to complete profile
+    if (profileCheck === 'incomplete') {
+      return <Navigate to="/complete-profile" replace />;
+    }
+    // If profile is complete, redirect to dashboard
+    if (profileCheck === 'complete') {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+
+  // If user is not logged in, show the landing page
+  return <Home />;
+};
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -118,7 +174,7 @@ function App() {
           theme="light"
         />
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<RootRoute />} />
           <Route 
             path="/login" 
             element={user ? <LoginRedirect /> : <Login />} 
@@ -152,6 +208,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <CreateEvent />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route 
+            path="/manage-events" 
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <ManageEvents />
                 </MainLayout>
               </ProtectedRoute>
             }
@@ -196,6 +262,9 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          {/* Additional routes for better accessibility */}
+          <Route path="/landing" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/auth-check" element={<AuthCheck />} />
           <Route path="/login-redirect" element={<LoginRedirect />} />
         </Routes>
