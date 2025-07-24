@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaEnvelope, FaArrowRight, FaArrowLeft, FaSpinner } from 'react-icons/fa';
+import { FaEnvelope, FaArrowRight, FaSpinner, FaGoogle } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GiSoccerBall } from 'react-icons/gi';
-import { signInWithEmailLinkAuth, completeEmailLinkSignIn, checkAuthState } from '../firebase/firebase';
+import { signInWithEmailLinkAuth, completeEmailLinkSignIn, checkAuthState, signInWithGoogle } from '../firebase/firebase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -24,6 +24,25 @@ const Login = () => {
   // Check if the current email is an organizer email
   const isOrganizerEmail = (email) => {
     return organizerEmails.includes(email.trim().toLowerCase());
+  };
+
+  // Handle Google Sign In for Players
+  const handleGoogleSignIn = async (e) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      setError('');
+      const { user, error: googleError } = await signInWithGoogle();
+      if (googleError) throw new Error(googleError);
+      if (user) {
+        localStorage.setItem('userRole', 'player');
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to sign in with Google');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Background images
@@ -63,25 +82,50 @@ const Login = () => {
   // Handle form submission
   const handleSubmit = async (e, role = 'player') => {
     e.preventDefault();
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
     
-    try {
-      setIsLoading(true);
-      setError('');
-      localStorage.setItem('userRole', role);
-      const { success, error: emailError } = await signInWithEmailLinkAuth(email);
-      if (emailError) throw new Error(emailError);
-      if (success) {
-        setEmailSent(true);
+    if (role === 'organizer') {
+      // For organizers, use email link authentication
+      if (!email) {
+        setError('Please enter your email address');
+        return;
       }
-    } catch (err) {
-      setError(err.message || 'Failed to send sign-in link');
-      localStorage.removeItem('userRole');
-    } finally {
-      setIsLoading(false);
+      
+      if (!isOrganizerEmail(email)) {
+        setError('This email is not authorized for organizer access');
+        return;
+      }
+      
+      try {
+        setIsLoading(true);
+        setError('');
+        localStorage.setItem('userRole', 'organizer');
+        const { success, error: emailError } = await signInWithEmailLinkAuth(email);
+        if (emailError) throw new Error(emailError);
+        if (success) {
+          setEmailSent(true);
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to send sign-in link');
+        localStorage.removeItem('userRole');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // For players, use Google authentication
+      try {
+        setIsLoading(true);
+        setError('');
+        const { user, error: googleError } = await signInWithGoogle();
+        if (googleError) throw new Error(googleError);
+        if (user) {
+          localStorage.setItem('userRole', 'player');
+          navigate('/dashboard');
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to sign in with Google');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -205,7 +249,7 @@ const Login = () => {
                     onClick={(e) => handleSubmit(e, 'organizer')}
                     whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(124, 58, 237, 0.3)' }}
                     whileTap={{ scale: 0.98 }}
-                    disabled={isLoading || !email}
+                    disabled={isLoading || !email || !isOrganizerEmail(email)}
                     className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                       isLoading || !email || !isOrganizerEmail(email) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:opacity-90'
                     }`}
@@ -221,15 +265,20 @@ const Login = () => {
                     onClick={(e) => handleSubmit(e, 'player')}
                     whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.3)' }}
                     whileTap={{ scale: 0.98 }}
-                    disabled={isLoading || !email}
-                    className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isLoading || !email ? 'opacity-75 cursor-not-allowed' : ''
+                    disabled={isLoading}
+                    className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 ${
+                      isLoading ? 'opacity-75 cursor-not-allowed' : ''
                     }`}
                   >
+                    <FaGoogle className="text-lg" />
                     <span>Login as Player</span>
-                    <FaArrowRight />
                   </motion.button>
                 </div>
+                {!isOrganizerEmail(email) && email && (
+                  <p className="text-xs text-gray-400 text-center mt-1">
+                    Only authorized emails can log in as organizers
+                  </p>
+                )}
               </div>
             </div>
           )}
