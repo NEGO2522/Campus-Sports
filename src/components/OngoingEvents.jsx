@@ -243,7 +243,7 @@ const OngoingEvents = ({ onEventClick }) => {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                              <div className="flex items-center justify-between mb-1">
-                              <div className="font-semibold text-green-900 text-base">
+                              <div className="font-semibold text-gray-900 text-base">
                                 {event.matchName || event.title || 'Match'}
                               </div>
                             </div>
