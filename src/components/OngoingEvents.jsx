@@ -261,36 +261,6 @@ const OngoingEvents = ({ onEventClick }) => {
                   <p className="text-sm text-gray-600 line-clamp-2">{event.description}</p>
                 )}
               </div>
-              <div className="mt-4 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewSchedule(event);
-                  }}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-                >
-                  <FaClock className="mr-1.5 h-3 w-3" />
-                  View Details
-                </button>
-                {!isFull && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleParticipate(event.id);
-                    }}
-                    disabled={isParticipating}
-                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                      isParticipating 
-                        ? 'bg-gray-400 cursor-not-allowed' 
-                        : 'bg-orange-600 hover:bg-orange-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500`}
-                  >
-                    {isParticipating ? 'Already Joined' : 'Join Now'}
-                  </button>
-                )}
-              </div>
 
               {/* Schedule/Details Section */}
               {showSchedule === event.id && (

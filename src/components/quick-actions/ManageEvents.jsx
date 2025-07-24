@@ -150,14 +150,6 @@ const ManageEvents = () => {
                     )}
                     <span className="ml-1 hidden sm:inline">Start</span>
                   </button>
-                  
-                  <button
-                    className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    title="View Details"
-                  >
-                    <FaEye className="h-3 w-3" />
-                    <span className="ml-1 hidden sm:inline">View</span>
-                  </button>
                 </div>
 
                 <div className="flex space-x-2">
