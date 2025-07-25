@@ -230,12 +230,11 @@ const FindPlayers = () => {
                     name: name,
                     email: userData.email || '',
                     sports: sports,
-                    location: userData.location || userData.city || 'Location not specified',
                     experience: userData.experienceLevel || 'Not specified',
                     age: userData.age || 'Not specified',
                     gender: userData.gender || 'Not specified',
                     skill: userData.skillLevel || userData.skill || 'Not specified',
-                    rating: userData.rating || 0,
+
                     matches: userData.matchesPlayed || userData.matches || 0,
                     availability: userData.availability || 'Not specified',
                     courseName: userData.courseName || 'Not specified',
@@ -502,22 +501,11 @@ const FindPlayers = () => {
                       </div>
                     </div>
                     
-                    {/* Location and Stats */}
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center text-sm text-gray-500">
-                        <FaMapMarkerAlt className="mr-1.5 flex-shrink-0" />
-                        <span className="truncate">{player.location}</span>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm">
-                        <div className="flex items-center text-yellow-500">
-                          <FaStar className="mr-1" />
-                          <span>{player.rating.toFixed(1)}</span>
-                        </div>
-                        <span className="mx-2 text-gray-300">•</span>
-                        <span className="text-gray-500">
-                          {player.matches} {player.matches === 1 ? 'match' : 'matches'}
-                        </span>
-                      </div>
+                    {/* Matches Played */}
+                    <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+                      <span className="text-sm text-gray-500">
+                        {player.matches} {player.matches === 1 ? 'match' : 'matches'} played
+                      </span>
                     </div>
                     
                     <div className="mt-4">
