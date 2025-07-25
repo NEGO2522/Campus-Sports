@@ -224,7 +224,7 @@ const FindPlayers = () => {
                              'Player ' + (docSnapshot.id || '').substring(0, 6);
                   
                   // Update or add the player with all fields
-                  playersMap.set(uid, {
+                  const updatedPlayer = {
                     id: docSnapshot.id,
                     uid: userData.uid || docSnapshot.id,
                     name: name,
@@ -238,6 +238,8 @@ const FindPlayers = () => {
                     rating: userData.rating || 0,
                     matches: userData.matchesPlayed || userData.matches || 0,
                     availability: userData.availability || 'Not specified',
+                    courseName: userData.courseName || 'Not specified',
+                    registrationNumber: userData.registrationNumber || 'Not provided',
                     lastActive: userData.lastActive ? 
                       (userData.lastActive.toDate ? 
                         formatDistanceToNow(userData.lastActive.toDate(), { addSuffix: true }) : 
@@ -249,7 +251,14 @@ const FindPlayers = () => {
                           `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
                     // Keep raw data for debugging
                     _rawData: userData
+                  };
+                  
+                  console.log('Updating player data with:', {
+                    courseName: updatedPlayer.courseName,
+                    registrationNumber: updatedPlayer.registrationNumber
                   });
+                  
+                  playersMap.set(uid, updatedPlayer);
                   
                   // Convert back to array
                   return Array.from(playersMap.values());
@@ -472,9 +481,42 @@ const FindPlayers = () => {
                         <p className="text-gray-500">Gender</p>
                         <p className="font-medium">{formattedGender}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-500">Skill Level</p>
-                        <p className="font-medium">{player.skill || experience || 'Not specified'}</p>
+                    </div>
+                    
+                    {/* Course and Registration Info - More Prominent Section */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Academic Details</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Course:</span>
+                          <span className="text-sm text-gray-700">
+                            {player.courseName !== 'Not specified' ? player.courseName : 'Not specified'}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-500">Registration No:</span>
+                          <span className="text-sm text-gray-700">
+                            {player.registrationNumber !== 'Not provided' ? player.registrationNumber : 'Not provided'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Location and Stats */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex items-center text-sm text-gray-500">
+                        <FaMapMarkerAlt className="mr-1.5 flex-shrink-0" />
+                        <span className="truncate">{player.location}</span>
+                      </div>
+                      <div className="mt-2 flex items-center text-sm">
+                        <div className="flex items-center text-yellow-500">
+                          <FaStar className="mr-1" />
+                          <span>{player.rating.toFixed(1)}</span>
+                        </div>
+                        <span className="mx-2 text-gray-300">•</span>
+                        <span className="text-gray-500">
+                          {player.matches} {player.matches === 1 ? 'match' : 'matches'}
+                        </span>
                       </div>
                     </div>
                     

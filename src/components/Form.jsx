@@ -67,6 +67,8 @@ const sportsOptions = [
 const UserProfileForm = () => {
   const [formData, setFormData] = useState({
     fullName: '',
+    registrationNumber: '',
+    courseName: '',
     age: '',
     gender: '',
     phoneNumber: '',
@@ -93,6 +95,8 @@ const UserProfileForm = () => {
           setFormData(prev => ({
             ...prev,
             fullName: userData.fullName || '',
+            registrationNumber: userData.registrationNumber || '',
+            courseName: userData.courseName || '',
             age: userData.age || '',
             gender: userData.gender || '',
             phoneNumber: userData.phoneNumber || '',
@@ -144,8 +148,19 @@ const UserProfileForm = () => {
     e.preventDefault();
     setError('');
     
+    // Validation
     if (formData.selectedSports.length === 0) {
       setError('Please select at least one sport');
+      return;
+    }
+
+    if (!formData.registrationNumber) {
+      setError('Registration number is required');
+      return;
+    }
+
+    if (!formData.courseName) {
+      setError('Course name is required');
       return;
     }
 
@@ -157,13 +172,27 @@ const UserProfileForm = () => {
     setIsSubmitting(true);
 
     try {
-      await setDoc(doc(db, 'users', auth.currentUser.uid), {
-        ...formData,
+      // Create a clean data object with all the fields we want to save
+      const userData = {
+        fullName: formData.fullName,
+        registrationNumber: formData.registrationNumber,
+        courseName: formData.courseName,
+        age: formData.age,
+        gender: formData.gender,
+        phoneNumber: formData.phoneNumber,
+        experienceLevel: formData.experienceLevel,
+        selectedSports: formData.selectedSports,
         updatedAt: serverTimestamp(),
         profileCompleted: true,
-      }, { merge: true });
+        // Include any additional fields you want to store
+        lastUpdated: new Date().toISOString()
+      };
 
-      navigate('/profile');
+      // Save to Firestore
+      await setDoc(doc(db, 'users', auth.currentUser.uid), userData, { merge: true });
+
+      console.log('Profile saved successfully:', userData);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error saving profile:', error);
       setError('Failed to save profile. Please try again.');
@@ -280,7 +309,49 @@ const UserProfileForm = () => {
                 <motion.div 
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="relative group"
+                >
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FaUser className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="text"
+                    id="registrationNumber"
+                    name="registrationNumber"
+                    value={formData.registrationNumber}
+                    onChange={handleInputChange}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 bg-white rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Registration Number"
+                    required
+                  />
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2 }}
+                  className="relative group"
+                >
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FaUser className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="text"
+                    id="courseName"
+                    name="courseName"
+                    value={formData.courseName}
+                    onChange={handleInputChange}
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 bg-white rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    placeholder="Course Name"
+                    required
+                  />
+                </motion.div>
+
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.25 }}
                   className="relative group"
                 >
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">

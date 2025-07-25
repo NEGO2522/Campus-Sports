@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase/firebase';
-import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog } from 'react-icons/fa';
+import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -122,6 +122,17 @@ const Navbar = () => {
               <FaUsers className="mr-2" />
               Explore Games
             </Link>
+            
+            {userRole === 'player' && (
+              <Link
+                to="/find-players"
+                className={`${isActive('/find-players')} block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
+                onClick={toggleMenu}
+              >
+                <FaSearch className="inline-block mr-2" />
+                Find Players
+              </Link>
+            )}
           </div>
 
           {/* Profile Dropdown - Desktop */}
@@ -242,6 +253,21 @@ const Navbar = () => {
               <FaUsers className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
               Explore Games
             </Link>
+
+            {userRole === 'player' && (
+              <Link
+                to="/find-players"
+                className={`${
+                  isActive('/find-players')
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-100 hover:bg-white/10'
+                } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
+                onClick={toggleMenu}
+              >
+                <FaSearch className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
+                Find Players
+              </Link>
+            )}
           </div>
 
           <div className="pt-4 pb-3 border-t border-gray-700">
