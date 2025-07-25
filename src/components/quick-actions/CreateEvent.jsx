@@ -36,9 +36,12 @@ const CreateEvent = () => {
     eventName: '',
     sport: '',
     dateTime: '',
+    registrationDeadline: '',
     location: '',
     description: '',
+    participationType: 'player', // 'player' or 'team'
     playersNeeded: 10,
+    teamsNeeded: 2,
     createdBy: '',
     createdAt: null,
     participants: [],
@@ -92,7 +95,7 @@ const CreateEvent = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'playersNeeded' ? parseInt(value) || 0 : value
+      [name]: (name === 'playersNeeded' || name === 'teamsNeeded') ? parseInt(value) || 0 : value
     }));
   };
 
@@ -100,8 +103,19 @@ const CreateEvent = () => {
     e.preventDefault();
     
     // Basic validation
-    if (!formData.eventName || !formData.sport || !formData.dateTime || !formData.location) {
+    if (!formData.eventName || !formData.sport || !formData.dateTime || !formData.registrationDeadline || !formData.location) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Validate participation data based on type
+    if (formData.participationType === 'player' && (!formData.playersNeeded || formData.playersNeeded < 2)) {
+      toast.error('Please specify at least 2 players needed');
+      return;
+    }
+    
+    if (formData.participationType === 'team' && (!formData.teamsNeeded || formData.teamsNeeded < 2)) {
+      toast.error('Please specify at least 2 teams needed');
       return;
     }
 
@@ -113,37 +127,43 @@ const CreateEvent = () => {
         throw new Error('You must be logged in to create an event');
       }
 
+      // Create event data with proper field handling based on participation type
       const eventData = {
-        ...formData,
+        eventName: formData.eventName,
+        sport: formData.sport,
+        dateTime: formData.dateTime,
+        registrationDeadline: formData.registrationDeadline,
+        location: formData.location,
+        description: formData.description,
+        participationType: formData.participationType,
+        // Only include the relevant field based on participation type
+        ...(formData.participationType === 'player' 
+          ? { playersNeeded: parseInt(formData.playersNeeded) || 10 }
+          : { teamsNeeded: parseInt(formData.teamsNeeded) || 2 }
+        ),
         createdBy: user.uid,
         createdAt: serverTimestamp(),
         participants: [], // Start with empty participants array
         status: formData.status
       };
 
+      console.log('Saving event data:', eventData);
+
       // Add a new document with a generated ID
       const docRef = await addDoc(collection(db, 'events'), eventData);
       
       toast.success('Event created successfully!');
       
-      // Log the activity
-      await logActivity({
-        type: ACTIVITY_TYPES.EVENT_CREATED,
-        eventId: docRef.id,
-        eventName: eventData.eventName,
-        eventType: eventData.sport,
-        eventLocation: eventData.location,
-        message: `Created a new ${eventData.sport} event: ${eventData.eventName}`,
-        isPublic: true
-      });
-      
       setFormData({
         eventName: '',
         sport: '',
         dateTime: '',
+        registrationDeadline: '',
         location: '',
         description: '',
+        participationType: 'player',
         playersNeeded: 10,
+        teamsNeeded: 2,
         createdBy: '',
         createdAt: null,
         participants: [],
@@ -213,7 +233,9 @@ const CreateEvent = () => {
                 </p>
               </div>
               <span className="ml-2 px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-800 rounded-full whitespace-nowrap">
-                {event.participants?.length || 0}/{event.playersNeeded} players
+                {event.participants?.length || 0}/
+                {event.participationType === 'team' ? event.teamsNeeded : event.playersNeeded} 
+                {event.participationType === 'team' ? 'teams' : 'players'}
               </span>
             </div>
           </div>
@@ -303,7 +325,18 @@ const CreateEvent = () => {
                           required
                         />
                       </div>
-                      
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Registration Deadline Date & Time *</label>
+                        <input 
+                          type="datetime-local" 
+                          name="registrationDeadline"
+                          value={formData.registrationDeadline}
+                          onChange={handleInputChange}
+                          className="w-full text-sm sm:text-base px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        />
+                      </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
@@ -338,21 +371,71 @@ const CreateEvent = () => {
                       </div>
                       
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Number of Players Needed</label>
-                        <div className="flex items-center space-x-2">
-                          <FaUsers className="text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
-                          <input 
-                            type="number" 
-                            name="playersNeeded"
-                            value={formData.playersNeeded}
-                            onChange={handleInputChange}
-                            min="2"
-                            max="50"
-                            className="w-16 sm:w-20 text-sm sm:text-base px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                          />
-                          <span className="text-xs sm:text-sm text-gray-500">players</span>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Participation Type</label>
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, participationType: 'player' }))}
+                            className={`flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                              formData.participationType === 'player'
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            <FaUsers className="mr-2 h-4 w-4" />
+                            Individual Players
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setFormData(prev => ({ ...prev, participationType: 'team' }))}
+                            className={`flex items-center justify-center px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                              formData.participationType === 'team'
+                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                            }`}
+                          >
+                            <FaUsers className="mr-2 h-4 w-4" />
+                            Teams
+                          </button>
                         </div>
+                        
+                        {formData.participationType === 'player' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Number of Players Needed</label>
+                            <div className="flex items-center space-x-2">
+                              <FaUsers className="text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
+                              <input 
+                                type="number" 
+                                name="playersNeeded"
+                                value={formData.playersNeeded}
+                                onChange={handleInputChange}
+                                min="2"
+                                max="50"
+                                className="w-16 sm:w-20 text-sm sm:text-base px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                required
+                              />
+                              <span className="text-xs sm:text-sm text-gray-500">players</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Number of Teams Needed</label>
+                            <div className="flex items-center space-x-2">
+                              <FaUsers className="text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
+                              <input 
+                                type="number" 
+                                name="teamsNeeded"
+                                value={formData.teamsNeeded}
+                                onChange={handleInputChange}
+                                min="2"
+                                max="20"
+                                className="w-16 sm:w-20 text-sm sm:text-base px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                required
+                              />
+                              <span className="text-xs sm:text-sm text-gray-500">teams</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                       
                       <div className="bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-100">

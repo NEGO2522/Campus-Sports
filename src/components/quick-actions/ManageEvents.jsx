@@ -125,7 +125,11 @@ const ManageEvents = () => {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <FaUsers className="mr-2 h-4 w-4 text-gray-400" />
-                  {event.participants?.length || 0} / {event.playersNeeded} players
+                  {event.participationType === 'team' ? (
+                    <span>{event.participants?.length || 0} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
+                  ) : (
+                    <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
+                  )}
                 </div>
               </div>
 
