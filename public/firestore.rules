@@ -19,8 +19,23 @@ service cloud.firestore {
                   && request.resource.data.sport is string
                   && request.resource.data.dateTime is string
                   && request.resource.data.location is string
-                  && request.resource.data.playersNeeded is number
+                  && request.resource.data.participationType is string
+                  && (
+                    (request.resource.data.participationType == 'player' && request.resource.data.playersNeeded is number) ||
+                    (request.resource.data.participationType == 'team' && request.resource.data.teamsNeeded is number)
+                  )
                   && request.resource.data.createdBy == request.auth.uid;
+      
+      // Allow update for adding participants (only by authenticated users)
+      allow update: if request.auth != null
+                   && request.auth.uid != null
+                   && resource.data.createdBy is string
+                   // Only allow updating participants array
+                   && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants']);
+      
+      // Allow delete only by the event creator
+      allow delete: if request.auth != null
+                   && request.auth.uid == resource.data.createdBy;
     }
     
     // Default deny all other access

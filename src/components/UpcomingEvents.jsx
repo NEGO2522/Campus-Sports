@@ -181,11 +181,15 @@ const UpcomingEvents = ({ onEventClick }) => {
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900">{event.eventName}</h3>
-                  <div className="mt-1 flex items-center text-sm text-gray-500">
-                    <FaCalendarAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                    <span>{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
-                    <span className="mx-2">•</span>
-                    <span>{format(new Date(event.dateTime), 'h:mm a')}</span>
+                  <div className="mt-1 flex items-center text-sm justify-between">
+                    <div className="flex items-center text-gray-500">
+                      <FaCalendarAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                      <span className="font-medium">Event Starts:</span>
+                      <span className="ml-1">{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
+                      <span className="mx-2">•</span>
+                      <span>{format(new Date(event.dateTime), 'h:mm a')}</span>
+                    </div>
+                    
                   </div>
                   <div className="mt-2 flex items-center text-sm text-gray-500">
                     <FaMapMarkerAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
@@ -193,7 +197,11 @@ const UpcomingEvents = ({ onEventClick }) => {
                   </div>
                   <div className="mt-2 flex items-center text-sm text-gray-500">
                     <FaUsers className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                    <span>{event.participants?.length || 0} / {event.playersNeeded} players</span>
+                    {event.participationType === 'team' ? (
+                      <span>{event.participants?.length || 0} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
+                    ) : (
+                      <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
+                    )}
                   </div>
                   {event.description && (
                     <p className="mt-2 text-sm text-gray-600 line-clamp-2">{event.description}</p>
@@ -210,6 +218,15 @@ const UpcomingEvents = ({ onEventClick }) => {
                       <span className="ml-1 text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1.5">Featured</span>
                     )}
                   </span>
+                  {event.registrationDeadline && (
+                      <div className="flex items-center text-sm mt-3 text-gray-600 ml-4 whitespace-nowrap">
+                        <FaClock className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                        <span className="font-medium">Register by:</span>
+                        <span className="ml-1">{format(new Date(event.registrationDeadline), 'MMM d, yyyy')}</span>
+                        <span className="mx-2">•</span>
+                        <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
+                      </div>
+                    )}
                   {isParticipating && (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <FaCheck className="mr-1" /> Participating

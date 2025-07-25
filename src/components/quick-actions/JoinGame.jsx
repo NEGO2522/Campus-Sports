@@ -88,6 +88,14 @@ const JoinGame = () => {
             organizerName = event.organizerName;
           }
 
+          // Determine the correct needed count based on participation type
+          const isTeamBased = event.participationType === 'team';
+          const neededCount = isTeamBased 
+            ? (event.teamsNeeded || 2) // Default to 2 teams if not specified
+            : (event.playersNeeded || 10); // Default to 10 players if not specified
+          
+          const currentParticipants = event.participants?.length || 0;
+          
           return {
             id: event.id,
             sport: event.sport || 'General',
@@ -98,7 +106,9 @@ const JoinGame = () => {
               format(event.endTime.toDate(), 'h:mm a') :
               format(new Date(eventDate.getTime() + 2 * 60 * 60 * 1000), 'h:mm a'),
             location: event.location || 'Location not specified',
-            players: `${event.participants?.length || 0}/${event.playersNeeded || 0}`,
+            players: `${currentParticipants}/${neededCount}`,
+            participationType: event.participationType || 'player',
+            participantsLabel: isTeamBased ? 'teams' : 'players',
             skillLevel: event.skillLevel || 'All Levels',
             organizer: organizerName,
             organizerId: event.createdBy,
@@ -107,9 +117,18 @@ const JoinGame = () => {
             image: event.image || 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1005&q=80',
             participants: event.participants || [],
             playersNeeded: event.playersNeeded || 0,
+            teamsNeeded: event.teamsNeeded || 0,
             rawDateTime: eventDate,
-            isFull: event.participants?.length >= event.playersNeeded,
-            status: status
+            isFull: currentParticipants >= neededCount,
+            status: status,
+            // Add these for debugging
+            _debug: {
+              participationType: event.participationType,
+              playersNeeded: event.playersNeeded,
+              teamsNeeded: event.teamsNeeded,
+              neededCount: neededCount,
+              isTeamBased: isTeamBased
+            }
           };
         }
         return null;
@@ -380,7 +399,7 @@ const JoinGame = () => {
                       ? 'bg-red-100 text-red-800' 
                       : 'bg-green-100 text-green-800'
                   }`}>
-                    {game.players} players
+                    {game.players} {game.participantsLabel}
                   </span>
                 </div>
                 
@@ -400,6 +419,10 @@ const JoinGame = () => {
                   <div className="flex items-center">
                     <FaUsers className="mr-2 text-gray-400" />
                     <span>Skill level: {game.skillLevel}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <FaUsers className="mr-2 text-gray-400" />
+                    <span>Type: {game.participationType === 'team' ? 'Team-based' : 'Individual players'}</span>
                   </div>
                 </div>
                 
