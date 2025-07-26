@@ -6,7 +6,6 @@ import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firest
 import { db, auth } from '../firebase/firebase';
 import UpcomingEvents from './UpcomingEvents';
 import OngoingEvents from './OngoingEvents';
-import ActivityFeed from './ActivityFeed';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -161,14 +160,7 @@ const Dashboard = () => {
           <UpcomingEvents onEventClick={() => navigate('/schedule')} />
         </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-lg sm:rounded-xl shadow-xs sm:shadow-sm p-4 sm:p-6">
-          <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900">Recent Activity</h2>
-          </div>
-          <ActivityFeed />
-        </div>
-      </div>
+              </div>
     </div>
   );
 };

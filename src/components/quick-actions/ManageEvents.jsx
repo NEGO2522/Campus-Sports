@@ -5,12 +5,14 @@ import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDo
 import { db, auth } from '../../firebase/firebase';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const ManageEvents = () => {
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [startingEventId, setStartingEventId] = useState(null);
   const [deletingEventId, setDeletingEventId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -160,6 +162,7 @@ const ManageEvents = () => {
                   <button
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     title="Edit Event"
+                    onClick={() => navigate(`/events/${event.id}`)}
                   >
                     <FaEdit className="h-3 w-3" />
                   </button>

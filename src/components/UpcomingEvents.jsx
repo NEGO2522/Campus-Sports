@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db, auth } from '../firebase/firebase';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaClock } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -13,6 +13,9 @@ const UpcomingEvents = ({ onEventClick }) => {
   const [eventSchedule, setEventSchedule] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const navigate = useNavigate();
+  const [showConfirm, setShowConfirm] = useState({ open: false, eventId: null });
+  const [saving, setSaving] = useState(false);
+  const [participatingEvents, setParticipatingEvents] = useState({});
 
   useEffect(() => {
     // Create a query against the collection
@@ -44,6 +47,17 @@ const UpcomingEvents = ({ onEventClick }) => {
       eventsData.sort((a, b) => a.dateTime - b.dateTime);
       
       setEvents(eventsData);
+      // Set participating status for each event for the current user
+      const user = auth.currentUser;
+      if (user) {
+        const participationMap = {};
+        eventsData.forEach(event => {
+          participationMap[event.id] = Array.isArray(event.participants) && event.participants.includes(user.uid);
+        });
+        setParticipatingEvents(participationMap);
+      } else {
+        setParticipatingEvents({});
+      }
       setLoading(false);
     }, (error) => {
       console.error('Error getting events:', error);
@@ -176,21 +190,45 @@ const UpcomingEvents = ({ onEventClick }) => {
                   <FaClock className="mr-1.5 h-3 w-3" />
                   View Schedule
                 </button>
-                <button
-                  type="button"
-                  onClick={e => {
-                    e.stopPropagation();
-                    navigate(`/events/${event.id}/participate`);
-                  }}
-                  disabled={isFull}
-                  className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                    isFull 
-                      ? 'bg-red-600 hover:bg-red-700' 
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
-                >
-                  {isFull ? 'Event Full' : 'Participate'}
-                </button>
+                {event.participationType === 'player' ? (
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setShowConfirm({ open: true, eventId: event.id });
+                    }}
+                    disabled={isFull || participatingEvents[event.id]}
+                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
+                      isFull
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : participatingEvents[event.id]
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                  >
+                    {isFull
+                      ? 'Event Full'
+                      : participatingEvents[event.id]
+                        ? 'Participated'
+                        : 'Participate'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation();
+                      navigate(`/events/${event.id}/participate`);
+                    }}
+                    disabled={isFull}
+                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
+                      isFull 
+                        ? 'bg-red-600 hover:bg-red-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                  >
+                    {isFull ? 'Event Full' : 'Participate'}
+                  </button>
+                )}
               </div>
 
               {/* Schedule/Timetable Section */}
@@ -241,7 +279,51 @@ const UpcomingEvents = ({ onEventClick }) => {
           </motion.div>
         );
       })}
-    </div>
+    {/* Confirmation Overlay for player participation */}
+    {showConfirm.open && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+        <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
+          <h3 className="text-xl font-semibold mb-4">Are you sure you want to participate?</h3>
+          <div className="flex space-x-4">
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={async () => {
+                setSaving(true);
+                try {
+                  const user = auth.currentUser;
+                  if (!user) {
+                    alert('You must be logged in to participate.');
+                    return;
+                  }
+                  const eventRef = doc(db, 'events', showConfirm.eventId);
+                  await updateDoc(eventRef, {
+                    participants: arrayUnion(user.uid)
+                  });
+                  setShowConfirm({ open: false, eventId: null });
+                  setParticipatingEvents(prev => ({ ...prev, [showConfirm.eventId]: true }));
+                } catch (error) {
+                  alert('Failed to participate.');
+                  console.error(error);
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Yes'}
+            </button>
+            <button
+              className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              onClick={() => setShowConfirm({ open: false, eventId: null })}
+              disabled={saving}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 };
 

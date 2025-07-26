@@ -182,6 +182,7 @@ const UserProfileForm = () => {
         phoneNumber: formData.phoneNumber,
         experienceLevel: formData.experienceLevel,
         selectedSports: formData.selectedSports,
+        email: auth.currentUser.email,
         updatedAt: serverTimestamp(),
         profileCompleted: true,
         // Include any additional fields you want to store

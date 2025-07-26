@@ -19,6 +19,8 @@ import Schedule from './components/quick-actions/Schedule';
 import ManageEvents from './components/quick-actions/ManageEvents';
 import TournamentBracket from './components/TournamentBracket';
 import Participate from './components/Participate';
+import CreateTeam from './components/CreateTeam';
+import EventDetail from './components/EventDetail';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -285,6 +287,26 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <Participate />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id/create-team"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CreateTeam />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <EventDetail />
                 </MainLayout>
               </ProtectedRoute>
             }
