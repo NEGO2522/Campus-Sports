@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase/firebase';
-import { logActivity, ACTIVITY_TYPES } from '../utils/activityLogger';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaCheck, FaClock } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/firebase';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaClock } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 const UpcomingEvents = ({ onEventClick }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [participatingEvents, setParticipatingEvents] = useState({});
   const [showSchedule, setShowSchedule] = useState(null);
   const [eventSchedule, setEventSchedule] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Create a query against the collection
@@ -56,70 +55,7 @@ const UpcomingEvents = ({ onEventClick }) => {
     return () => unsubscribe();
   }, []);
 
-  // Check if current user is participating in each event
-  useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) {
-      // If user is not logged in, clear all participation statuses
-      setParticipatingEvents({});
-      return;
-    }
-
-    const updatedParticipating = {};
-    const now = new Date();
-    
-    events.forEach(event => {
-      // Only set participation status for future events
-      const eventDate = event.dateTime?.toDate ? event.dateTime.toDate() : new Date(event.dateTime);
-      if (eventDate >= now) {
-        updatedParticipating[event.id] = event.participants?.includes(user.uid) || false;
-      }
-    });
-    
-    setParticipatingEvents(updatedParticipating);
-  }, [events]);
-
-  const handleParticipate = async (eventId) => {
-    const user = auth.currentUser;
-    if (!user) {
-      toast.error('Please log in to participate in events');
-      return;
-    }
-
-    try {
-      const eventRef = doc(db, 'events', eventId);
-      const eventDoc = await getDoc(eventRef);
-      const eventData = eventDoc.data();
-      
-      // Update the event with the new participant
-      await updateDoc(eventRef, {
-        participants: arrayUnion(user.uid)
-      });
-      
-      // Log the participation activity
-      await logActivity({
-        type: ACTIVITY_TYPES.EVENT_JOINED,
-        eventId,
-        eventName: eventData.eventName,
-        eventType: eventData.sport,
-        eventLocation: eventData.location,
-        message: `Joined ${eventData.sport} event: ${eventData.eventName}`,
-        isPublic: true
-      });
-      
-      // Update local state to reflect participation
-      setParticipatingEvents(prev => ({
-        ...prev,
-        [eventId]: true
-      }));
-      
-      toast.success('Successfully joined the event!');
-    } catch (error) {
-      console.error('Error joining event:', error);
-      toast.error('Failed to join event. Please try again.');
-    }
-  };
-
+  
   const handleViewSchedule = async (event) => {
     setShowSchedule(event.id);
     setScheduleLoading(true);
@@ -165,7 +101,6 @@ const UpcomingEvents = ({ onEventClick }) => {
   return (
     <div className="space-y-4">
       {events.map((event, index) => {
-        const isParticipating = participatingEvents[event.id];
         const isFull = event.participants?.length >= event.playersNeeded;
         
         return (
@@ -227,12 +162,7 @@ const UpcomingEvents = ({ onEventClick }) => {
                         <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
                       </div>
                     )}
-                  {isParticipating && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <FaCheck className="mr-1" /> Participating
-                    </span>
-                  )}
-                </div>
+                                  </div>
               </div>
               <div className="mt-4 flex justify-end space-x-2">
                 <button
@@ -248,20 +178,18 @@ const UpcomingEvents = ({ onEventClick }) => {
                 </button>
                 <button
                   type="button"
-                  onClick={(e) => {
-              e.stopPropagation();
-              handleParticipate(event.id);
-            }}
-                  disabled={isParticipating || isFull}
+                  onClick={e => {
+                    e.stopPropagation();
+                    navigate(`/events/${event.id}/participate`);
+                  }}
+                  disabled={isFull}
                   className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                    isParticipating 
-                      ? 'bg-gray-400 cursor-not-allowed' 
-                      : isFull 
-                        ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-blue-600 hover:bg-blue-700'
+                    isFull 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : 'bg-blue-600 hover:bg-blue-700'
                   } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                 >
-                  {isParticipating ? 'Participated' : isFull ? 'Event Full' : 'Participate'}
+                  {isFull ? 'Event Full' : 'Participate'}
                 </button>
               </div>
 
