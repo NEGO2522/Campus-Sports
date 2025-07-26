@@ -182,6 +182,33 @@ const EventDetail = () => {
             <td className="py-3 px-4 capitalize">{event.participationType}</td>
             <td></td>
           </tr>
+          {event.participationType === 'team' && (
+            <tr className="border-b">
+              <td className="py-3 px-4 font-semibold flex items-center">👥 Team Size</td>
+              <td className="py-3 px-4">
+                {editField === 'teamSize' ? (
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    className="border px-2 py-1 rounded w-full"
+                    value={editValue}
+                    onChange={e => setEditValue(e.target.value)}
+                    disabled={savingField}
+                  />
+                ) : (
+                  event.teamSize || 'Not set'
+                )}
+              </td>
+              <td className="py-3 px-4 w-12">
+                {editField === 'teamSize' ? (
+                  <button className="text-blue-600 font-bold mr-2" onClick={() => handleSave('teamSize')} disabled={savingField}>Save</button>
+                ) : (
+                  <button className="text-gray-500 hover:text-blue-600" onClick={() => handleEdit('teamSize')}><FaEdit /></button>
+                )}
+              </td>
+            </tr>
+          )}
           <tr>
             <td className="py-3 px-4 font-semibold flex items-center"><FaInfoCircle className="mr-2 text-yellow-500" /> Sport</td>
             <td className="py-3 px-4">{event.sport}</td>

@@ -42,6 +42,7 @@ const CreateEvent = () => {
     participationType: 'player', // 'player' or 'team'
     playersNeeded: 10,
     teamsNeeded: 2,
+    teamSize: 0,
     createdBy: '',
     createdAt: null,
     participants: [],
@@ -95,7 +96,7 @@ const CreateEvent = () => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'playersNeeded' || name === 'teamsNeeded') ? parseInt(value) || 0 : value
+      [name]: (name === 'playersNeeded' || name === 'teamsNeeded' || name === 'teamSize') ? parseInt(value) || 0 : value
     }));
   };
 
@@ -139,7 +140,7 @@ const CreateEvent = () => {
         // Only include the relevant field based on participation type
         ...(formData.participationType === 'player' 
           ? { playersNeeded: parseInt(formData.playersNeeded) || 10 }
-          : { teamsNeeded: parseInt(formData.teamsNeeded) || 2 }
+          : { teamsNeeded: parseInt(formData.teamsNeeded) || 2, teamSize: parseInt(formData.teamSize) || 0 }
         ),
         createdBy: user.uid,
         createdAt: serverTimestamp(),
@@ -164,6 +165,7 @@ const CreateEvent = () => {
         participationType: 'player',
         playersNeeded: 10,
         teamsNeeded: 2,
+        teamSize: 0,
         createdBy: '',
         createdAt: null,
         participants: [],
@@ -418,6 +420,7 @@ const CreateEvent = () => {
                             </div>
                           </div>
                         ) : (
+                          <>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Number of Teams Needed</label>
                             <div className="flex items-center space-x-2">
@@ -435,6 +438,23 @@ const CreateEvent = () => {
                               <span className="text-xs sm:text-sm text-gray-500">teams</span>
                             </div>
                           </div>
+                          <div className="mt-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">How many students in a single team?</label>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="number"
+                                name="teamSize"
+                                value={formData.teamSize}
+                                onChange={handleInputChange}
+                                min="1"
+                                max="50"
+                                className="w-20 text-sm sm:text-base px-2 sm:px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                required
+                              />
+                              <span className="text-xs sm:text-sm text-gray-500">students per team</span>
+                            </div>
+                          </div>
+                          </>
                         )}
                       </div>
                       

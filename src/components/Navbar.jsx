@@ -137,12 +137,13 @@ const Navbar = () => {
 
           {/* Profile Dropdown - Desktop */}
           <div className="hidden md:ml-6 md:flex md:items-center relative">
-            <button
+            <Link
+              to="/notification"
               className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-10"
               aria-label="Notifications"
             >
               <FaBell className="h-6 w-6" />
-            </button>
+            </Link>
             <button
               onClick={toggleProfile}
               className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -278,6 +279,14 @@ const Navbar = () => {
 
           <div className="pt-4 pb-3 border-t border-gray-700">
             <div className="space-y-1">
+              <Link
+                to="/notification"
+                className="group flex items-center px-4 py-3 text-base font-medium text-gray-100 hover:bg-white/10 rounded-md transition-colors duration-200"
+                onClick={toggleMenu}
+              >
+                <FaBell className="mr-3 flex-shrink-0 h-6 w-6 text-yellow-400" />
+                Notifications
+              </Link>
               <Link
                 to="/form"
                 className="group flex items-center px-4 py-3 text-base font-medium text-gray-100 hover:bg-white/10 rounded-md transition-colors duration-200"

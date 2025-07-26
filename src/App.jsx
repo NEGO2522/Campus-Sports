@@ -20,7 +20,11 @@ import ManageEvents from './components/quick-actions/ManageEvents';
 import TournamentBracket from './components/TournamentBracket';
 import Participate from './components/Participate';
 import CreateTeam from './components/CreateTeam';
+import Notification from './components/Notification';
+
 import EventDetail from './components/EventDetail';
+
+
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -277,6 +281,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <TournamentBracket />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/notification"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Notification />
                 </MainLayout>
               </ProtectedRoute>
             }
