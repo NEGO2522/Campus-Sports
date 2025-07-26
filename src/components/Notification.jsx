@@ -22,19 +22,40 @@ const Notification = () => {
         let allInvites = [];
         for (const eventDoc of eventsSnap.docs) {
           const eventId = eventDoc.id;
+          const eventData = eventDoc.data();
+          // Support both 'name' and 'eventName' fields
+          const eventName = eventData.name || eventData.eventName || 'Unknown Event';
           const teamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
-          teamSnap.forEach(inviteDoc => {
+          for (const inviteDoc of teamSnap.docs) {
             const data = inviteDoc.data();
             if (data.invitee === user.uid && data.accepted === false) {
+              // Fetch inviter's user info
+              let inviterName = '';
+              let inviterEmail = '';
+              try {
+                const inviterDoc = await getDoc(doc(db, 'users', data.inviter));
+                if (inviterDoc.exists()) {
+                  const inviterData = inviterDoc.data();
+                  inviterName = inviterData.name || 'Unknown User';
+                  inviterEmail = inviterData.email || '';
+                } else {
+                  inviterName = 'Unknown User';
+                }
+              } catch (e) {
+                inviterName = 'Unknown User';
+              }
               allInvites.push({
                 eventId,
+                eventName,
                 inviteId: inviteDoc.id,
                 inviter: data.inviter,
+                inviterName,
+                inviterEmail,
                 accepted: data.accepted,
                 timestamp: data.timestamp,
               });
             }
-          });
+          }
         }
         setInvites(allInvites);
       } catch (err) {
@@ -61,8 +82,15 @@ const Notification = () => {
         {invites.map(invite => (
           <li key={invite.inviteId} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-blue-800">You have been invited to join a team in event: <span className="font-bold">{invite.eventId}</span></div>
-              <div className="text-xs text-gray-500 mt-1">Invited by: {invite.inviter}</div>
+              <div className="font-semibold text-blue-800">
+                You have been invited to join a team in event: <span className="font-bold">{invite.eventName}</span>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Invited by: <span className="font-semibold">{invite.inviterName}</span>
+                {invite.inviterEmail && (
+                  <span className="ml-2 text-gray-400">({invite.inviterEmail})</span>
+                )}
+              </div>
             </div>
             <Link to={`/events/${invite.eventId}/accept-invite/${invite.inviteId}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">View Invite</Link>
           </li>
