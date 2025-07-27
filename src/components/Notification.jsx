@@ -68,7 +68,14 @@ const Notification = () => {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-center">Loading...</div>;
+    return (
+      <div>
+        <div className="w-full h-1 bg-blue-100">
+          <div className="h-1 bg-blue-600 animate-pulse w-1/2" style={{ width: '50%' }}></div>
+        </div>
+        <div className="p-8 text-center">Loading...</div>
+      </div>
+    );
   }
 
   if (invites.length === 0) {
@@ -76,14 +83,17 @@ const Notification = () => {
   }
 
   // Accept invite handler
+  const [acceptingId, setAcceptingId] = useState(null);
   const handleAccept = async (eventId, inviteId) => {
+    setAcceptingId(inviteId);
     try {
       await updateDoc(doc(db, 'events', eventId, 'team', inviteId), { accepted: true });
       // Remove the invite from the UI
       setInvites(prev => prev.filter(invite => invite.inviteId !== inviteId));
     } catch (err) {
-      // Optionally handle error
       alert('Failed to accept invite. Please try again.');
+    } finally {
+      setAcceptingId(null);
     }
   };
 
@@ -105,10 +115,18 @@ const Notification = () => {
               </div>
             </div>
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center min-w-[80px]"
               onClick={() => handleAccept(invite.eventId, invite.inviteId)}
+              disabled={acceptingId === invite.inviteId}
             >
-              Accept
+              {acceptingId === invite.inviteId ? (
+                <span className="flex items-center justify-center">
+                  <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                  Accepting...
+                </span>
+              ) : (
+                'Accept'
+              )}
             </button>
           </li>
         ))}

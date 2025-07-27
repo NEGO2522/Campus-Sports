@@ -10,6 +10,7 @@ const Participate = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [alreadyParticipated, setAlreadyParticipated] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -18,6 +19,24 @@ const Participate = () => {
         const eventDoc = await getDoc(doc(db, 'events', id));
         if (eventDoc.exists()) {
           setParticipationType(eventDoc.data().participationType);
+          const user = auth.currentUser;
+          if (user) {
+            // Check for individual participation
+            const participants = eventDoc.data().participants || [];
+            if (participants.includes(user.uid)) {
+              setAlreadyParticipated(true);
+            } else {
+              // Check for team participation
+              const teamObj = eventDoc.data().team || {};
+              let found = false;
+              Object.values(teamObj).forEach(team => {
+                if (Array.isArray(team.members) && team.members.includes(user.uid)) {
+                  found = true;
+                }
+              });
+              setAlreadyParticipated(found);
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching event:', error);
@@ -63,13 +82,13 @@ const Participate = () => {
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
         <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
         <button
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+          className={`px-6 py-3 rounded-lg shadow transition font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
           onClick={() => setShowConfirm(true)}
-          disabled={saving}
+          disabled={saving || alreadyParticipated}
         >
-          Participate
+          {alreadyParticipated ? 'Participated' : 'Participate'}
         </button>
-        {showConfirm && (
+        {showConfirm && !alreadyParticipated && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
             <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
               <h3 className="text-xl font-semibold mb-4">Are you sure?</h3>
@@ -102,16 +121,18 @@ const Participate = () => {
       <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
       <div className="space-x-4">
         <button
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
-          onClick={() => navigate(`/events/${id}/create-team`)}
+          className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+          onClick={() => !alreadyParticipated && navigate(`/events/${id}/create-team`)}
+          disabled={alreadyParticipated}
         >
-          Create Team
+          {alreadyParticipated ? 'Participated' : 'Create Team'}
         </button>
         <button
-          className="px-6 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition"
-          onClick={() => navigate(`/events/${id}/join-team`)}
+          className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+          onClick={() => !alreadyParticipated && navigate(`/events/${id}/join-team`)}
+          disabled={alreadyParticipated}
         >
-          Join Team
+          {alreadyParticipated ? 'Participated' : 'Join Team'}
         </button>
       </div>
     </div>

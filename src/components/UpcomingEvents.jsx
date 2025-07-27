@@ -52,7 +52,23 @@ const UpcomingEvents = ({ onEventClick }) => {
       if (user) {
         const participationMap = {};
         eventsData.forEach(event => {
-          participationMap[event.id] = Array.isArray(event.participants) && event.participants.includes(user.uid);
+          let participated = false;
+          // Check for individual participation
+          if (Array.isArray(event.participants) && event.participants.includes(user.uid)) {
+            participated = true;
+          }
+          // Check for team participation
+          if (event.team && typeof event.team === 'object') {
+            Object.values(event.team).forEach(team => {
+              if (
+                (Array.isArray(team.members) && team.members.includes(user.uid)) ||
+                team.leader === user.uid
+              ) {
+                participated = true;
+              }
+            });
+          }
+          participationMap[event.id] = participated;
         });
         setParticipatingEvents(participationMap);
       } else {
@@ -217,16 +233,24 @@ const UpcomingEvents = ({ onEventClick }) => {
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
-                      navigate(`/events/${event.id}/participate`);
+                      if (!participatingEvents[event.id]) {
+                        navigate(`/events/${event.id}/participate`);
+                      }
                     }}
-                    disabled={isFull}
+                    disabled={isFull || participatingEvents[event.id]}
                     className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                      isFull 
-                        ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-blue-600 hover:bg-blue-700'
+                      isFull
+                        ? 'bg-red-600 hover:bg-red-700'
+                        : participatingEvents[event.id]
+                          ? 'bg-gray-400 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700'
                     } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                   >
-                    {isFull ? 'Event Full' : 'Participate'}
+                    {isFull
+                      ? 'Event Full'
+                      : participatingEvents[event.id]
+                        ? 'Participated'
+                        : 'Participate'}
                   </button>
                 )}
               </div>

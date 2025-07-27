@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase/firebase';
-import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell } from 'react-icons/fa';
+import { db, auth } from '../firebase/firebase';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell, FaTrophy, FaPencilAlt } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userRole, setUserRole] = useState('');
+  const [showParticipation, setShowParticipation] = useState(false);
+  const [participationData, setParticipationData] = useState([]);
+  const [loadingParticipation, setLoadingParticipation] = useState(false);
+  const [currentUid, setCurrentUid] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setCurrentUid(auth.currentUser ? auth.currentUser.uid : '');
+  }, []);
 
   // Get user role from sessionStorage on component mount
   useEffect(() => {
@@ -19,8 +28,6 @@ const Navbar = () => {
   const toggleMenu = () => {
     const newIsMenuOpen = !isMenuOpen;
     setIsMenuOpen(newIsMenuOpen);
-    
-    // Toggle overflow hidden on body when menu is open/closed
     if (newIsMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -39,14 +46,12 @@ const Navbar = () => {
         setIsProfileOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isProfileOpen]);
 
-  // Clean up the effect when component unmounts
   useEffect(() => {
     return () => {
       document.body.style.overflow = 'auto';
@@ -66,6 +71,70 @@ const Navbar = () => {
     return location.pathname === path ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100';
   };
 
+  // Participation Modal Logic
+  const handleParticipationClick = async () => {
+    setShowParticipation(true);
+    setLoadingParticipation(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setParticipationData([]);
+        setLoadingParticipation(false);
+        return;
+      }
+      const eventsSnap = await getDocs(collection(db, 'events'));
+      const userEvents = [];
+      const userIdsSet = new Set();
+      eventsSnap.forEach(eventDoc => {
+        const eventData = eventDoc.data();
+        if (eventData.team && typeof eventData.team === 'object') {
+          Object.entries(eventData.team).forEach(([teamName, teamObj]) => {
+            if (
+              (Array.isArray(teamObj.members) && teamObj.members.includes(user.uid)) ||
+              teamObj.leader === user.uid
+            ) {
+              userEvents.push({
+                eventName: eventData.eventName || eventData.name || 'Unknown Event',
+                eventId: eventDoc.id,
+                teamName,
+                leader: teamObj.leader,
+                members: teamObj.members || [],
+              });
+              userIdsSet.add(teamObj.leader);
+              (teamObj.members || []).forEach(m => userIdsSet.add(m));
+            }
+          });
+        }
+      });
+      // Fetch user full names
+      const userIdToName = {};
+      if (userIdsSet.size > 0) {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        usersSnap.forEach(userDoc => {
+          const d = userDoc.data();
+          userIdToName[userDoc.id] = d.fullName || userDoc.id;
+        });
+      }
+      // Map ids to names in participation data
+      const participationWithNames = userEvents.map(ev => ({
+        ...ev,
+        leaderName: userIdToName[ev.leader] || ev.leader,
+        memberNames: ev.members.map(m => userIdToName[m] || m)
+      }));
+      setParticipationData(participationWithNames);
+    } catch (err) {
+      setParticipationData([]);
+    } finally {
+      setLoadingParticipation(false);
+    }
+  };
+
+  // Handler for pencil click
+  const handleEditTeam = (eventId) => {
+    setShowParticipation(false);
+    navigate(`/events/${eventId}/create-team`);
+  };
+
   return (
     <div>
       {/* Mobile menu overlay */}
@@ -75,7 +144,6 @@ const Navbar = () => {
         }`}
         onClick={toggleMenu}
       />
-      
       <nav className="w-full relative z-50 bg-white shadow-sm md:shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
@@ -85,7 +153,6 @@ const Navbar = () => {
               Campus League
             </Link>
           </div>
-          
           {/* Navigation Links - Desktop */}
           <div className="hidden md:ml-6 md:flex md:items-center md:space-x-8">
             <Link
@@ -95,7 +162,6 @@ const Navbar = () => {
               <FaHome className="mr-2" />
               Dashboard
             </Link>
-            
             {userRole === 'organizer' && (
               <>
                 <Link
@@ -114,7 +180,6 @@ const Navbar = () => {
                 </Link>
               </>
             )}
-            
             <Link
               to="/join-game"
               className={`${isActive('/join-game')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
@@ -122,7 +187,6 @@ const Navbar = () => {
               <FaUsers className="mr-2" />
               Explore Games
             </Link>
-            
             {userRole === 'player' && (
               <Link
                 to="/find-players"
@@ -133,8 +197,15 @@ const Navbar = () => {
                 Find Players
               </Link>
             )}
+            {/* Participation Button */}
+            <button
+              className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+              onClick={handleParticipationClick}
+            >
+              <FaTrophy className="mr-2" />
+              Participation
+            </button>
           </div>
-
           {/* Profile Dropdown - Desktop */}
           <div className="hidden md:ml-6 md:flex md:items-center relative">
             <Link
@@ -150,7 +221,6 @@ const Navbar = () => {
             >
               <FaUser className="h-6 w-6" />
             </button>
-            
             {/* Dropdown menu */}
             {isProfileOpen && (
               <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown">
@@ -177,7 +247,6 @@ const Navbar = () => {
               </div>
             )}
           </div>
-
           {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
@@ -192,125 +261,54 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-
-          {/* Mobile menu, show/hide based on menu state */}
-      <div 
-        className={`fixed inset-0 top-16 bottom-0 left-0 right-0 transform ${
-          isMenuOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
-        } transition-all duration-300 ease-in-out z-40 md:hidden`}
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-        }}
-      >
-        <div className="h-full overflow-y-auto">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link
-              to="/dashboard"
-              className={`${
-                isActive('/dashboard')
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-100 hover:bg-white/10'
-              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
-              onClick={toggleMenu}
+      {/* Participation Modal */}
+      {showParticipation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
+              onClick={() => setShowParticipation(false)}
             >
-              <FaHome className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
-              Dashboard
-            </Link>
-
-            {userRole === 'organizer' && (
-              <>
-                <Link
-                  to="/create-event"
-                  className={`${
-                    isActive('/create-event')
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-100 hover:bg-white/10'
-                  } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
-                  onClick={toggleMenu}
-                >
-                  <FaPlusCircle className="mr-3 flex-shrink-0 h-6 w-6 text-green-500" />
-                  Create Event
-                </Link>
-                <Link
-                  to="/manage-events"
-                  className={`${
-                    isActive('/manage-events')
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-100 hover:bg-white/10'
-                  } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
-                  onClick={toggleMenu}
-                >
-                  <FaCog className="mr-3 flex-shrink-0 h-6 w-6 text-orange-500" />
-                  Manage Events
-                </Link>
-              </>
+              <FaTimes />
+            </button>
+            <h2 className="text-2xl font-bold mb-6 text-center">Your Participation</h2>
+            {loadingParticipation ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : participationData.length === 0 ? (
+              <div className="text-center text-gray-500">No participation found.</div>
+            ) : (
+              <ul className="space-y-6">
+                {participationData.map((item, idx) => (
+                  <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow flex flex-col relative">
+                    {/* Pencil Button - only for leader */}
+                    {item.leader === currentUid && (
+                      <button
+                        className="absolute top-2 right-2 text-gray-500 hover:text-blue-700"
+                        title="Edit Team"
+                        onClick={() => handleEditTeam(item.eventId)}
+                      >
+                        <FaPencilAlt />
+                      </button>
+                    )}
+                    <div className="font-semibold text-blue-800 text-lg mb-1">{item.eventName}</div>
+                    <div className="text-sm text-gray-700 mb-1">Team: <span className="font-bold">{item.teamName}</span></div>
+                    <div className="text-sm text-gray-700 mb-1">Leader: <span className="font-bold">{item.leaderName}</span></div>
+                    <div className="text-sm text-gray-700">Members:</div>
+                    <ul className="ml-4 text-gray-600 text-sm list-disc">
+                      {item.memberNames.map((member, i) => (
+                        <li key={member + i}>{member}</li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
             )}
-
-            <Link
-              to="/join-game"
-              className={`${
-                isActive('/join-game')
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-100 hover:bg-white/10'
-              } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
-              onClick={toggleMenu}
-            >
-              <FaUsers className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
-              Explore Games
-            </Link>
-
-            {userRole === 'player' && (
-              <Link
-                to="/find-players"
-                className={`${
-                  isActive('/find-players')
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-100 hover:bg-white/10'
-                } group flex items-center px-4 py-3 text-base font-medium rounded-md transition-colors duration-200`}
-                onClick={toggleMenu}
-              >
-                <FaSearch className="mr-3 flex-shrink-0 h-6 w-6 text-blue-500" />
-                Find Players
-              </Link>
-            )}
-          </div>
-
-          <div className="pt-4 pb-3 border-t border-gray-700">
-            <div className="space-y-1">
-              <Link
-                to="/notification"
-                className="group flex items-center px-4 py-3 text-base font-medium text-gray-100 hover:bg-white/10 rounded-md transition-colors duration-200"
-                onClick={toggleMenu}
-              >
-                <FaBell className="mr-3 flex-shrink-0 h-6 w-6 text-yellow-400" />
-                Notifications
-              </Link>
-              <Link
-                to="/form"
-                className="group flex items-center px-4 py-3 text-base font-medium text-gray-100 hover:bg-white/10 rounded-md transition-colors duration-200"
-                onClick={toggleMenu}
-              >
-                <FaEdit className="mr-3 flex-shrink-0 h-6 w-6 text-amber-500" />
-                Edit Interested Sports
-              </Link>
-              
-              <button
-                onClick={() => {
-                  handleLogout();
-                  toggleMenu();
-                }}
-                className="w-full group flex items-center px-4 py-3 text-base font-medium text-red-400 hover:bg-red-900/20 rounded-md transition-colors duration-200 text-left"
-              >
-                <FaSignOutAlt className="mr-3 flex-shrink-0 h-6 w-6" />
-                Logout
-              </button>
-            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      )}
+      </nav>
     </div>
   );
 };
