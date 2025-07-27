@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 
 const Notification = () => {
   const [invites, setInvites] = useState([]);
@@ -36,7 +36,7 @@ const Notification = () => {
                 const inviterDoc = await getDoc(doc(db, 'users', data.inviter));
                 if (inviterDoc.exists()) {
                   const inviterData = inviterDoc.data();
-                  inviterName = inviterData.name || 'Unknown User';
+                  inviterName = inviterData.fullName || 'Unknown User';
                   inviterEmail = inviterData.email || '';
                 } else {
                   inviterName = 'Unknown User';
@@ -75,6 +75,18 @@ const Notification = () => {
     return <div className="p-8 text-center text-gray-500">No invitations found.</div>;
   }
 
+  // Accept invite handler
+  const handleAccept = async (eventId, inviteId) => {
+    try {
+      await updateDoc(doc(db, 'events', eventId, 'team', inviteId), { accepted: true });
+      // Remove the invite from the UI
+      setInvites(prev => prev.filter(invite => invite.inviteId !== inviteId));
+    } catch (err) {
+      // Optionally handle error
+      alert('Failed to accept invite. Please try again.');
+    }
+  };
+
   return (
     <div className="max-w-2xl mx-auto p-8">
       <h2 className="text-2xl font-bold mb-6">Invitations</h2>
@@ -92,7 +104,12 @@ const Notification = () => {
                 )}
               </div>
             </div>
-            <Link to={`/events/${invite.eventId}/accept-invite/${invite.inviteId}`} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">View Invite</Link>
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+              onClick={() => handleAccept(invite.eventId, invite.inviteId)}
+            >
+              Accept
+            </button>
           </li>
         ))}
       </ul>

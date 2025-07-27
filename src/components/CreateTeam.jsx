@@ -20,14 +20,15 @@ const CreateTeam = () => {
     setCurrentUid(auth.currentUser ? auth.currentUser.uid : null);
   }, []);
 
-  // Fetch invited students from Firestore
+  // Fetch invited students from Firestore (with accepted status)
   useEffect(() => {
     const fetchInvited = async () => {
       if (!eventId) return;
       try {
         const teamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
-        const invitedIds = teamSnap.docs.map(doc => doc.data().invitee);
-        setInvited(invitedIds);
+        // Store array of { invitee, accepted }
+        const invitedList = teamSnap.docs.map(doc => ({ invitee: doc.data().invitee, accepted: doc.data().accepted }));
+        setInvited(invitedList);
       } catch (err) {
         setInvited([]);
       }
@@ -89,6 +90,10 @@ const CreateTeam = () => {
       );
     }
   }, [search, students]);
+
+  // Count accepted students
+  const acceptedCount = invited.filter(i => i.accepted).length;
+  const canSave = teamSize && acceptedCount === teamSize;
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -190,30 +195,44 @@ const CreateTeam = () => {
       {invited.length > 0 && (
         <div className="mt-8 max-w-3xl mx-auto bg-white rounded-xl shadow p-6 bg-blue-50 border border-blue-100 rounded-xl p-4">
           <div className="space-y-3">
-            {students.filter(s => invited.includes(s.id)).map(student => (
-              <div key={student.id} className="flex items-center bg-white rounded-lg shadow p-3 border border-blue-100 w-full">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-                  <FaUser className="text-blue-500 text-xl" />
+            {students.filter(s => invited.some(i => i.invitee === s.id)).map(student => {
+              const inviteInfo = invited.find(i => i.invitee === student.id);
+              return (
+                <div key={student.id} className="flex items-center bg-white rounded-lg shadow p-3 border border-blue-100 w-full">
+                  <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                    <FaUser className="text-blue-500 text-xl" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-semibold text-blue-900">{student.fullName}</div>
+                    <div className="text-xs text-blue-500">Reg. No: {student.registrationNumber}</div>
+                    <div className="text-xs text-blue-400">{student.courseName}</div>
+                  </div>
+                  <div className="ml-4 flex-shrink-0">
+                    <button
+                      className={`px-4 py-2 rounded-lg shadow text-sm font-semibold cursor-not-allowed opacity-80 ${inviteInfo && inviteInfo.accepted ? 'bg-blue-600' : 'bg-green-500'} text-white`}
+                      disabled
+                    >
+                      {inviteInfo && inviteInfo.accepted ? 'Accepted' : 'Invited'}
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-semibold text-blue-900">{student.fullName}</div>
-                  <div className="text-xs text-blue-500">Reg. No: {student.registrationNumber}</div>
-                  <div className="text-xs text-blue-400">{student.courseName}</div>
-                </div>
-                <div className="ml-4 flex-shrink-0">
-                  <button
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg shadow text-sm font-semibold cursor-not-allowed opacity-80"
-                    disabled
-                  >
-                    Invited
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
-      
+      {/* Save Button Fixed at Bottom Right */}
+      <button
+        className={`fixed bottom-8 right-8 px-8 py-4 rounded-full shadow-lg text-lg font-bold transition-all z-50 ${canSave ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+        disabled={!canSave}
+        onClick={() => {
+          if (!canSave) return;
+          // TODO: Implement save logic here
+          alert('Team saved!');
+        }}
+      >
+        Save
+      </button>
     </div>
   );
 };
