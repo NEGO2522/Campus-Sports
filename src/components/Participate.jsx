@@ -129,10 +129,10 @@ const Participate = () => {
         </button>
         <button
           className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
-          onClick={() => !alreadyParticipated && navigate(`/events/${id}/join-team`)}
+          onClick={() => !alreadyParticipated && navigate('/notification')}
           disabled={alreadyParticipated}
         >
-          {alreadyParticipated ? 'Participated' : 'Join Team'}
+          {alreadyParticipated ? 'Participated' : 'See Invitation'}
         </button>
       </div>
     </div>
