@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, collection, getDocs, updateDoc, arrayRemove } from 'firebase/firestore';
+import { doc, getDoc, collection, getDocs, updateDoc, arrayRemove, addDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaInfoCircle, FaEdit, FaTrash } from 'react-icons/fa';
 
@@ -14,6 +14,18 @@ const EventDetail = () => {
   const [editValue, setEditValue] = useState('');
   const [savingField, setSavingField] = useState(false);
   const [removingId, setRemovingId] = useState(null);
+
+  // Create Match Modal State
+  const [showMatchModal, setShowMatchModal] = useState(false);
+  const [matchForm, setMatchForm] = useState({
+    round: '',
+    team1: '',
+    team2: '',
+    location: '',
+    date: '',
+    time: ''
+  });
+  const [savingMatch, setSavingMatch] = useState(false);
 
   const fetchEventAndParticipants = async () => {
     setLoading(true);
@@ -109,6 +121,135 @@ const EventDetail = () => {
   return (
     <div className="max-w-4xl mx-auto bg-white rounded-xl shadow p-8 mt-8">
       <h2 className="text-3xl font-bold mb-6 text-center">{event.eventName}</h2>
+      {/* Create Matches Button */}
+      <div className="flex justify-end mb-4">
+        <button
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+          onClick={() => setShowMatchModal(true)}
+          disabled={!event.team || Object.keys(event.team).length < 2}
+        >
+          Create Matches
+        </button>
+      </div>
+      {/* Create Match Modal */}
+      {showMatchModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
+              onClick={() => setShowMatchModal(false)}
+            >
+              &times;
+            </button>
+            {(!event.team || Object.keys(event.team).length < 2) ? (
+              <div className="text-center text-red-600 font-semibold">At least 2 teams are required to create a match.</div>
+            ) : (
+              <>
+                <h3 className="text-xl font-bold mb-4 text-center">Create Match</h3>
+                <form
+                  onSubmit={async e => {
+                    e.preventDefault();
+                    setSavingMatch(true);
+                    try {
+                      const dateTime = new Date(`${matchForm.date}T${matchForm.time}`);
+                      await addDoc(collection(db, 'events', id, 'matches'), {
+                        round: matchForm.round,
+                        team1: matchForm.team1,
+                        team2: matchForm.team2,
+                        location: matchForm.location,
+                        dateTime
+                      });
+                      setShowMatchModal(false);
+                      setMatchForm({ round: '', team1: '', team2: '', location: '', date: '', time: '' });
+                      alert('Match created!');
+                    } catch (err) {
+                      alert('Failed to create match.');
+                    } finally {
+                      setSavingMatch(false);
+                    }
+                  }}
+                >
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium mb-1">Round Name</label>
+                    <input
+                      className="w-full border px-3 py-2 rounded"
+                      value={matchForm.round}
+                      onChange={e => setMatchForm(f => ({ ...f, round: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium mb-1">Team 1 Name</label>
+                    <select
+                      className="w-full border px-3 py-2 rounded"
+                      value={matchForm.team1}
+                      onChange={e => setMatchForm(f => ({ ...f, team1: e.target.value }))}
+                      required
+                    >
+                      <option value="" disabled>Select Team 1</option>
+                      {event.team && Object.keys(event.team).map(teamName => (
+                        <option key={teamName} value={teamName}>{teamName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium mb-1">Team 2 Name</label>
+                    <select
+                      className="w-full border px-3 py-2 rounded"
+                      value={matchForm.team2}
+                      onChange={e => setMatchForm(f => ({ ...f, team2: e.target.value }))}
+                      required
+                    >
+                      <option value="" disabled>Select Team 2</option>
+                      {event.team && Object.keys(event.team).map(teamName => (
+                        <option key={teamName} value={teamName}>{teamName}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="mb-3">
+                    <label className="block text-sm font-medium mb-1">Location</label>
+                    <input
+                      className="w-full border px-3 py-2 rounded"
+                      value={matchForm.location}
+                      onChange={e => setMatchForm(f => ({ ...f, location: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div className="mb-3 flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium mb-1">Date</label>
+                      <input
+                        type="date"
+                        className="w-full border px-3 py-2 rounded"
+                        value={matchForm.date}
+                        onChange={e => setMatchForm(f => ({ ...f, date: e.target.value }))}
+                        required
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium mb-1">Time</label>
+                      <input
+                        type="time"
+                        className="w-full border px-3 py-2 rounded"
+                        value={matchForm.time}
+                        onChange={e => setMatchForm(f => ({ ...f, time: e.target.value }))}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full mt-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+                    disabled={savingMatch}
+                  >
+                    {savingMatch ? 'Saving...' : 'Save Match'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       <table className="w-full mb-8 border rounded-lg overflow-hidden">
         <tbody>
           <tr className="border-b">

@@ -24,19 +24,26 @@ const CreateTeam = () => {
 
   // Restrict access to only the leader
   useEffect(() => {
-    const checkLeader = async () => {
+    const checkAccess = async () => {
       const user = auth.currentUser;
       if (!user || !eventId) return;
       const eventRef = doc(db, 'events', eventId);
       const eventSnap = await getDoc(eventRef);
       if (eventSnap.exists() && eventSnap.data().team) {
         const teams = eventSnap.data().team;
-        // Find the team where the user is leader
+        // Is user a leader of any team?
         const isLeader = Object.values(teams).some(team => team.leader === user.uid);
-        if (!isLeader) setAccessDenied(true);
+        // Is user a member (not leader) of any team?
+        const isMemberNotLeader = Object.values(teams).some(team =>
+          Array.isArray(team.members) && team.members.includes(user.uid) && team.leader !== user.uid
+        );
+        if (isMemberNotLeader) setAccessDenied(true);
+        else setAccessDenied(false);
+      } else {
+        setAccessDenied(false);
       }
     };
-    checkLeader();
+    checkAccess();
   }, [eventId]);
 
   // Fetch invited students from Firestore (with accepted status)

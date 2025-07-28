@@ -87,6 +87,7 @@ const Navbar = () => {
       const userIdsSet = new Set();
       eventsSnap.forEach(eventDoc => {
         const eventData = eventDoc.data();
+        // Team events
         if (eventData.team && typeof eventData.team === 'object') {
           Object.entries(eventData.team).forEach(([teamName, teamObj]) => {
             if (
@@ -94,6 +95,7 @@ const Navbar = () => {
               teamObj.leader === user.uid
             ) {
               userEvents.push({
+                type: 'team',
                 eventName: eventData.eventName || eventData.name || 'Unknown Event',
                 eventId: eventDoc.id,
                 teamName,
@@ -104,6 +106,20 @@ const Navbar = () => {
               (teamObj.members || []).forEach(m => userIdsSet.add(m));
             }
           });
+        }
+        // Individual events
+        if (
+          eventData.participationType !== 'team' &&
+          Array.isArray(eventData.participants) &&
+          eventData.participants.includes(user.uid)
+        ) {
+          userEvents.push({
+            type: 'individual',
+            eventName: eventData.eventName || eventData.name || 'Unknown Event',
+            eventId: eventDoc.id,
+            participant: user.uid
+          });
+          userIdsSet.add(user.uid);
         }
       });
       // Fetch user full names
@@ -116,11 +132,20 @@ const Navbar = () => {
         });
       }
       // Map ids to names in participation data
-      const participationWithNames = userEvents.map(ev => ({
-        ...ev,
-        leaderName: userIdToName[ev.leader] || ev.leader,
-        memberNames: ev.members.map(m => userIdToName[m] || m)
-      }));
+      const participationWithNames = userEvents.map(ev => {
+        if (ev.type === 'team') {
+          return {
+            ...ev,
+            leaderName: userIdToName[ev.leader] || ev.leader,
+            memberNames: ev.members.map(m => userIdToName[m] || m)
+          };
+        } else {
+          return {
+            ...ev,
+            participantName: userIdToName[ev.participant] || ev.participant
+          };
+        }
+      });
       setParticipationData(participationWithNames);
     } catch (err) {
       setParticipationData([]);
@@ -281,27 +306,34 @@ const Navbar = () => {
             ) : (
               <ul className="space-y-6">
                 {participationData.map((item, idx) => (
-                  <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow flex flex-col relative">
-                    {/* Pencil Button - only for leader */}
-                    {item.leader === currentUid && (
-                      <button
-                        className="absolute top-2 right-2 text-gray-500 hover:text-blue-700"
-                        title="Edit Team"
-                        onClick={() => handleEditTeam(item.eventId)}
-                      >
-                        <FaPencilAlt />
-                      </button>
-                    )}
-                    <div className="font-semibold text-blue-800 text-lg mb-1">{item.eventName}</div>
-                    <div className="text-sm text-gray-700 mb-1">Team: <span className="font-bold">{item.teamName}</span></div>
-                    <div className="text-sm text-gray-700 mb-1">Leader: <span className="font-bold">{item.leaderName}</span></div>
-                    <div className="text-sm text-gray-700">Members:</div>
-                    <ul className="ml-4 text-gray-600 text-sm list-disc">
-                      {item.memberNames.map((member, i) => (
-                        <li key={member + i}>{member}</li>
-                      ))}
-                    </ul>
-                  </li>
+                  item.type === 'team' ? (
+                    <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow flex flex-col relative">
+                      {/* Pencil Button - only for leader */}
+                      {item.leader === currentUid && (
+                        <button
+                          className="absolute top-2 right-2 text-gray-500 hover:text-blue-700"
+                          title="Edit Team"
+                          onClick={() => handleEditTeam(item.eventId)}
+                        >
+                          <FaPencilAlt />
+                        </button>
+                      )}
+                      <div className="font-semibold text-blue-800 text-lg mb-1">{item.eventName}</div>
+                      <div className="text-sm text-gray-700 mb-1">Team: <span className="font-bold">{item.teamName}</span></div>
+                      <div className="text-sm text-gray-700 mb-1">Leader: <span className="font-bold">{item.leaderName}</span></div>
+                      <div className="text-sm text-gray-700">Members:</div>
+                      <ul className="ml-4 text-gray-600 text-sm list-disc">
+                        {item.memberNames.map((member, i) => (
+                          <li key={member + i}>{member}</li>
+                        ))}
+                      </ul>
+                    </li>
+                  ) : (
+                    <li key={item.eventId + 'individual'} className="bg-green-50 rounded-lg p-4 shadow flex flex-col">
+                      <div className="font-semibold text-green-800 text-lg mb-1">{item.eventName}</div>
+                      <div className="text-sm text-gray-700">Participant: <span className="font-bold">{item.participantName}</span></div>
+                    </li>
+                  )
                 ))}
               </ul>
             )}
