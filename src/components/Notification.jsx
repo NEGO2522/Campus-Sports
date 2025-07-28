@@ -67,6 +67,8 @@ const Notification = () => {
     fetchInvites();
   }, []);
 
+  const [acceptingId, setAcceptingId] = useState(null);
+
   if (loading) {
     return (
       <div>
@@ -83,7 +85,6 @@ const Notification = () => {
   }
 
   // Accept invite handler
-  const [acceptingId, setAcceptingId] = useState(null);
   const handleAccept = async (eventId, inviteId) => {
     setAcceptingId(inviteId);
     try {
