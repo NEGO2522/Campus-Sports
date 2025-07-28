@@ -306,7 +306,7 @@ function App() {
             }
           />
           <Route
-            path="/events/:id/create-team"
+            path="/events/:id/create-team/:reg"
             element={
               <ProtectedRoute>
                 <MainLayout>

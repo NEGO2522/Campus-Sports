@@ -7,8 +7,9 @@ import { useParams } from 'react-router-dom';
 
 const CreateTeam = () => {
   const [invited, setInvited] = useState([]); // This will now be fetched from Firestore
-  const { id: eventId } = useParams();
+  const { id: eventId, reg: regNumberParam } = useParams();
   const [accessDenied, setAccessDenied] = useState(false);
+  const [userReg, setUserReg] = useState(null);
   const [students, setStudents] = useState([]);
   const [search, setSearch] = useState('');
   const [filtered, setFiltered] = useState([]);
@@ -19,60 +20,68 @@ const CreateTeam = () => {
   const [eventLoading, setEventLoading] = useState(true);
 
   useEffect(() => {
-    setCurrentUid(auth.currentUser ? auth.currentUser.uid : null);
+    if (auth.currentUser) {
+      setCurrentUid(auth.currentUser.uid);
+      // Fetch registration number of current user
+      getDoc(doc(db, 'users', auth.currentUser.uid)).then(userDoc => {
+        if (userDoc.exists()) {
+          setUserReg(userDoc.data().registrationNumber);
+        }
+      });
+    }
   }, []);
 
-  // Restrict access to only the leader
+  // Restrict access to only the user with the registration number in the route
   useEffect(() => {
-    const checkAccess = async () => {
-      const user = auth.currentUser;
-      if (!user || !eventId) return;
-      const eventRef = doc(db, 'events', eventId);
-      const eventSnap = await getDoc(eventRef);
-      if (eventSnap.exists() && eventSnap.data().team) {
-        const teams = eventSnap.data().team;
-        // Is user a leader of any team?
-        const isLeader = Object.values(teams).some(team => team.leader === user.uid);
-        // Is user a member (not leader) of any team?
-        const isMemberNotLeader = Object.values(teams).some(team =>
-          Array.isArray(team.members) && team.members.includes(user.uid) && team.leader !== user.uid
-        );
-        if (isMemberNotLeader) setAccessDenied(true);
-        else setAccessDenied(false);
-      } else {
-        setAccessDenied(false);
-      }
-    };
-    checkAccess();
-  }, [eventId]);
+    if (!userReg || !regNumberParam) return;
+    if (userReg !== regNumberParam) setAccessDenied(true);
+    else setAccessDenied(false);
+  }, [userReg, regNumberParam]);
 
-  // Fetch invited students from Firestore (with accepted status)
+  // Fetch invited students from Firestore (with accepted status), only those sent by current user
   useEffect(() => {
     const fetchInvited = async () => {
-      if (!eventId) return;
+      if (!eventId || !currentUid) return;
       try {
         const teamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
-        // Store array of { invitee, accepted }
-        const invitedList = teamSnap.docs.map(doc => ({ invitee: doc.data().invitee, accepted: doc.data().accepted }));
+        // Only show invites sent by the current user
+        const invitedList = teamSnap.docs
+          .filter(doc => doc.data().inviter === currentUid)
+          .map(doc => ({ invitee: doc.data().invitee, accepted: doc.data().accepted }));
         setInvited(invitedList);
       } catch (err) {
         setInvited([]);
       }
     };
     fetchInvited();
-  }, [eventId]);
+  }, [eventId, currentUid]);
 
+  // Track all members of all teams in the event
+  const [allTeamMembers, setAllTeamMembers] = useState([]);
   useEffect(() => {
-    // Fetch team size from event
+    // Fetch team size and all team members and leaders from event
     const fetchEvent = async () => {
       setEventLoading(true);
       try {
         const eventDoc = await getDoc(doc(db, 'events', eventId));
         if (eventDoc.exists()) {
           setTeamSize(eventDoc.data().teamSize || null);
+          // Collect all members and leaders from all teams
+          const teams = eventDoc.data().team || {};
+          let membersAndLeaders = [];
+          Object.values(teams).forEach(team => {
+            if (Array.isArray(team.members)) {
+              membersAndLeaders = membersAndLeaders.concat(team.members);
+            }
+            if (team.leader) {
+              membersAndLeaders.push(team.leader);
+            }
+          });
+          setAllTeamMembers(membersAndLeaders);
         }
       } catch (error) {
         setTeamSize(null);
+        setAllTeamMembers([]);
       } finally {
         setEventLoading(false);
       }
@@ -244,12 +253,19 @@ const CreateTeam = () => {
                           <div className="text-xs text-gray-400">{student.courseName}</div>
                         </div>
                         <div className="ml-4 flex-shrink-0">
-                          {invited.includes(student.id) ? (
+                          {invited.some(i => i.invitee === student.id) ? (
                             <button
                               className="px-4 py-2 bg-green-500 text-white rounded-lg shadow text-sm font-semibold cursor-not-allowed opacity-80"
                               disabled
                             >
                               Invited
+                            </button>
+                          ) : allTeamMembers.includes(student.id) ? (
+                            <button
+                              className="px-4 py-2 bg-gray-400 text-white rounded-lg shadow text-sm font-semibold cursor-not-allowed opacity-80"
+                              disabled
+                            >
+                              Already in Team
                             </button>
                           ) : (
                             <button
@@ -268,8 +284,10 @@ const CreateTeam = () => {
                                   });
                                   // Refetch invited list after successful invite
                                   const teamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
-                                  const invitedIds = teamSnap.docs.map(doc => doc.data().invitee);
-                                  setInvited(invitedIds);
+                                  const invitedList = teamSnap.docs
+                                    .filter(doc => doc.data().inviter === inviterId)
+                                    .map(doc => ({ invitee: doc.data().invitee, accepted: doc.data().accepted }));
+                                  setInvited(invitedList);
                                 } catch (err) {
                                   // Optionally handle error
                                   console.error('Failed to send invite:', err);

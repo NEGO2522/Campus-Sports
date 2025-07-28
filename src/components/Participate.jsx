@@ -5,6 +5,7 @@ import { db, auth } from '../firebase/firebase';
 
 const Participate = () => {
   const { id } = useParams();
+  const [userReg, setUserReg] = useState(null);
   const navigate = useNavigate();
   const [participationType, setParticipationType] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -21,6 +22,11 @@ const Participate = () => {
           setParticipationType(eventDoc.data().participationType);
           const user = auth.currentUser;
           if (user) {
+            // Get registration number
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+              setUserReg(userDoc.data().registrationNumber);
+            }
             // Check for individual participation
             const participants = eventDoc.data().participants || [];
             if (participants.includes(user.uid)) {
@@ -122,7 +128,11 @@ const Participate = () => {
       <div className="space-x-4">
         <button
           className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-          onClick={() => !alreadyParticipated && navigate(`/events/${id}/create-team`)}
+          onClick={() => {
+            if (!alreadyParticipated && userReg) {
+              navigate(`/events/${id}/create-team/${userReg}`);
+            }
+          }}
           disabled={alreadyParticipated}
         >
           {alreadyParticipated ? 'Participated' : 'Create Team'}
