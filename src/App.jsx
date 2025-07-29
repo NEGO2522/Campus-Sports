@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import UserProfileForm from './components/Form';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleBasedRoute from './components/RoleBasedRoute';
 import { auth, db } from './firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import CreateEvent from './components/quick-actions/CreateEvent';
@@ -18,6 +19,7 @@ import CreateTeam from './components/CreateTeam';
 import Notification from './components/Notification';
 import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
+import NotFound from './components/NotFound';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -203,24 +205,35 @@ function App() {
             }
           />
           {/* Quick Action Routes */}
+          {/* Organizer-only routes */}
           <Route 
             path="/create-event" 
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['organizer']}>
                 <MainLayout>
                   <CreateEvent />
                 </MainLayout>
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route 
             path="/manage-events" 
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['organizer']}>
                 <MainLayout>
                   <ManageEvents />
                 </MainLayout>
-              </ProtectedRoute>
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/events/:eventId/matches/:matchId/edit"
+            element={
+              <RoleBasedRoute allowedRoles={['organizer']}>
+                <MainLayout>
+                  <EditMatch />
+                </MainLayout>
+              </RoleBasedRoute>
             }
           />
 
@@ -234,36 +247,11 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          {/* Additional routes for better accessibility */}
-          <Route path="/landing" element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/auth-check" element={<AuthCheck />} />
-          <Route path="/login-redirect" element={<LoginRedirect />} />
-          <Route
-            path="/tournament-bracket"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <TournamentBracket />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/notification"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Notification />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          {/* PARTICIPATE ROUTE WITH BLURRED DASHBOARD BACKGROUND */}
+          {/* Player-only routes */}
           <Route
             path="/events/:id/participate"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['player']}>
                 <div style={{ position: 'relative', minHeight: '100vh' }}>
                   {/* Blurred Dashboard background */}
                   <div
@@ -294,19 +282,47 @@ function App() {
                     <Participate />
                   </div>
                 </div>
-              </ProtectedRoute>
+              </RoleBasedRoute>
             }
           />
           <Route
             path="/events/:id/create-team/:reg"
             element={
-              <ProtectedRoute>
+              <RoleBasedRoute allowedRoles={['player']}>
                 <MainLayout>
                   <CreateTeam />
+                </MainLayout>
+              </RoleBasedRoute>
+            }
+          />
+          
+          {/* Additional routes for better accessibility */}
+          <Route path="/landing" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/auth-check" element={<AuthCheck />} />
+          <Route path="/login-redirect" element={<LoginRedirect />} />
+          <Route
+            path="/tournament-bracket"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <TournamentBracket />
                 </MainLayout>
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/notification"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <Notification />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* PARTICIPATE ROUTE WITH BLURRED DASHBOARD BACKGROUND */}
+          {/* Public event routes */}
           <Route
             path="/events/:id"
             element={
@@ -317,15 +333,15 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/events/:eventId/matches/:matchId/edit"
+          
+          {/* 404 - Catch all unmatched routes */}
+          <Route 
+            path="*" 
             element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <EditMatch />
-                </MainLayout>
-              </ProtectedRoute>
-            }
+              <MainLayout>
+                <NotFound />
+              </MainLayout>
+            } 
           />
         </Routes>
       </div>
