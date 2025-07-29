@@ -10,7 +10,6 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-// Import quick action components
 import CreateEvent from './components/quick-actions/CreateEvent';
 import JoinGame from './components/quick-actions/JoinGame';
 import ManageEvents from './components/quick-actions/ManageEvents';
@@ -271,13 +270,41 @@ function App() {
               </ProtectedRoute>
             }
           />
+          {/* PARTICIPATE ROUTE WITH BLURRED DASHBOARD BACKGROUND */}
           <Route
             path="/events/:id/participate"
             element={
               <ProtectedRoute>
-                <MainLayout>
-                  <Participate />
-                </MainLayout>
+                <div style={{ position: 'relative', minHeight: '100vh' }}>
+                  {/* Blurred Dashboard background */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 0,
+                      filter: 'blur(10px)',
+                      pointerEvents: 'none',
+                      width: '100vw',
+                      height: '100vh',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <Dashboard />
+                  </div>
+                  {/* Participate overlay */}
+                  <div
+                    style={{
+                      position: 'relative',
+                      zIndex: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minHeight: '100vh',
+                    }}
+                  >
+                    <Participate />
+                  </div>
+                </div>
               </ProtectedRoute>
             }
           />

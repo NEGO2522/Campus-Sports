@@ -83,17 +83,30 @@ const Participate = () => {
     );
   }
 
+  // Frosted glass style for Participate content
+  const glassStyle = {
+    background: 'rgba(255,255,255,0.4)',
+    borderRadius: '16px',
+    boxShadow: '0 4px 32px rgba(0,0,0,0.1)',
+    backdropFilter: 'blur(8px)',
+    padding: '2rem',
+    minWidth: '320px',
+    maxWidth: '90vw',
+  };
+
   if (participationType === 'player') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
-        <button
-          className={`px-6 py-3 rounded-lg shadow transition font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-          onClick={() => setShowConfirm(true)}
-          disabled={saving || alreadyParticipated}
-        >
-          {alreadyParticipated ? 'Participated' : 'Participate'}
-        </button>
+      <div className="flex flex-col items-center justify-center min-h-screen transition-all duration-300">
+        <div style={glassStyle}>
+          <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
+          <button
+            className={`px-6 py-3 rounded-lg shadow transition font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            onClick={() => setShowConfirm(true)}
+            disabled={saving || alreadyParticipated}
+          >
+            {alreadyParticipated ? 'Participated' : 'Participate'}
+          </button>
+        </div>
         {showConfirm && !alreadyParticipated && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
             <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
@@ -123,27 +136,29 @@ const Participate = () => {
 
   // For team-based events
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-      <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
-      <div className="space-x-4">
-        <button
-          className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-          onClick={() => {
-            if (!alreadyParticipated && userReg) {
-              navigate(`/events/${id}/create-team/${userReg}`);
-            }
-          }}
-          disabled={alreadyParticipated}
-        >
-          {alreadyParticipated ? 'Participated' : 'Create Team'}
-        </button>
-        <button
-          className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
-          onClick={() => !alreadyParticipated && navigate('/notification')}
-          disabled={alreadyParticipated}
-        >
-          {alreadyParticipated ? 'Participated' : 'See Invitation'}
-        </button>
+    <div className="flex flex-col items-center justify-center min-h-screen transition-all duration-300">
+      <div style={glassStyle}>
+        <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
+        <div className="space-x-4">
+          <button
+            className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            onClick={() => {
+              if (!alreadyParticipated && userReg) {
+                navigate(`/events/${id}/create-team/${userReg}`);
+              }
+            }}
+            disabled={alreadyParticipated}
+          >
+            {alreadyParticipated ? 'Participated' : 'Create Team'}
+          </button>
+          <button
+            className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+            onClick={() => !alreadyParticipated && navigate('/notification')}
+            disabled={alreadyParticipated}
+          >
+            {alreadyParticipated ? 'Participated' : 'See Invitation'}
+          </button>
+        </div>
       </div>
     </div>
   );
