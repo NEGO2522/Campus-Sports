@@ -11,7 +11,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import CreateEvent from './components/quick-actions/CreateEvent';
-import JoinGame from './components/quick-actions/JoinGame';
 import ManageEvents from './components/quick-actions/ManageEvents';
 import TournamentBracket from './components/TournamentBracket';
 import Participate from './components/Participate';
@@ -225,17 +224,7 @@ function App() {
             }
           />
 
-          <Route 
-            path="/join-game" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <JoinGame />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route 
+<Route 
             path="/form" 
             element={
               <ProtectedRoute>
