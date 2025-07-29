@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import EventMatches from './quick-actions/EventMatches';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, updateDoc, arrayRemove, addDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
@@ -119,35 +120,36 @@ const EventDetail = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-xl shadow p-8 mt-8">
-      <h2 className="text-3xl font-bold mb-6 text-center">{event.eventName}</h2>
-      {/* Create Matches Button */}
-      <div className="flex justify-end mb-4">
-        <button
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-          onClick={() => setShowMatchModal(true)}
-          disabled={!event.team || Object.keys(event.team).length < 2}
-        >
-          Create Matches
-        </button>
-      </div>
-      {/* Create Match Modal */}
-      {showMatchModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
-              onClick={() => setShowMatchModal(false)}
-            >
-              &times;
-            </button>
-            {(!event.team || Object.keys(event.team).length < 2) ? (
-              <div className="text-center text-red-600 font-semibold">At least 2 teams are required to create a match.</div>
-            ) : (
-              <>
-                <h3 className="text-xl font-bold mb-4 text-center">Create Match</h3>
-                <form
-                  onSubmit={async e => {
+    <div className="max-w-6xl mx-auto bg-white rounded-xl shadow p-8 mt-8 flex flex-col lg:flex-row gap-8">
+      <div className="flex-1 min-w-0">
+        <h2 className="text-3xl font-bold mb-6 text-center">{event.eventName}</h2>
+        {/* Create Matches Button */}
+        <div className="flex justify-end mb-4">
+          <button
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
+            onClick={() => setShowMatchModal(true)}
+            disabled={!event.team || Object.keys(event.team).length < 2}
+          >
+            Create Matches
+          </button>
+        </div>
+        {/* Create Match Modal */}
+        {showMatchModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
+                onClick={() => setShowMatchModal(false)}
+              >
+                &times;
+              </button>
+              {(!event.team || Object.keys(event.team).length < 2) ? (
+                <div className="text-center text-red-600 font-semibold">At least 2 teams are required to create a match.</div>
+              ) : (
+                <>
+                  <h3 className="text-xl font-bold mb-4 text-center">Create Match</h3>
+                  <form
+                    onSubmit={async e => {
                     e.preventDefault();
                     setSavingMatch(true);
                     try {
@@ -250,7 +252,7 @@ const EventDetail = () => {
           </div>
         </div>
       )}
-      <table className="w-full mb-8 border rounded-lg overflow-hidden">
+        <table className="w-full mb-8 border rounded-lg overflow-hidden">
         <tbody>
           <tr className="border-b">
             <td className="py-3 px-4 font-semibold flex items-center"><FaCalendarAlt className="mr-2 text-blue-500" /> Date</td>
@@ -456,6 +458,11 @@ const EventDetail = () => {
             )}
           </>
         )}
+      </div>
+      </div>
+      {/* Match Card at right side */}
+      <div className="lg:w-96 w-full border-l border-gray-200 bg-gray-50 mt-8 lg:mt-0">
+        <EventMatches eventId={id} />
       </div>
     </div>
   );

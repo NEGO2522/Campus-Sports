@@ -170,176 +170,238 @@ const Navbar = () => {
         onClick={toggleMenu}
       />
       <nav className="w-full relative z-50 bg-white shadow-sm md:shadow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
-          {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700">
-              Campus League
-            </Link>
-          </div>
-          {/* Navigation Links - Desktop */}
-          <div className="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-            <Link
-              to="/dashboard"
-              className={`${isActive('/dashboard')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-            >
-              <FaHome className="mr-2" />
-              Dashboard
-            </Link>
-            {userRole === 'organizer' && (
-              <>
-                <Link
-                  to="/create-event"
-                  className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                >
-                  <FaPlusCircle className="mr-2" />
-                  Create Event
-                </Link>
-                <Link
-                  to="/manage-events"
-                  className={`${isActive('/manage-events')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                >
-                  <FaCog className="mr-2" />
-                  Manage Events
-                </Link>
-              </>
-            )}
-            <Link
-              to="/join-game"
-              className={`${isActive('/join-game')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-            >
-              <FaUsers className="mr-2" />
-              Explore Games
-            </Link>
-            {userRole === 'player' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700">
+                Campus League
+              </Link>
+            </div>
+            {/* Navigation Links - Desktop */}
+            <div className="hidden md:ml-6 md:flex md:items-center md:space-x-8">
               <Link
-                to="/find-players"
-                className={`${isActive('/find-players')} block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
+                to="/dashboard"
+                className={`${isActive('/dashboard')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+              >
+                <FaHome className="mr-2" />
+                Dashboard
+              </Link>
+              {userRole === 'organizer' && (
+                <>
+                  <Link
+                    to="/create-event"
+                    className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+                  >
+                    <FaPlusCircle className="mr-2" />
+                    Create Event
+                  </Link>
+                  <Link
+                    to="/manage-events"
+                    className={`${isActive('/manage-events')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+                  >
+                    <FaCog className="mr-2" />
+                    Manage Events
+                  </Link>
+                </>
+              )}
+              <Link
+                to="/join-game"
+                className={`${isActive('/join-game')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+              >
+                <FaUsers className="mr-2" />
+                Explore Games
+              </Link>
+              {userRole === 'player' && (
+                <Link
+                  to="/find-players"
+                  className={`${isActive('/find-players')} block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
+                  onClick={toggleMenu}
+                >
+                  <FaSearch className="inline-block mr-2" />
+                  Find Players
+                </Link>
+              )}
+              {/* Participation Button */}
+              <button
+                className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                onClick={handleParticipationClick}
+              >
+                <FaTrophy className="mr-2" />
+                Participation
+              </button>
+            </div>
+            {/* Profile Dropdown - Desktop */}
+            <div className="hidden md:ml-6 md:flex md:items-center relative">
+              <Link
+                to="/notification"
+                className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-10"
+                aria-label="Notifications"
+              >
+                <FaBell className="h-6 w-6" />
+              </Link>
+              <button
+                onClick={toggleProfile}
+                className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaUser className="h-6 w-6" />
+              </button>
+              {/* Dropdown menu */}
+              {isProfileOpen && (
+                <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown">
+                  <div className="py-1" role="none">
+                    <Link to="/notification" className="text-gray-700 hover:text-blue-600 py-2 flex items-center">
+                      <FaBell className="mr-2" /> Notifications
+                    </Link>
+                    <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
+                      <FaEdit className="mr-2" /> Edit Interested Sports
+                    </Link>
+                    <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
+                      <FaSignOutAlt className="mr-2" /> Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={toggleMenu}
+                className="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                {isMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
+              </button>
+            </div>
+          </div>
+        </div>
+        {/* Mobile Navigation Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden fixed top-16 left-0 w-full bg-white z-40 shadow-lg border-t border-gray-200 animate-slide-down">
+            <div className="flex flex-col py-4 px-6 space-y-2">
+              <Link
+                to="/dashboard"
+                className={`${isActive('/dashboard')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
                 onClick={toggleMenu}
               >
-                <FaSearch className="inline-block mr-2" />
-                Find Players
+                <FaHome className="mr-2" />
+                Dashboard
               </Link>
-            )}
-            {/* Participation Button */}
-            <button
-              className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-              onClick={handleParticipationClick}
-            >
-              <FaTrophy className="mr-2" />
-              Participation
-            </button>
-          </div>
-          {/* Profile Dropdown - Desktop */}
-          <div className="hidden md:ml-6 md:flex md:items-center relative">
-            <Link
-              to="/notification"
-              className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-10"
-              aria-label="Notifications"
-            >
-              <FaBell className="h-6 w-6" />
-            </Link>
-            <button
-              onClick={toggleProfile}
-              className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <FaUser className="h-6 w-6" />
-            </button>
-            {/* Dropdown menu */}
-            {isProfileOpen && (
-              <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown">
-                <div className="py-1" role="none">
+              {userRole === 'organizer' && (
+                <>
                   <Link
-                    to="/form"
-                    onClick={() => setIsProfileOpen(false)}
-                    className="text-gray-700 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    to="/create-event"
+                    className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+                    onClick={toggleMenu}
                   >
-                    <FaEdit className="mr-2 text-gray-500" />
-                    Edit Interested Sports
+                    <FaPlusCircle className="mr-2" />
+                    Create Event
                   </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsProfileOpen(false);
-                    }}
-                    className="w-full text-left text-red-600 block px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                  <Link
+                    to="/manage-events"
+                    className={`${isActive('/manage-events')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+                    onClick={toggleMenu}
                   >
-                    <FaSignOutAlt className="mr-2" />
-                    Logout
-                  </button>
+                    <FaCog className="mr-2" />
+                    Manage Events
+                  </Link>
+                </>
+              )}
+              <Link
+                to="/join-game"
+                className={`${isActive('/join-game')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+                onClick={toggleMenu}
+              >
+                <FaUsers className="mr-2" />
+                Explore Games
+              </Link>
+              {userRole === 'player' && (
+                <Link
+                  to="/find-players"
+                  className={`${isActive('/find-players')} block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
+                  onClick={toggleMenu}
+                >
+                  <FaSearch className="inline-block mr-2" />
+                  Find Players
+                </Link>
+              )}
+              <button
+                className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                onClick={() => { handleParticipationClick(); toggleMenu(); }}
+              >
+                <FaTrophy className="mr-2" />
+                Participation
+              </button>
+              <Link
+                to="/notification"
+                className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                aria-label="Notifications"
+                onClick={toggleMenu}
+              >
+                <FaBell className="h-6 w-6" /> Notifications
+              </Link>
+              <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
+                <FaEdit className="mr-2" /> Edit Interested Sports
+              </Link>
+              <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
+            </div>
+          </div>
+        )}
+        {/* Participation Modal */}
+        {showParticipation && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
+                onClick={() => setShowParticipation(false)}
+              >
+                <FaTimes />
+              </button>
+              <h2 className="text-2xl font-bold mb-6 text-center">Your Participation</h2>
+              {loadingParticipation ? (
+                <div className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
-              </div>
-            )}
+              ) : participationData.length === 0 ? (
+                <div className="text-center text-gray-500">No participation found.</div>
+              ) : (
+                <ul className="space-y-6">
+                  {participationData.map((item, idx) => (
+                    item.type === 'team' ? (
+                      <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow flex flex-col relative">
+                        {/* Pencil Button - only for leader */}
+                        {item.leader === currentUid && (
+                          <button
+                            className="absolute top-2 right-2 text-gray-500 hover:text-blue-700"
+                            title="Edit Team"
+                            onClick={() => handleEditTeam(item.eventId)}
+                          >
+                            <FaPencilAlt />
+                          </button>
+                        )}
+                        <div className="font-semibold text-blue-800 text-lg mb-1">{item.eventName}</div>
+                        <div className="text-sm text-gray-700 mb-1">Team: <span className="font-bold">{item.teamName}</span></div>
+                        <div className="text-sm text-gray-700 mb-1">Leader: <span className="font-bold">{item.leaderName}</span></div>
+                        <div className="text-sm text-gray-700">Members:</div>
+                        <ul className="ml-4 text-gray-600 text-sm list-disc">
+                          {item.memberNames.map((member, i) => (
+                            <li key={member + i}>{member}</li>
+                          ))}
+                        </ul>
+                      </li>
+                    ) : (
+                      <li key={item.eventId + 'individual'} className="bg-green-50 rounded-lg p-4 shadow flex flex-col">
+                        <div className="font-semibold text-green-800 text-lg mb-1">{item.eventName}</div>
+                        <div className="text-sm text-gray-700">Participant: <span className="font-bold">{item.participantName}</span></div>
+                      </li>
+                    )
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={toggleMenu}
-              type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none"
-              aria-expanded="false"
-            >
-              <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
-            </button>
-          </div>
-        </div>
-      </div>
-      {/* Participation Modal */}
-      {showParticipation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full relative">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
-              onClick={() => setShowParticipation(false)}
-            >
-              <FaTimes />
-            </button>
-            <h2 className="text-2xl font-bold mb-6 text-center">Your Participation</h2>
-            {loadingParticipation ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            ) : participationData.length === 0 ? (
-              <div className="text-center text-gray-500">No participation found.</div>
-            ) : (
-              <ul className="space-y-6">
-                {participationData.map((item, idx) => (
-                  item.type === 'team' ? (
-                    <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow flex flex-col relative">
-                      {/* Pencil Button - only for leader */}
-                      {item.leader === currentUid && (
-                        <button
-                          className="absolute top-2 right-2 text-gray-500 hover:text-blue-700"
-                          title="Edit Team"
-                          onClick={() => handleEditTeam(item.eventId)}
-                        >
-                          <FaPencilAlt />
-                        </button>
-                      )}
-                      <div className="font-semibold text-blue-800 text-lg mb-1">{item.eventName}</div>
-                      <div className="text-sm text-gray-700 mb-1">Team: <span className="font-bold">{item.teamName}</span></div>
-                      <div className="text-sm text-gray-700 mb-1">Leader: <span className="font-bold">{item.leaderName}</span></div>
-                      <div className="text-sm text-gray-700">Members:</div>
-                      <ul className="ml-4 text-gray-600 text-sm list-disc">
-                        {item.memberNames.map((member, i) => (
-                          <li key={member + i}>{member}</li>
-                        ))}
-                      </ul>
-                    </li>
-                  ) : (
-                    <li key={item.eventId + 'individual'} className="bg-green-50 rounded-lg p-4 shadow flex flex-col">
-                      <div className="font-semibold text-green-800 text-lg mb-1">{item.eventName}</div>
-                      <div className="text-sm text-gray-700">Participant: <span className="font-bold">{item.participantName}</span></div>
-                    </li>
-                  )
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
+        )}
       </nav>
     </div>
   );
