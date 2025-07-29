@@ -23,8 +23,7 @@ import CreateTeam from './components/CreateTeam';
 import Notification from './components/Notification';
 
 import EventDetail from './components/EventDetail';
-
-
+import EditMatch from './components/EditMatch';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -321,6 +320,16 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <EventDetail />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:eventId/matches/:matchId/edit"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <EditMatch />
                 </MainLayout>
               </ProtectedRoute>
             }

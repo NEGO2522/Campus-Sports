@@ -46,6 +46,7 @@ const OngoingEvents = ({ onEventClick }) => {
               location: match.location,
               dateTime,
               description: match.description || '',
+              matchStarted: match.matchStarted === true
             };
           });
         }
@@ -225,8 +226,15 @@ const OngoingEvents = ({ onEventClick }) => {
                                 <div className="text-lg text-black font-medium mt-1 mb-2">
                                   <div className="flex items-center justify-between mb-2">
                                     <div>{(match.team1?.name || match.team1) || 'Team 1'}</div>
-                                    {match.dateTime && (
-                                      <div className="text-xs text-gray-700 ml-4 whitespace-nowrap">{format(match.dateTime, 'dd MMM, hh:mm a')}</div>
+                                    {match.matchStarted === true ? (
+                                      <div className="flex items-center text-red-600 font-bold text-xs ml-4 whitespace-nowrap">
+                                        <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                                        LIVE
+                                      </div>
+                                    ) : (
+                                      match.dateTime && (
+                                        <div className="text-xs text-gray-700 ml-4 whitespace-nowrap">{format(match.dateTime, 'dd MMM, hh:mm a')}</div>
+                                      )
                                     )}
                                   </div>
                                   <div>{(match.team2?.name || match.team2) || 'Team 2'}</div>

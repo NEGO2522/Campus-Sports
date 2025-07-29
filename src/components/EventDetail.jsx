@@ -159,7 +159,8 @@ const EventDetail = () => {
                         team1: matchForm.team1,
                         team2: matchForm.team2,
                         location: matchForm.location,
-                        dateTime
+                        dateTime,
+                        matchStarted: false
                       });
                       setShowMatchModal(false);
                       setMatchForm({ round: '', team1: '', team2: '', location: '', date: '', time: '' });
