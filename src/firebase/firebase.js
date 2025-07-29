@@ -1,4 +1,3 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -15,8 +14,6 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 // Firebase configuration
 const firebaseConfig = {
-  // Your web app's Firebase configuration
-  // Replace these values with your actual Firebase config
   apiKey: "AIzaSyCzkMaz4LGbWfR8QhEcNFIVAFjJ3ZDMkaA",
   authDomain: "sports-app-4d03e.firebaseapp.com",
   projectId: "sports-app-4d03e",
@@ -55,9 +52,7 @@ try {
 
 // Action Code Configuration for email link authentication
 const actionCodeSettings = {
-  // URL you want to redirect back to after email sign in
   url: window.location.origin + '/login',
-  // This must be true for email link sign-in
   handleCodeInApp: true
 };
 
@@ -75,7 +70,6 @@ export const signInWithGoogle = async () => {
 export const signInWithEmailLinkAuth = async (email) => {
   try {
     await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    // Save the email locally to complete sign in after clicking the email link
     window.localStorage.setItem('emailForSignIn', email);
     return { success: true, error: null };
   } catch (error) {
@@ -89,11 +83,9 @@ export const completeEmailLinkSignIn = async (email, emailLink) => {
     if (isSignInWithEmailLink(auth, emailLink)) {
       let userEmail = email || window.localStorage.getItem('emailForSignIn');
       if (!userEmail) {
-        // User opened the link on a different device
         userEmail = window.prompt('Please provide your email for confirmation');
       }
       const result = await signInWithEmailLink(auth, userEmail, emailLink);
-      // Clear email from storage
       window.localStorage.removeItem('emailForSignIn');
       return { user: result.user, error: null };
     }
