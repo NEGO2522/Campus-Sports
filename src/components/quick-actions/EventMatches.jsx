@@ -93,26 +93,34 @@ const EventMatches = ({ eventId }) => {
                   </div>
                   <div className="text-xs text-gray-700 mb-1">Location: {match.location}</div>
                   <div className="text-xs mb-1">
-                    {match.matchStarted === true ? (
-                      <span className="flex items-center text-red-600 font-bold">
-                        <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
-                        LIVE
-                      </span>
-                    ) : (
-                      <span className="text-gray-700">
-                        Date & Time: {(() => {
-                          if (!match.dateTime) return 'N/A';
-                          let dateObj;
-                          if (typeof match.dateTime.toDate === 'function') {
-                            dateObj = match.dateTime.toDate();
-                          } else {
-                            dateObj = new Date(match.dateTime);
-                          }
-                          if (isNaN(dateObj.getTime())) return 'N/A';
-                          return format(dateObj, 'MMM dd, yyyy • h:mm a');
-                        })()}
-                      </span>
-                    )}
+                    {/* Debug: {String(match.matchStarted)} ({typeof match.matchStarted}) */}
+                    {(() => {
+                      // Only show LIVE if matchStarted is boolean true
+                      if (typeof match.matchStarted === 'boolean' && match.matchStarted === true) {
+                        return (
+                          <span className="flex items-center text-red-600 font-bold">
+                            <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                            LIVE
+                          </span>
+                        );
+                      } else {
+                        return (
+                          <span className="text-gray-700">
+                            Date & Time: {(() => {
+                              if (!match.dateTime) return 'N/A';
+                              let dateObj;
+                              if (typeof match.dateTime?.toDate === 'function') {
+                                dateObj = match.dateTime.toDate();
+                              } else {
+                                dateObj = new Date(match.dateTime);
+                              }
+                              if (isNaN(dateObj.getTime())) return 'N/A';
+                              return format(dateObj, 'MMM dd, yyyy • h:mm a');
+                            })()}
+                          </span>
+                        );
+                      }
+                    })()}
                   </div>
                   {/* Start Button at the bottom of date/time */}
                   {match.matchStarted === false && (
