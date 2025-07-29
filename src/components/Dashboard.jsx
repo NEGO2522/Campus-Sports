@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaUsers, FaTrophy, FaRunning, FaMedal, FaCrown, FaFire } from 'react-icons/fa';
+
 import { motion } from 'framer-motion';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
@@ -58,24 +58,10 @@ const Dashboard = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleQuickAction = (action) => {
-    switch(action) {
-      case 'Find Players':
-        navigate('/find-players');
-        break;
-      case 'View Schedule':
-        navigate('/schedule');
-        break;
-      default:
-        break;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
-        
-
         {/* Stats Grid */}
         <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
           {stats.map((stat) => (
@@ -111,28 +97,6 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:gap-4">
-            {[
-              { name: 'Find Players', icon: '👥', color: 'bg-green-100 text-green-600' },
-              { name: 'View Schedule', icon: '📋', color: 'bg-yellow-100 text-yellow-600' },
-            ].map((action, index) => (
-              <motion.button
-                key={action.name}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleQuickAction(action.name)}
-                className={`flex flex-col items-center justify-center p-2 xs:p-3 sm:p-4 rounded-lg ${action.color} hover:shadow-sm transition-all cursor-pointer h-full min-h-[80px] xs:min-h-[90px] sm:min-h-[100px]`}
-              >
-                <span className="text-lg xs:text-xl sm:text-2xl mb-1 xs:mb-1.5 sm:mb-2">{action.icon}</span>
-                <span className="text-[10px] xs:text-xs sm:text-sm font-medium text-center px-1">{action.name}</span>
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
         {/* Ongoing Events */}
         <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 sm:p-4 md:p-6 mb-4 sm:mb-6 md:mb-8">
           <div className="mb-3 sm:mb-4">
@@ -141,13 +105,9 @@ const Dashboard = () => {
             </h2>
           </div>
           
-          {/* Sidebar Layout: Events on left, Standings on right */}
           <div className="p-7">
-            {/* Events Section - Takes 2/3 of the width on large screens */}
             <div className="lg:col-span-2">
-              <OngoingEvents onEventClick={() => navigate('/schedule')} />
-              
-              
+              <OngoingEvents />
             </div>
           </div>
         </div>
@@ -157,7 +117,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
           </div>
-          <UpcomingEvents onEventClick={() => navigate('/schedule')} />
+          <UpcomingEvents />
         </div>
 
               </div>

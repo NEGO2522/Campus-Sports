@@ -6,22 +6,18 @@ import Home from './components/Home';
 import Login from './auth/Login';
 import Dashboard from './components/Dashboard';
 import UserProfileForm from './components/Form';
-
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 // Import quick action components
 import CreateEvent from './components/quick-actions/CreateEvent';
-import FindPlayers from './components/quick-actions/FindPlayers';
 import JoinGame from './components/quick-actions/JoinGame';
-import Schedule from './components/quick-actions/Schedule';
 import ManageEvents from './components/quick-actions/ManageEvents';
 import TournamentBracket from './components/TournamentBracket';
 import Participate from './components/Participate';
 import CreateTeam from './components/CreateTeam';
 import Notification from './components/Notification';
-
 import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
 
@@ -229,32 +225,13 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route 
-            path="/find-players" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <FindPlayers />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
+
           <Route 
             path="/join-game" 
             element={
               <ProtectedRoute>
                 <MainLayout>
                   <JoinGame />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route 
-            path="/schedule" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Schedule />
                 </MainLayout>
               </ProtectedRoute>
             }
