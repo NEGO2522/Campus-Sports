@@ -272,7 +272,6 @@ const Navbar = () => {
                     aria-labelledby="user-menu-button"
                     tabIndex="-1"
                   >
-
                     <Link 
                       to="/notification" 
                       className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-150"
@@ -319,21 +318,33 @@ const Navbar = () => {
                 )}
               </div>
             </div>
+            {/* Mobile header controls */}
+            <div className="md:hidden flex items-center space-x-2">
+              <Link
+                to="/notification"
+                className="p-2 rounded-full text-gray-600 hover:text-blue-600 hover:bg-gray-100 transition-colors duration-200"
+                aria-label="Notifications"
+              >
+                <div className="relative">
+                  <FaBell className="h-5 w-5" />
+                  {hasUnreadNotifications && (
+                    <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                  )}
+                </div>
+              </Link>
+              <button
+                onClick={toggleMenu}
+                className="p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                {isMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
-      {/* Mobile menu button */}
-      <div className="md:hidden flex items-center justify-end p-4">
-        <button
-          onClick={toggleMenu}
-          className="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          {isMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
-        </button>
-      </div>
       {/* Mobile Navigation Menu */}
       {isMenuOpen && (
-        <div className="md:hidden fixed top-16 left-0 w-full bg-white z-40 shadow-lg border-t border-gray-200 animate-slide-down">
+        <div className="md:hidden fixed left-0 w-full bg-white z-40 shadow-lg border-t border-gray-200 animate-slide-down" style={{ top: '4rem' }}>
           <div className="flex flex-col py-4 px-6 space-y-2">
             <Link
               to="/dashboard"
@@ -370,19 +381,7 @@ const Navbar = () => {
               <FaTrophy className="mr-2" />
               Participation
             </button>
-            <Link
-              to="/notification"
-              className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              aria-label="Notifications"
-              onClick={toggleMenu}
-            >
-              <div className="relative inline-block mr-2">
-                <FaBell className="h-6 w-6" />
-                {hasUnreadNotifications && (
-                  <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
-                )}
-              </div> Notifications
-            </Link>
+
             <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
               <FaEdit className="mr-2" /> Edit Interested Sports
             </Link>
