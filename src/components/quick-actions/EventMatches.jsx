@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
-import { FaChevronDown, FaChevronUp, FaCheck, FaEdit } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaCheck, FaEdit, FaPlay } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -84,19 +84,6 @@ const EventMatches = ({ eventId }) => {
                   >
                     <FaEdit />
                   </button>
-                  {/* Start Button */}
-                  {match.matchStarted === false && (
-                    <button
-                      className="absolute top-2 left-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-xs font-semibold"
-                      onClick={async () => {
-                        const matchRef = doc(db, 'events', eventId, 'matches', match.id);
-                        await updateDoc(matchRef, { matchStarted: true });
-                        setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: true } : m));
-                      }}
-                    >
-                      Start
-                    </button>
-                  )}
                   <div className="text-lg text-black font-medium mt-1 mb-2">
                     <div className="flex items-center justify-between mb-2">
                       <div>{(match.team1?.name || match.team1) || 'Team 1'}</div>
@@ -127,6 +114,22 @@ const EventMatches = ({ eventId }) => {
                       </span>
                     )}
                   </div>
+                  {/* Start Button at the bottom of date/time */}
+                  {match.matchStarted === false && (
+                    <div className="mt-2">
+                      <button
+                        className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 shadow"
+                        title="Start Match"
+                        onClick={async () => {
+                          const matchRef = doc(db, 'events', eventId, 'matches', match.id);
+                          await updateDoc(matchRef, { matchStarted: true });
+                          setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: true } : m));
+                        }}
+                      >
+                        <FaPlay className="w-3 h-3  " />
+                      </button>
+                    </div>
+                  )}
                   {match.description && <div className="text-xs text-gray-500 mt-1">{match.description}</div>}
                   {/* Delete Button */}
                   <button
