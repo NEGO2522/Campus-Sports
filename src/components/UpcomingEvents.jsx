@@ -204,7 +204,7 @@ const UpcomingEvents = ({ onEventClick }) => {
                   className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <FaClock className="mr-1.5 h-3 w-3" />
-                  View Schedule
+                  View Details
                 </button>
                 {event.participationType === 'player' ? (
                   <button

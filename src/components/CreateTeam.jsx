@@ -371,9 +371,12 @@ const CreateTeam = () => {
                             }
                             // Delete the invite doc
                             await deleteDoc(doc(db, 'events', eventId, 'team', inviteDoc.id));
-                            // Refresh invited list
+                            // Refresh invited list (only those sent by current user)
                             const newTeamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
-                            const invitedList = newTeamSnap.docs.map(docu => ({ invitee: docu.data().invitee, accepted: docu.data().accepted }));
+                            const inviterId = auth.currentUser?.uid;
+                            const invitedList = newTeamSnap.docs
+                              .filter(docu => docu.data().inviter === inviterId)
+                              .map(docu => ({ invitee: docu.data().invitee, accepted: docu.data().accepted }));
                             setInvited(invitedList);
                           }
                         } catch (err) {
