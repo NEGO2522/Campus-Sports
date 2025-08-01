@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { FaCalendarAlt, FaUsers, FaTrophy, FaRunning, FaMedal, FaCrown, FaFire } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { collection, query, where, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
@@ -58,10 +58,11 @@ const Dashboard = () => {
     return () => unsubscribe();
   }, []);
 
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
+        
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
           {stats.map((stat) => (
@@ -105,9 +106,13 @@ const Dashboard = () => {
             </h2>
           </div>
           
+          {/* Sidebar Layout: Events on left, Standings on right */}
           <div className="p-7">
+            {/* Events Section - Takes 2/3 of the width on large screens */}
             <div className="lg:col-span-2">
-              <OngoingEvents />
+              <OngoingEvents onEventClick={() => navigate('/schedule')} />
+              
+              
             </div>
           </div>
         </div>
@@ -117,7 +122,7 @@ const Dashboard = () => {
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
           </div>
-          <UpcomingEvents />
+          <UpcomingEvents onEventClick={() => navigate('/schedule')} />
         </div>
 
               </div>
