@@ -205,16 +205,6 @@ const Navbar = () => {
                   </Link>
                 </>
               )}
-              {userRole === 'player' && (
-                <Link
-                  to="/find-players"
-                  className={`${isActive('/find-players')} block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
-                  onClick={toggleMenu}
-                >
-                  <FaSearch className="inline-block mr-2" />
-                  Find Players
-                </Link>
-              )}
               {/* Participation Button */}
               <button
                 className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
@@ -241,7 +231,7 @@ const Navbar = () => {
               </button>
               {/* Dropdown menu */}
               {isProfileOpen && (
-                <div className="origin-top-right absolute right-0 mt-3 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown">
+                <div className="origin-top-right absolute right-0 mt-50 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown" style={{ transform: 'translateX(-10px)' }}>
                   <div className="py-1" role="none">
                     <Link to="/notification" className="text-gray-700 hover:text-blue-600 py-2 flex items-center">
                       <FaBell className="mr-2" /> Notifications
@@ -298,16 +288,6 @@ const Navbar = () => {
                     Manage Events
                   </Link>
                 </>
-              )}
-              {userRole === 'player' && (
-                <Link
-                  to="/find-players"
-                  className={`${isActive('/find-players')} block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100`}
-                  onClick={toggleMenu}
-                >
-                  <FaSearch className="inline-block mr-2" />
-                  Find Players
-                </Link>
               )}
               <button
                 className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"

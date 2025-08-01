@@ -276,6 +276,17 @@ function App() {
             }
           />
           <Route
+            path="/events/:id/create-team/:year/:matchId"
+            element={
+              <ProtectedRoute>
+                <MainLayout>
+                  <CreateTeam />
+                </MainLayout>
+              </ProtectedRoute>
+            }
+          />
+          {/* Keeping the old route for backward compatibility */}
+          <Route
             path="/events/:id/create-team/:reg"
             element={
               <ProtectedRoute>
