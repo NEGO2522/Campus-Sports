@@ -286,7 +286,7 @@ function App() {
             }
           />
           <Route
-            path="/events/:id/create-team/:reg"
+            path="/events/:id/create-team/"
             element={
               <RoleBasedRoute allowedRoles={['player']}>
                 <MainLayout>
