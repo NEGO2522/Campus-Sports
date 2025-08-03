@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase/firebase';
 import { collection, getDocs, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
-import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell, FaTrophy, FaPencilAlt } from 'react-icons/fa';
+import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell, FaTrophy, FaPencilAlt, FaInfoCircle } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -277,7 +277,10 @@ const Navbar = () => {
                     <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
                       <FaEdit className="mr-2" /> Edit Profile
                     </Link>
-                    <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
+                    <Link to="/about" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
+                      <FaInfoCircle className="mr-2" /> About
+                    </Link>
+                    <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center w-full text-left" onClick={() => { handleLogout(); toggleMenu(); }}>
                       <FaSignOutAlt className="mr-2" /> Logout
                     </button>
                   </div>
@@ -349,6 +352,9 @@ const Navbar = () => {
               </button>
               <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
                 <FaEdit className="mr-2" /> Edit Profile
+              </Link>
+              <Link to="/about" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
+                <FaInfoCircle className="mr-2" /> About
               </Link>
               <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
                 <FaSignOutAlt className="mr-2" /> Logout

@@ -76,8 +76,7 @@ const UserProfileForm = () => {
     age: '',
     gender: '',
     phoneNumber: '',
-    experienceLevel: 'beginner',
-    selectedSports: [],
+    experienceLevel: 'beginner'
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -126,26 +125,7 @@ const UserProfileForm = () => {
     }));
   };
 
-  const toggleSport = (sport) => {
-    setFormData(prev => {
-      const isSelected = prev.selectedSports.some(s => s.id === sport.id);
-      if (isSelected) {
-        return {
-          ...prev,
-          selectedSports: prev.selectedSports.filter(s => s.id !== sport.id)
-        };
-      } else {
-        if (prev.selectedSports.length >= 2) {
-          setError('You can select up to 2 sports');
-          return prev;
-        }
-        return {
-          ...prev,
-          selectedSports: [...prev.selectedSports, { id: sport.id, name: sport.name }]
-        };
-      }
-    });
-  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,10 +139,6 @@ const UserProfileForm = () => {
       }
 
       // Validation
-      if (formData.selectedSports.length === 0) {
-        setError('Please select at least one sport');
-        return;
-      }
 
       if (!formData.registrationNumber) {
         setError('Registration number is required');
@@ -227,14 +203,7 @@ const UserProfileForm = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-10"
-        >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Profile</h1>
-          <p className="text-gray-600">Let's get to know you better to enhance your experience</p>
-        </motion.div>
+
 
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
           <div className="p-6 sm:p-10">
@@ -401,58 +370,6 @@ const UserProfileForm = () => {
                   />
                 </motion.div>
               </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <label className="block text-sm font-medium text-gray-600 mb-4">
-                  Select Your Favorite Sports <span className="text-gray-500">(Max 2)</span>
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-                  {sportsOptions.map((sport, index) => {
-                    const isSelected = formData.selectedSports.some(s => s.id === sport.id);
-                    return (
-                      <motion.div 
-                        key={sport.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.35 + (index * 0.05) }}
-                        whileHover={{ 
-                          scale: 1.05,
-                          boxShadow: isSelected ? '0 10px 25px -5px rgba(0, 0, 0, 0.4)' : '0 4px 6px -1px rgba(0, 0, 0, 0.2)'
-                        }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
-                          isSelected 
-                            ? `${sport.selectedBg} text-white shadow-md`
-                            : `bg-white border-gray-200 text-gray-700 hover:border-${sport.color.split('-')[1]}-300 hover:bg-gray-50`
-                        }`}
-                        onClick={() => toggleSport(sport)}
-                      >
-                        <div className="flex flex-col items-center">
-                          <span className={`text-3xl mb-2 transition-all duration-300 ${isSelected ? 'scale-110' : 'scale-100'}`}>
-                            {sport.icon}
-                          </span>
-                          <span className={`text-xs font-semibold text-center transition-colors ${isSelected ? 'text-white' : sport.color}`}>
-                            {sport.name}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <motion.div 
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md"
-                          >
-                            ✓
-                          </motion.div>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </motion.div>
 
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
