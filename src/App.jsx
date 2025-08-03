@@ -20,6 +20,7 @@ import Notification from './components/Notification';
 import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
 import About from './components/About';
+import ContactUs from './components/ContactUs';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -183,6 +184,11 @@ function App() {
           <Route path="/about" element={
             <MainLayout>
               <About />
+            </MainLayout>
+          } />
+          <Route path="/contact" element={
+            <MainLayout>
+              <ContactUs />
             </MainLayout>
           } />
           <Route path="/complete-profile" element={
