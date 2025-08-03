@@ -204,12 +204,12 @@ const About = () => {
   const teamMembers = [
     {
       name: 'Kshitij Jain',
-      role: 'Co-founder & Lead Developer',
+      role: 'Co-founder & Technical Developer',
       location: 'Jaipur, Rajasthan'
     },
     {
       name: 'Harsh Agarwal',
-      role: 'Co-founder & Technical Lead',
+      role: 'Founder & Technical Developer',
       location: 'Jaipur, Rajasthan'
     }
   ];
