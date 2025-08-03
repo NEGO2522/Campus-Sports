@@ -233,11 +233,8 @@ const Navbar = () => {
               {isProfileOpen && (
                 <div className="origin-top-right absolute right-0 mt-50 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown" style={{ transform: 'translateX(-10px)' }}>
                   <div className="py-1" role="none">
-                    <Link to="/notification" className="text-gray-700 hover:text-blue-600 py-2 flex items-center">
-                      <FaBell className="mr-2" /> Notifications
-                    </Link>
                     <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                      <FaEdit className="mr-2" /> Edit Interested Sports
+                      <FaEdit className="mr-2" /> Edit Profile
                     </Link>
                     <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
                       <FaSignOutAlt className="mr-2" /> Logout
@@ -246,13 +243,19 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            {/* Mobile menu button */}
-            <div className="md:hidden flex items-center">
+            {/* Mobile menu button and notification */}
+            <div className="md:hidden flex items-center space-x-4">
+              <button
+                onClick={handleParticipationClick}
+                className="text-gray-700 hover:text-blue-600 focus:outline-none relative"
+              >
+                <FaBell size={20} />
+              </button>
               <button
                 onClick={toggleMenu}
-                className="p-2 rounded-md text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="text-gray-700 hover:text-blue-600 focus:outline-none"
               >
-                {isMenuOpen ? <FaTimes className="h-6 w-6" /> : <FaBars className="h-6 w-6" />}
+                {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
               </button>
             </div>
           </div>
@@ -296,16 +299,8 @@ const Navbar = () => {
                 <FaTrophy className="mr-2" />
                 Participation
               </button>
-              <Link
-                to="/notification"
-                className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                aria-label="Notifications"
-                onClick={toggleMenu}
-              >
-                <FaBell className="h-6 w-6" /> Notifications
-              </Link>
               <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                <FaEdit className="mr-2" /> Edit Interested Sports
+                <FaEdit className="mr-2" /> Edit Profile
               </Link>
               <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
                 <FaSignOutAlt className="mr-2" /> Logout
