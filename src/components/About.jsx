@@ -140,18 +140,6 @@ const About = () => {
     },
   ];
 
-  const teamMembers = [
-    {
-        name: 'Harsh Agarwal',
-        role: 'Co-founder & Lead Developer',
-        location: 'Jaipur, Rajasthan' 
-    },
-    {
-      name: 'Kshitij Jain',
-      role: 'Co-founder & Lead Developer',
-      location: 'Jaipur, Rajasthan'
-    }
-  ];
 
   return (
     <Box sx={{ bgcolor: 'background.default', overflow: 'hidden' }}>
@@ -239,118 +227,6 @@ const About = () => {
       </Box>
 
 
-
-      {/* Team Section */}
-      <Box sx={{ py: 10, bgcolor: 'background.default' }}>
-        <Container maxWidth="lg">
-          <Box 
-            textAlign="center" 
-            mb={8}
-            data-aos="fade-up"
-          >
-            <Typography 
-              variant="h4" 
-              component="h2" 
-              fontWeight={800}
-              sx={{
-                display: 'inline-block',
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  width: '60px',
-                  height: '4px',
-                  bottom: '-10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  borderRadius: '2px',
-                }
-              }}
-            >
-              Meet Our Team
-            </Typography>
-            <Typography 
-              variant="subtitle1" 
-              color="text.secondary" 
-              sx={{ 
-                maxWidth: '700px', 
-                mx: 'auto', 
-                mt: 2,
-                fontSize: '1.1rem'
-              }}
-            >
-              The passionate individuals behind Campus League
-            </Typography>
-          </Box>
-
-          <Grid container spacing={4} justifyContent="center">
-            {teamMembers.map((member, index) => (
-              <Grid 
-                item 
-                xs={12} 
-                sm={6} 
-                md={6} 
-                key={index}
-                data-aos="fade-up"
-                data-aos-delay={`${index * 100}`}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                }}
-              >
-                <TeamMember>
-                  <Box textAlign="center" flexGrow={1}>
-                    <Typography 
-                      variant="h5" 
-                      component="h3" 
-                      gutterBottom 
-                      fontWeight={700}
-                      sx={{
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        display: 'inline-block',
-                      }}
-                    >
-                      {member.name}
-                    </Typography>
-                    <Typography 
-                      variant="subtitle1" 
-                      color="primary" 
-                      gutterBottom 
-                      fontWeight={600}
-                      sx={{ mb: 2 }}
-                    >
-                      {member.role}
-                    </Typography>
-                    <Box 
-                      display="flex" 
-                      alignItems="center" 
-                      justifyContent="center" 
-                      mb={2}
-                    >
-                      <Box
-                        sx={{
-                          '& svg': {
-                            color: theme.palette.primary.main,
-                            mr: 1,
-                          }
-                        }}
-                      >
-                        <LocationOn fontSize="small" />
-                        <Typography variant="body2" color="text.secondary">
-                          {member.location}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </TeamMember>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
     </Box>
   );
 };
