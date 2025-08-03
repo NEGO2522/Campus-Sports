@@ -9,13 +9,15 @@ import { useNavigate } from 'react-router-dom';
 const UpcomingEvents = ({ onEventClick }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showSchedule, setShowSchedule] = useState(null);
-  const [eventSchedule, setEventSchedule] = useState(null);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [showDetails, setShowDetails] = useState(null);
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState({ open: false, eventId: null });
   const [saving, setSaving] = useState(false);
   const [participatingEvents, setParticipatingEvents] = useState({});
+
+  const toggleEventDetails = (eventId) => {
+    setShowDetails(showDetails === eventId ? null : eventId);
+  };
 
   useEffect(() => {
     // Create a query against the collection
@@ -25,8 +27,10 @@ const UpcomingEvents = ({ onEventClick }) => {
       orderBy('dateTime')
     );
 
-    // Subscribe to query updates
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    // Subscribe to query updates with error handling
+    const unsubscribe = onSnapshot(
+      q, 
+      (querySnapshot) => {
       const now = new Date();
       const eventsData = [];
       
@@ -75,42 +79,23 @@ const UpcomingEvents = ({ onEventClick }) => {
         setParticipatingEvents({});
       }
       setLoading(false);
-    }, (error) => {
+    }, 
+    (error) => {
       console.error('Error getting events:', error);
       setEvents([]);
       setLoading(false);
-    });
+      // You might want to show an error message to the user here
+    },
+    // Include metadata changes to ensure we get the most up-to-date data
+    { includeMetadataChanges: true }
+    );
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   
-  const handleViewSchedule = async (event) => {
-    setShowSchedule(event.id);
-    setScheduleLoading(true);
-    
-    try {
-      // In a real app, you would fetch the actual schedule from Firestore
-      // For now, we'll use a mock schedule
-      const mockSchedule = {
-        date: event.dateTime,
-        location: event.location,
-        duration: '2 hours',
-        organizer: event.createdBy || 'Event Organizer',
-        participants: event.participants?.length || 0,
-        maxParticipants: event.playersNeeded || 10,
-        description: event.description || 'No additional details provided.'
-      };
-      
-      setEventSchedule(mockSchedule);
-    } catch (error) {
-      console.error('Error fetching schedule:', error);
-      toast.error('Failed to load event schedule');
-    } finally {
-      setScheduleLoading(false);
-    }
-  };
+
 
   if (loading) {
     return (
@@ -214,12 +199,13 @@ const UpcomingEvents = ({ onEventClick }) => {
                   className="inline-flex items-center px-2.5 py-1.5 xs:px-3 xs:py-2 text-xs xs:text-sm border border-gray-300 font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleViewSchedule(event);
+                    toggleEventDetails(event.id);
                   }}
                 >
                   <FaClock className="mr-1.5 h-3 w-3" />
-                  View Details
+                  {showDetails === event.id ? 'Hide Details' : 'View Details'}
                 </button>
+
                 {event.participationType === 'player' ? (
                   <button
                     type="button"
@@ -269,48 +255,45 @@ const UpcomingEvents = ({ onEventClick }) => {
                 )}
               </div>
 
-              {/* Schedule/Timetable Section */}
-              {showSchedule === event.id && (
+              {/* Event Details Section with Real-time Updates */}
+              {showDetails === event.id && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Event Schedule</h4>
-                  {scheduleLoading ? (
-                    <div className="flex justify-center p-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-                    </div>
-                  ) : eventSchedule ? (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Date & Time</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {format(new Date(eventSchedule.date), 'EEEE, MMMM d, yyyy')} at {format(new Date(eventSchedule.date), 'h:mm a')}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Location</p>
-                          <p className="text-sm font-medium text-gray-900">{eventSchedule.location}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Duration</p>
-                          <p className="text-sm font-medium text-gray-900">{eventSchedule.duration}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Participants</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {eventSchedule.participants} / {eventSchedule.maxParticipants} players
-                          </p>
-                        </div>
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Event Details</h4>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Date & Time</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')} at {format(new Date(event.dateTime), 'h:mm a')}
+                        </p>
                       </div>
-                      {eventSchedule.description && (
-                        <div className="mt-4">
-                          <p className="text-sm text-gray-500 mb-1">Additional Details</p>
-                          <p className="text-sm text-gray-700">{eventSchedule.description}</p>
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-sm text-gray-500">Location</p>
+                        <p className="text-sm font-medium text-gray-900">{event.location}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Sport</p>
+                        <p className="text-sm font-medium text-gray-900 capitalize">{event.sport?.toLowerCase()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Participants</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {Array.isArray(event.participants) ? event.participants.length : 0} / {event.playersNeeded || 10} players
+                          {event.team && Object.keys(event.team).length > 0 && (
+                            <span className="block text-xs text-gray-500 mt-1">
+                              {Object.keys(event.team).length} team(s) registered
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">No schedule details available.</p>
-                  )}
+                    {event.description && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-500 mb-1">Description</p>
+                        <p className="text-sm text-gray-700">{event.description}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

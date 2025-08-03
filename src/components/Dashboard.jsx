@@ -107,7 +107,7 @@ const Dashboard = () => {
           
           <div className="-mx-2 xs:mx-0 sm:p-2">
             <div className="overflow-x-auto">
-              <OngoingEvents onEventClick={() => navigate('/schedule')} />
+              <OngoingEvents />
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ const Dashboard = () => {
             <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
           </div>
           <div className="-mx-2 xs:mx-0">
-            <UpcomingEvents onEventClick={() => navigate('/schedule')} />
+            <UpcomingEvents />
           </div>
         </div>
 
