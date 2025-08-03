@@ -19,6 +19,7 @@ import CreateTeam from './components/CreateTeam';
 import Notification from './components/Notification';
 import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
+import About from './components/About';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -177,7 +178,13 @@ function App() {
           <Route path="/" element={<RootRoute />} />
           
           {/* Auth routes */}
+          {/* Public routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/about" element={
+            <MainLayout>
+              <About />
+            </MainLayout>
+          } />
           <Route path="/complete-profile" element={
             <ProtectedRoute>
               <MainLayout>
