@@ -250,46 +250,91 @@ const Navbar = () => {
             </div>
             {/* Profile Dropdown - Desktop */}
             <div className="hidden md:ml-6 md:flex md:items-center relative">
-              <div className="relative mr-10">
+              {/* Notification Bell */}
+              <div className="relative mr-4">
                 <Link
                   to="/notification"
-                  className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 relative inline-block"
+                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 relative inline-block transition-colors duration-200"
                   aria-label="Notifications"
                 >
-                  <FaBell className="h-6 w-6" />
+                  <FaBell className="h-5 w-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white">
-                      {unreadCount}
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white font-medium">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </Link>
               </div>
-              <button
-                onClick={toggleProfile}
-                
-                className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <FaUser className="h-6 w-6" />
-              </button>
-              {/* Dropdown menu */}
-              {isProfileOpen && (
-                <div className="origin-top-right absolute right-0 mt-50 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 profile-dropdown" style={{ transform: 'translateX(-10px)' }}>
-                  <div className="py-1" role="none">
-                    <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                      <FaEdit className="mr-2" /> Edit Profile
-                    </Link>
-                    <Link to="/about" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                      <FaInfoCircle className="mr-2" /> About
-                    </Link>
-                    <Link to="/contact" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                      <FaEnvelope className="mr-2" /> Contact Us
-                    </Link>
-                    <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center w-full text-left" onClick={() => { handleLogout(); toggleMenu(); }}>
-                      <FaSignOutAlt className="mr-2" /> Logout
-                    </button>
+              
+              {/* Profile Button */}
+              <div className="relative">
+                <button
+                  onClick={toggleProfile}
+                  className="flex items-center space-x-2 p-1.5 pr-3 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                  aria-expanded={isProfileOpen}
+                  aria-haspopup="true"
+                >
+                  <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium">
+                    <FaUser className="h-4 w-4" />
                   </div>
-                </div>
-              )}
+                  <span className="text-sm font-medium text-gray-700">Profile</span>
+                  <svg 
+                    className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isProfileOpen ? 'transform rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {/* Dropdown menu */}
+                {isProfileOpen && (
+                  <div 
+                    className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden transition-all duration-200 transform origin-top-right"
+                    style={{ transform: isProfileOpen ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-10px)', opacity: isProfileOpen ? 1 : 0 }}
+                  >
+                    <div className="py-1" role="menu" aria-orientation="vertical">
+                      <Link 
+                        to="/form" 
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-150 flex items-center"
+                        onClick={() => setIsProfileOpen(false)}
+                        role="menuitem"
+                      >
+                        <FaEdit className="mr-3 text-gray-400 group-hover:text-blue-500" />
+                        Edit Profile
+                      </Link>
+                      <Link 
+                        to="/about" 
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-150 flex items-center"
+                        onClick={() => setIsProfileOpen(false)}
+                        role="menuitem"
+                      >
+                        <FaInfoCircle className="mr-3 text-gray-400 group-hover:text-blue-500" />
+                        About
+                      </Link>
+                      <Link 
+                        to="/contact" 
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-150 flex items-center"
+                        onClick={() => setIsProfileOpen(false)}
+                        role="menuitem"
+                      >
+                        <FaEnvelope className="mr-3 text-gray-400 group-hover:text-blue-500" />
+                        Contact Us
+                      </Link>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button 
+                        className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center"
+                        onClick={() => { handleLogout(); setIsProfileOpen(false); }}
+                        role="menuitem"
+                      >
+                        <FaSignOutAlt className="mr-3 text-red-400" />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             {/* Mobile menu button and notification */}
             <div className="md:hidden flex items-center space-x-4">

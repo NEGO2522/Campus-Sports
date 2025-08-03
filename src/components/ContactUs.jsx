@@ -142,10 +142,11 @@ const ContactUs = () => {
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
-      py: 8,
+      py: { xs: 4, sm: 6, md: 8 },
+      px: { xs: 2, sm: 3 },
       backgroundColor: theme.palette.background.default
     }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ width: '100%' }}>
         <motion.div
           initial="hidden"
           animate="visible"
@@ -153,67 +154,86 @@ const ContactUs = () => {
         >
           <motion.div variants={itemVariants}>
             <Typography 
-              variant="h3" 
+              variant={isMobile ? 'h4' : 'h3'} 
               component="h1" 
               align="center" 
               gutterBottom
               sx={{
                 fontWeight: 700,
                 color: theme.palette.primary.main,
-                mb: 2
+                mb: { xs: 1.5, sm: 2 },
+                fontSize: { xs: '1.75rem', sm: '2.5rem' }
               }}
             >
               Contact Us
             </Typography>
             <Typography 
-              variant="h6" 
+              variant={isMobile ? 'body1' : 'h6'} 
               align="center" 
               color="textSecondary"
               paragraph
-              sx={{ mb: 6 }}
+              sx={{ 
+                mb: { xs: 4, sm: 6 },
+                px: { xs: 1, sm: 0 },
+                lineHeight: 1.6
+              }}
             >
               Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
             </Typography>
-            <Typography 
-              variant="body2" 
-              align="center" 
-              color="textSecondary"
-              sx={{ mb: 4 }}
+            <Box 
+              sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center',
+                mb: 4 
+              }}
             >
-              Or email us directly at: {''}
+              <Typography 
+                variant="body2" 
+                align="center" 
+                color="textSecondary"
+                sx={{ mb: 1 }}
+              >
+                Or email us directly at:
+              </Typography>
               <a 
-                href="mailto:sports@campusleague.in" 
+                href="mailto:sports@campusleague.in"
                 style={{ 
                   color: theme.palette.primary.main, 
                   textDecoration: 'none',
                   fontWeight: 500,
+                  fontSize: isMobile ? '0.9375rem' : '1rem',
+                  padding: '4px 8px',
+                  borderRadius: '4px',
                   '&:hover': {
                     textDecoration: 'underline',
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
                   }
                 }}
               >
                 sports@campusleague.in
               </a>
-            </Typography>
+            </Box>
           </motion.div>
 
           <Grid container justifyContent="center">
-            <Grid item xs={12} md={8} lg={6}>
+            <Grid item xs={12} sm={10} md={8} lg={6}>
               <motion.div variants={itemVariants} style={{ height: '100%' }}>
                 <Paper 
-                  elevation={3} 
+                  elevation={isMobile ? 1 : 3} 
                   component="form" 
                   onSubmit={handleSubmit}
                   sx={{
-                    p: 4,
+                    p: { xs: 3, sm: 4 },
                     height: '100%',
                     borderRadius: 2,
                     backgroundColor: theme.palette.background.paper,
                     display: 'flex',
-                    flexDirection: 'column'
+                    flexDirection: 'column',
+                    border: isMobile ? `1px solid ${theme.palette.divider}` : 'none'
                   }}
                 >
-                  <Grid container spacing={3} sx={{ flex: 1 }}>
+                  <Grid container spacing={2.5} sx={{ flex: 1 }}>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
@@ -225,14 +245,23 @@ const ContactUs = () => {
                         helperText={errors.name}
                         required
                         variant="outlined"
+                        size={isMobile ? 'small' : 'medium'}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Person color={errors.name ? 'error' : 'action'} />
+                              <Person 
+                                fontSize={isMobile ? 'small' : 'medium'} 
+                                color={errors.name ? 'error' : 'action'} 
+                              />
                             </InputAdornment>
                           ),
                         }}
-                        sx={{ mb: 2 }}
+                        sx={{ 
+                          mb: { xs: 1.5, sm: 2 },
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -247,14 +276,23 @@ const ContactUs = () => {
                         helperText={errors.email}
                         required
                         variant="outlined"
+                        size={isMobile ? 'small' : 'medium'}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <Email color={errors.email ? 'error' : 'action'} />
+                              <Email 
+                                fontSize={isMobile ? 'small' : 'medium'} 
+                                color={errors.email ? 'error' : 'action'} 
+                              />
                             </InputAdornment>
                           ),
                         }}
-                        sx={{ mb: 2 }}
+                        sx={{ 
+                          mb: { xs: 1.5, sm: 2 },
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12}>
@@ -268,14 +306,23 @@ const ContactUs = () => {
                         helperText={errors.subject}
                         required
                         variant="outlined"
+                        size={isMobile ? 'small' : 'medium'}
                         InputProps={{
                           startAdornment: (
                             <InputAdornment position="start">
-                              <SubjectIcon color={errors.subject ? 'error' : 'action'} />
+                              <SubjectIcon 
+                                fontSize={isMobile ? 'small' : 'medium'} 
+                                color={errors.subject ? 'error' : 'action'} 
+                              />
                             </InputAdornment>
                           ),
                         }}
-                        sx={{ mb: 2 }}
+                        sx={{ 
+                          mb: { xs: 1.5, sm: 2 },
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12}>
@@ -289,31 +336,55 @@ const ContactUs = () => {
                         helperText={errors.message}
                         required
                         multiline
-                        rows={6}
+                        rows={isMobile ? 4 : 6}
                         variant="outlined"
-                        sx={{ mb: 3 }}
+                        size={isMobile ? 'small' : 'medium'}
+                        sx={{ 
+                          mb: { xs: 2, sm: 3 },
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '8px',
+                          },
+                          '& .MuiOutlinedInput-multiline': {
+                            padding: isMobile ? '8.5px 14px' : '16.5px 14px'
+                          }
+                        }}
                       />
                     </Grid>
                     <Grid item xs={12}>
-                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <motion.div 
+                        whileHover={{ scale: isMobile ? 1 : 1.02 }} 
+                        whileTap={{ scale: 0.98 }}
+                        style={{ width: '100%' }}
+                      >
                         <Button
                           type="submit"
                           variant="contained"
                           color="primary"
-                          size="large"
+                          size={isMobile ? 'medium' : 'large'}
                           fullWidth
                           disabled={isSubmitting}
-                          startIcon={<SendIcon />}
+                          startIcon={!isSubmitting && <SendIcon />}
                           sx={{
-                            py: 1.5,
+                            py: isMobile ? 1 : 1.5,
                             fontWeight: 600,
                             textTransform: 'none',
-                            fontSize: '1rem',
+                            fontSize: isMobile ? '0.9375rem' : '1rem',
                             borderRadius: 2,
-                            boxShadow: '0 4px 14px 0 rgba(0, 118, 255, 0.39)'
+                            boxShadow: '0 4px 14px 0 rgba(0, 118, 255, 0.39)',
+                            '&:hover': {
+                              boxShadow: '0 6px 20px 0 rgba(0, 118, 255, 0.5)'
+                            },
+                            '& .MuiButton-startIcon': {
+                              marginRight: isMobile ? '6px' : '8px'
+                            }
                           }}
                         >
-                          {isSubmitting ? 'Sending...' : 'Send Message'}
+                          {isSubmitting ? (
+                            <>
+                              <CircularProgress size={20} color="inherit" thickness={4} sx={{ mr: 1 }} />
+                              Sending...
+                            </>
+                          ) : 'Send Message'}
                         </Button>
                       </motion.div>
                     </Grid>
