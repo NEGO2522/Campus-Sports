@@ -158,9 +158,9 @@ const Home = () => {
         </div>
         
         {/* Content */}
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-6 text-center">
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 text-center">
           <motion.div variants={itemVariants}>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold mb-6 text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold mb-4 sm:mb-6 text-white">
               <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Connect. </span>
               <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-white to-blue-100">Play. </span>
               <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">Excel.</span>
@@ -169,7 +169,7 @@ const Home = () => {
           
           <motion.p 
             variants={itemVariants}
-            className="text-xl md:text-2xl lg:text-3xl mb-10 max-w-4xl mx-auto text-gray-200 font-medium leading-relaxed"
+            className="text-lg sm:text-xl md:text-2xl lg:text-3xl mb-8 sm:mb-10 max-w-4xl mx-auto text-gray-200 font-medium leading-relaxed px-2 sm:px-0"
           >
             The ultimate platform for college athletes to connect, compete, and create unforgettable sports experiences.
           </motion.p>
@@ -177,7 +177,7 @@ const Home = () => {
           <motion.div variants={itemVariants} className="mt-12">
             <button 
               onClick={handleGetStarted}
-              className="relative group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-5 px-12 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/30 flex items-center space-x-3 cursor-pointer mx-auto text-lg"
+              className="relative group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 sm:py-5 px-8 sm:px-12 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/30 flex items-center space-x-2 sm:space-x-3 cursor-pointer mx-auto text-base sm:text-lg"
             >
               <span className="relative z-10">Get Started</span>
               <motion.span 
@@ -202,13 +202,12 @@ const Home = () => {
       {/* Features Section */}
       <motion.section 
         ref={featuresRef}
-        className="relative w-full min-h-screen flex items-center justify-center py-20 overflow-hidden"
+        className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-b from-gray-800 to-gray-900 relative"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-100px" }}
         transition={{ duration: 0.8, ease: [0.6, 0.05, 0.01, 0.9] }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800"></div>
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="container mx-auto px-6 relative z-10">
           <motion.div 
@@ -271,7 +270,7 @@ const Home = () => {
             </motion.div>
           </motion.div>
         
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -292,7 +291,7 @@ const Home = () => {
                   <div className={`inline-flex items-center justify-center w-20 h-20 rounded-3xl mb-6 ${feature.color} shadow-xl group-hover:scale-110 transition-transform duration-500`}>
                     {React.cloneElement(feature.icon, { className: `text-4xl text-white` })}
                   </div>
-                  <h3 className="text-2xl font-bold mb-4 text-white">{feature.title}</h3>
+                  <h3 className="text-xl font-bold mb-4 text-white">{feature.title}</h3>
                   <p className="text-gray-300 flex-grow">{feature.description}</p>
                   <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                     <div className="w-8 h-1 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full"></div>

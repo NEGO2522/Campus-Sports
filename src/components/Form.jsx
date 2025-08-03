@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
+import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUser, FaPhone, FaVenusMars, FaChevronLeft, FaSwimmer } from 'react-icons/fa';
 import { GiSoccerBall, GiBasketballBasket, GiCricketBat, GiTennisBall, GiVolleyballBall, GiTennisRacket } from 'react-icons/gi';
@@ -65,6 +66,9 @@ const sportsOptions = [
 ];
 
 const UserProfileForm = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/dashboard';
   const [formData, setFormData] = useState({
     fullName: '',
     registrationNumber: '',
@@ -78,7 +82,6 @@ const UserProfileForm = () => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   // Load user data if editing profile
   useEffect(() => {
@@ -146,54 +149,58 @@ const UserProfileForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
-    // Validation
-    if (formData.selectedSports.length === 0) {
-      setError('Please select at least one sport');
-      return;
-    }
-
-    if (!formData.registrationNumber) {
-      setError('Registration number is required');
-      return;
-    }
-
-    if (!formData.courseName) {
-      setError('Course name is required');
-      return;
-    }
-
-    if (!auth.currentUser) {
-      navigate('/login');
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
-      // Create a clean data object with all the fields we want to save
-      const userData = {
-        fullName: formData.fullName,
-        registrationNumber: formData.registrationNumber,
-        courseName: formData.courseName,
-        age: formData.age,
-        gender: formData.gender,
-        phoneNumber: formData.phoneNumber,
-        experienceLevel: formData.experienceLevel,
-        selectedSports: formData.selectedSports,
+      if (!auth.currentUser) {
+        toast.error('You must be logged in to complete your profile');
+        navigate('/login', { state: { from: location } });
+        return;
+      }
+
+      // Validation
+      if (formData.selectedSports.length === 0) {
+        setError('Please select at least one sport');
+        return;
+      }
+
+      if (!formData.registrationNumber) {
+        setError('Registration number is required');
+        return;
+      }
+
+      if (!formData.courseName) {
+        setError('Course name is required');
+        return;
+      }
+
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+
+      await setDoc(userRef, {
+        ...formData,
+        userId: auth.currentUser.uid,
         email: auth.currentUser.email,
-        updatedAt: serverTimestamp(),
         profileCompleted: true,
-        // Include any additional fields you want to store
-        lastUpdated: new Date().toISOString()
-      };
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
 
-      // Save to Firestore
-      await setDoc(doc(db, 'users', auth.currentUser.uid), userData, { merge: true });
-
-      console.log('Profile saved successfully:', userData);
-      navigate('/dashboard');
+      // Update auth state or local storage to indicate profile is complete
+      localStorage.setItem('profileCompleted', 'true');
+      
+      console.log('Profile saved successfully:', formData);
+      
+      // Force a small delay to ensure the state is updated before navigation
+      setTimeout(() => {
+        // Use replace: true to prevent going back to the form
+        navigate('/dashboard', { 
+          replace: true,
+          state: { from: 'profile-completion' } 
+        });
+        
+        // Show success message after navigation
+        toast.success('Profile saved successfully!');
+      }, 100);
     } catch (error) {
       console.error('Error saving profile:', error);
       setError('Failed to save profile. Please try again.');

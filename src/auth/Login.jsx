@@ -4,6 +4,8 @@ import { FaEnvelope, FaArrowRight, FaSpinner, FaGoogle } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GiSoccerBall } from 'react-icons/gi';
 import { signInWithEmailLinkAuth, completeEmailLinkSignIn, checkAuthState, signInWithGoogle } from '../firebase/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/firebase';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -26,6 +28,17 @@ const Login = () => {
     return organizerEmails.includes(email.trim().toLowerCase());
   };
 
+  // Check if user profile is complete
+  const checkProfileCompletion = async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      return userDoc.exists() && userDoc.data().profileCompleted;
+    } catch (error) {
+      console.error('Error checking profile completion:', error);
+      return false;
+    }
+  };
+
   // Handle Google Sign In for Players
   const handleGoogleSignIn = async (e) => {
     e.preventDefault();
@@ -34,9 +47,20 @@ const Login = () => {
       setError('');
       const { user, error: googleError } = await signInWithGoogle();
       if (googleError) throw new Error(googleError);
+      
       if (user) {
         localStorage.setItem('userRole', 'player');
-        navigate('/dashboard');
+        
+        // Check if profile is complete
+        const isProfileComplete = await checkProfileCompletion(user.uid);
+        
+        // If profile is not complete, redirect to complete-profile
+        if (!isProfileComplete) {
+          navigate('/complete-profile', { state: { from: location.state?.from || '/' } });
+        } else {
+          // If profile is complete, go to dashboard or intended destination
+          navigate(location.state?.from?.pathname || '/dashboard');
+        }
       }
     } catch (err) {
       setError(err.message || 'Failed to sign in with Google');
@@ -150,7 +174,7 @@ const Login = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gray-900" ref={containerRef}>
+    <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden bg-gray-900" ref={containerRef}>
       {/* Background Images */}
       <div className="absolute inset-0 w-full h-full">
         <AnimatePresence mode="wait">
@@ -182,21 +206,21 @@ const Login = () => {
       )}
 
       {/* Main Content */}
-      <div className="relative z-10 w-full max-w-md px-4">
+      <div className="relative z-10 w-full max-w-md px-2 sm:px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl p-8 shadow-2xl border border-gray-700/50 overflow-hidden backdrop-blur-sm"
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-gray-700/50 overflow-hidden backdrop-blur-sm w-full mx-2 sm:mx-0"
         >
           {/* Logo and Title */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
                 <GiSoccerBall className="text-3xl text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome Back</h1>
             <p className="text-gray-300 text-sm">
               Sign in to your Campus Sports account
             </p>

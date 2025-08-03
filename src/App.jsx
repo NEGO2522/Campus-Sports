@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Home from './components/Home';
 import Login from './auth/Login';
 import Dashboard from './components/Dashboard';
@@ -37,7 +37,6 @@ const AuthCheck = () => {
   const [isProfileComplete, setIsProfileComplete] = useState(null);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -46,7 +45,6 @@ const AuthCheck = () => {
           const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
           if (userDoc.exists() && userDoc.data().profileCompleted) {
             setIsProfileComplete(true);
-            navigate(location.state?.from?.pathname || '/dashboard', { replace: true });
           } else {
             setIsProfileComplete(false);
           }
@@ -57,12 +55,12 @@ const AuthCheck = () => {
           setLoading(false);
         }
       } else {
-        navigate('/login', { state: { from: location }, replace: true });
+        setLoading(false);
       }
     };
 
     checkProfile();
-  }, [navigate, location]);
+  }, []);
 
   if (loading) {
     return (
@@ -180,7 +178,13 @@ function App() {
           
           {/* Auth routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/complete-profile" element={<UserProfileForm />} />
+          <Route path="/complete-profile" element={
+            <ProtectedRoute>
+              <MainLayout>
+                <UserProfileForm />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/check-profile" element={<AuthCheck />} />
           
           {/* Protected routes */}

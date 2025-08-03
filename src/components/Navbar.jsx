@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase/firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell, FaTrophy, FaPencilAlt } from 'react-icons/fa';
 
 const Navbar = () => {
@@ -12,12 +12,46 @@ const Navbar = () => {
   const [participationData, setParticipationData] = useState([]);
   const [loadingParticipation, setLoadingParticipation] = useState(false);
   const [currentUid, setCurrentUid] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Set up real-time listener for unread invitations in team subcollections
   useEffect(() => {
-    setCurrentUid(auth.currentUser ? auth.currentUser.uid : '');
-  }, []);
+    if (!auth.currentUser) return;
+    
+    const userId = auth.currentUser.uid;
+    setCurrentUid(userId);
+    
+    // Query all events
+    const eventsQuery = query(collection(db, 'events'));
+    
+    // Subscribe to real-time updates
+    const unsubscribe = onSnapshot(eventsQuery, async (eventsSnapshot) => {
+      let pendingInvitesCount = 0;
+      
+      // Check each event's team subcollection for pending invites
+      for (const eventDoc of eventsSnapshot.docs) {
+        const teamQuery = query(
+          collection(db, 'events', eventDoc.id, 'team'),
+          where('invitee', '==', userId),
+          where('accepted', '==', false)
+        );
+        
+        try {
+          const teamSnapshot = await getDocs(teamQuery);
+          pendingInvitesCount += teamSnapshot.size;
+        } catch (err) {
+          console.error('Error checking team invites:', err);
+        }
+      }
+      
+      setUnreadCount(pendingInvitesCount);
+    });
+
+    // Clean up subscription on unmount
+    return () => unsubscribe();
+  }, [auth.currentUser]);
 
   // Get user role from sessionStorage on component mount
   useEffect(() => {
@@ -216,13 +250,20 @@ const Navbar = () => {
             </div>
             {/* Profile Dropdown - Desktop */}
             <div className="hidden md:ml-6 md:flex md:items-center relative">
-              <Link
-                to="/notification"
-                className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 mr-10"
-                aria-label="Notifications"
-              >
-                <FaBell className="h-6 w-6" />
-              </Link>
+              <div className="relative mr-10">
+                <Link
+                  to="/notification"
+                  className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 relative inline-block"
+                  aria-label="Notifications"
+                >
+                  <FaBell className="h-6 w-6" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </Link>
+              </div>
               <button
                 onClick={toggleProfile}
                 className="p-1 rounded-full text-gray-600 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -245,12 +286,19 @@ const Navbar = () => {
             </div>
             {/* Mobile menu button and notification */}
             <div className="md:hidden flex items-center space-x-4">
-              <button
-                onClick={handleParticipationClick}
-                className="text-gray-700 hover:text-blue-600 focus:outline-none relative"
-              >
-                <FaBell size={20} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => navigate('/notification')}
+                  className="text-gray-700 hover:text-blue-600 focus:outline-none relative p-1"
+                >
+                  <FaBell size={20} />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
               <button
                 onClick={toggleMenu}
                 className="text-gray-700 hover:text-blue-600 focus:outline-none"
