@@ -416,55 +416,99 @@ const Navbar = () => {
         )}
         {/* Participation Modal */}
         {showParticipation && (
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-lg p-8 max-w-2xl w-full relative">
-              <button
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
-                onClick={() => setShowParticipation(false)}
-              >
-                <FaTimes />
-              </button>
-              <h2 className="text-2xl font-bold mb-6 text-center">Your Participation</h2>
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
+                <h2 className="text-xl font-bold text-gray-900">Your Participation</h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700 text-2xl p-2 -mr-2"
+                  onClick={() => setShowParticipation(false)}
+                  aria-label="Close"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6 overflow-y-auto flex-1">
               {loadingParticipation ? (
-                <div className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
                 </div>
               ) : participationData.length === 0 ? (
-                <div className="text-center text-gray-500">No participation found.</div>
+                <div className="text-center text-gray-500 py-12">
+                  <FaTrophy className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+                  <p className="text-lg font-medium">No participation found</p>
+                  <p className="text-sm mt-1">Join or create a team to see your participation here</p>
+                </div>
               ) : (
-                <ul className="space-y-6">
-                  {participationData.map((item, idx) => (
-                    item.type === 'team' ? (
-                      <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow flex flex-col relative">
-                        {/* Pencil Button - only for leader */}
-                        {item.leader === currentUid && (
-                          <button
-                            className="absolute top-2 right-2 text-gray-500 hover:text-blue-700"
-                            title="Edit Team"
-                            onClick={() => handleEditTeam(item.eventId)}
-                          >
-                            <FaPencilAlt />
-                          </button>
-                        )}
-                        <div className="font-semibold text-blue-800 text-lg mb-1">{item.eventName}</div>
-                        <div className="text-sm text-gray-700 mb-1">Team: <span className="font-bold">{item.teamName}</span></div>
-                        <div className="text-sm text-gray-700 mb-1">Leader: <span className="font-bold">{item.leaderName}</span></div>
-                        <div className="text-sm text-gray-700">Members:</div>
-                        <ul className="ml-4 text-gray-600 text-sm list-disc">
-                          {item.memberNames.map((member, i) => (
-                            <li key={member + i}>{member}</li>
-                          ))}
-                        </ul>
-                      </li>
-                    ) : (
-                      <li key={item.eventId + 'individual'} className="bg-green-50 rounded-lg p-4 shadow flex flex-col">
-                        <div className="font-semibold text-green-800 text-lg mb-1">{item.eventName}</div>
-                        <div className="text-sm text-gray-700">Participant: <span className="font-bold">{item.participantName}</span></div>
-                      </li>
-                    )
-                  ))}
-                </ul>
+                <div className="max-w-2xl mx-auto w-full">
+                  <ul className="space-y-4">
+                    {participationData.map((item, idx) => (
+                      item.type === 'team' ? (
+                        <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow-sm border border-blue-100 relative">
+                          {/* Pencil Button - only for leader */}
+                          {item.leader === currentUid && (
+                            <button
+                              className="absolute top-3 right-3 p-1.5 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                              title="Edit Team"
+                              onClick={() => handleEditTeam(item.eventId)}
+                              aria-label="Edit team"
+                            >
+                              <FaPencilAlt className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          <div className="font-semibold text-blue-900 text-base mb-1 pr-6">{item.eventName}</div>
+                          <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+                            <div className="text-gray-700">Team:</div>
+                            <div className="font-medium text-gray-900">{item.teamName}</div>
+                            
+                            <div className="text-gray-700">Role:</div>
+                            <div className="font-medium text-gray-900">
+                              {item.leader === currentUid ? 'Team Leader' : 'Team Member'}
+                            </div>
+                            
+                            <div className="text-gray-700">Members:</div>
+                            <div className="space-y-1">
+                              {[item.leaderName, ...item.memberNames.filter(name => name !== item.leaderName)].map((member, i) => (
+                                <div key={member + i} className="flex items-center">
+                                  <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 ${member === item.leaderName ? 'bg-blue-500' : 'bg-gray-400'}`}></span>
+                                  <span className={member === item.leaderName ? 'font-medium text-blue-700' : 'text-gray-700'}>
+                                    {member} {member === item.leaderName && '(Leader)'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </li>
+                      ) : (
+                        <li key={item.eventId + 'individual'} className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-100">
+                          <div className="font-semibold text-green-900 text-base mb-1">{item.eventName}</div>
+                          <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+                            <div className="text-gray-700">Participation:</div>
+                            <div className="font-medium text-gray-900">Individual</div>
+                            
+                            <div className="text-gray-700">Status:</div>
+                            <div className="font-medium text-green-700">Registered</div>
+                          </div>
+                        </li>
+                      )
+                    ))}
+                  </ul>
+                </div>
               )}
+              </div>
+              
+              {/* Footer */}
+              <div className="bg-white border-t border-gray-200 p-4 flex justify-end">
+                <button
+                  onClick={() => setShowParticipation(false)}
+                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-base font-medium"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}
