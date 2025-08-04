@@ -135,17 +135,40 @@ const UpcomingEvents = ({ onEventClick }) => {
             <div className="p-3 xs:p-4 sm:p-5">
               <div className="flex flex-col xs:flex-row justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base xs:text-lg font-semibold text-gray-900 truncate">{event.eventName}</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-base xs:text-lg font-semibold text-gray-900 truncate">{event.eventName}</h3>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] xs:text-xs font-medium ${
+                      event.sport?.toLowerCase() === 'football'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`} style={{ minWidth: '60px', justifyContent: 'center' }}>
+                      {event.sport}
+                      {event.location?.toLowerCase().includes('poornima') && (
+                        <span className="ml-1 text-[8px] xs:text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1">Featured</span>
+                      )}
+                    </span>
+                  </div>
                   <div className="mt-1.5 flex flex-col xs:flex-row xs:items-center text-xs xs:text-sm text-gray-500 gap-1.5">
-                    <div className="flex items-center">
-                      <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
-                      <span className="font-medium">Starts:</span>
-                      <span className="ml-1 xs:ml-1.5">
-                        <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
-                        <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d, yyyy')}</span>
-                        <span className="mx-1.5">•</span>
-                        {format(new Date(event.dateTime), 'h:mm a')}
-                      </span>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
+                        <span className="font-medium">Starts:</span>
+                        <span className="ml-1 xs:ml-1.5">
+                          <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
+                          <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d, yyyy')}</span>
+                          <span className="mx-1.5">•</span>
+                          {format(new Date(event.dateTime), 'h:mm a')}
+                        </span>
+                      </div>
+                      {event.registrationDeadline && (
+                        <div className="flex items-center text-xs xs:text-sm text-gray-600 whitespace-nowrap ml-2">
+                          <FaClock className="mr-1 h-3 w-3 xs:h-3.5 xs:w-3.5 flex-shrink-0" />
+                          <span className="font-medium">Register by:</span>
+                          <span className="ml-1">{format(new Date(event.registrationDeadline), 'MMM d')}</span>
+                          <span className="mx-1">•</span>
+                          <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2 flex items-center text-xs xs:text-sm text-gray-500">
@@ -164,29 +187,6 @@ const UpcomingEvents = ({ onEventClick }) => {
                 </div>
                 <div className="flex-shrink-0 flex flex-col items-end mt-2 xs:mt-0">
                   <div className="flex flex-col items-end">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] xs:text-xs font-medium ${
-                      event.sport?.toLowerCase() === 'football' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    } mb-2`}>
-                      {event.sport}
-                      {event.location?.toLowerCase().includes('poornima') && (
-                        <span className="ml-1 text-[8px] xs:text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1">Featured</span>
-                      )}
-                    </span>
-                    {event.registrationDeadline && (
-                      <div className="flex flex-col xs:flex-row items-end xs:items-center text-xs xs:text-sm text-gray-600 whitespace-nowrap mt-1">
-                        <div className="flex items-center">
-                          <FaClock className="mr-1 h-3 w-3 xs:h-3.5 xs:w-3.5 flex-shrink-0" />
-                          <span className="font-medium">Register by:</span>
-                        </div>
-                        <div className="flex items-center ml-4 xs:ml-1.5 mt-0.5 xs:mt-0">
-                          <span className="ml-1">{format(new Date(event.registrationDeadline), 'MMM d')}</span>
-                          <span className="mx-1">•</span>
-                          <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

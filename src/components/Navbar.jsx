@@ -73,10 +73,18 @@ const Navbar = () => {
     setIsProfileOpen(!isProfileOpen);
   };
 
-  // Close profile dropdown when clicking outside
+  // Close profile dropdown when clicking outside (fix: allow clicks inside button and dropdown)
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isProfileOpen && !event.target.closest('.profile-dropdown')) {
+      const dropdown = document.querySelector('.profile-dropdown');
+      const button = document.querySelector('.profile-btn');
+      if (
+        isProfileOpen &&
+        dropdown &&
+        !dropdown.contains(event.target) &&
+        button &&
+        !button.contains(event.target)
+      ) {
         setIsProfileOpen(false);
       }
     };
@@ -270,7 +278,7 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={toggleProfile}
-                  className="flex items-center space-x-2 p-1.5 pr-3 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
+                  className="profile-btn flex items-center space-x-2 p-1.5 pr-3 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
                   aria-expanded={isProfileOpen}
                   aria-haspopup="true"
                 >
@@ -291,8 +299,8 @@ const Navbar = () => {
                 {/* Dropdown menu */}
                 {isProfileOpen && (
                   <div 
-                    className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50 overflow-hidden transition-all duration-200 transform origin-top-right"
-                    style={{ transform: isProfileOpen ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-10px)', opacity: isProfileOpen ? 1 : 0 }}
+                    className="profile-dropdown absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-[100] overflow-hidden transition-all duration-200 transform origin-top-right"
+                    style={{ transform: isProfileOpen ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-10px)', opacity: isProfileOpen ? 1 : 0, pointerEvents: 'auto' }}
                   >
                     <div className="py-1" role="menu" aria-orientation="vertical">
                       <Link 
