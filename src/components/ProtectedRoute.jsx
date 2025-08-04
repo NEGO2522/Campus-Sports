@@ -6,51 +6,41 @@ import { doc, getDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
 
 const ProtectedRoute = ({ children }) => {
-  const [status, setStatus] = useState({ loading: true, user: null, profileChecked: false });
+  const [status, setStatus] = useState({ loading: true, user: null, profileChecked: false, userRole: '' });
   const location = useLocation();
   const navigate = useNavigate();
 
   const checkAuthAndProfile = useCallback(async (currentUser) => {
     if (!currentUser) {
-      setStatus(prev => ({ ...prev, loading: false, user: null, profileChecked: false }));
-      return { shouldRedirect: true, redirectTo: '/login' };
+      setStatus(prev => ({ ...prev, loading: false, user: null, profileChecked: false, userRole: '' }));
+      return { shouldRedirect: true, redirectTo: '/login', userRole: '' };
     }
-
     try {
       // Check if user has completed their profile
       const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
       const profileCompleted = userDoc.exists() && userDoc.data().profileCompleted;
-      
+      const userRole = userDoc.exists() ? (userDoc.data().role || '') : '';
       // Store in local storage for quick access
       if (profileCompleted) {
         localStorage.setItem('profileCompleted', 'true');
       } else {
         localStorage.removeItem('profileCompleted');
       }
-      
       setStatus(prev => ({
         ...prev,
         loading: false,
         user: currentUser,
-        profileChecked: profileCompleted
+        profileChecked: profileCompleted,
+        userRole
       }));
-
       return { 
         shouldRedirect: !profileCompleted, 
-        redirectTo: '/complete-profile' 
+        redirectTo: '/complete-profile',
+        userRole
       };
     } catch (error) {
-      console.error('Error checking profile status:', error);
-      // In case of error, assume profile is not complete to be safe
-      setStatus(prev => ({
-        ...prev,
-        loading: false,
-        profileChecked: false
-      }));
-      return { 
-        shouldRedirect: true, 
-        redirectTo: '/complete-profile' 
-      };
+      setStatus(prev => ({ ...prev, loading: false, user: currentUser, profileChecked: false, userRole: '' }));
+      return { shouldRedirect: true, redirectTo: '/complete-profile', userRole: '' };
     }
   }, []);
 
@@ -89,11 +79,18 @@ const ProtectedRoute = ({ children }) => {
     if (!location.pathname.startsWith('/complete-profile')) {
       return <Navigate to="/complete-profile" state={{ from: location }} replace />;
     }
-    // If already on the complete-profile page, render the form
     return children;
   }
 
-  // If authenticated and profile is complete, render the protected content
+
+  const isAdminRoute = (
+    location.pathname.startsWith('/create-event') ||
+    location.pathname.startsWith('/manage-events') ||
+    /^\/events\/[^/]+$/.test(location.pathname)
+  );
+  if (isAdminRoute && status.userRole !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 };
 

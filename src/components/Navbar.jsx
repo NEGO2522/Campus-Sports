@@ -23,34 +23,73 @@ const Navbar = () => {
     const userId = auth.currentUser.uid;
     setCurrentUid(userId);
     
-    // Query all events
+    // Keep track of all unsubscribe functions
+    const unsubscribeFunctions = [];
+    let pendingInvitesCount = 0;
+    const eventListeners = new Map();
+    
+    // Function to update the unread count
+    const updateUnreadCount = () => {
+      let totalCount = 0;
+      eventListeners.forEach(count => totalCount += count);
+      setUnreadCount(totalCount);
+    };
+    
+    // First, get all events and set up listeners for each
     const eventsQuery = query(collection(db, 'events'));
     
-    // Subscribe to real-time updates
-    const unsubscribe = onSnapshot(eventsQuery, async (eventsSnapshot) => {
-      let pendingInvitesCount = 0;
+    const unsubscribeEvents = onSnapshot(eventsQuery, (eventsSnapshot) => {
+      // Clean up existing team listeners for removed events
+      const currentEventIds = new Set(eventsSnapshot.docs.map(doc => doc.id));
       
-      // Check each event's team subcollection for pending invites
-      for (const eventDoc of eventsSnapshot.docs) {
+      eventListeners.forEach((count, eventId) => {
+        if (!currentEventIds.has(eventId)) {
+          eventListeners.delete(eventId);
+        }
+      });
+      
+      // Set up listeners for each event's team subcollection
+      eventsSnapshot.docs.forEach(eventDoc => {
+        const eventId = eventDoc.id;
+        
+        // Skip if we already have a listener for this event
+        if (eventListeners.has(eventId)) return;
+        
+        // Initialize count for this event
+        eventListeners.set(eventId, 0);
+        
+        // Set up real-time listener for this event's team invitations
         const teamQuery = query(
-          collection(db, 'events', eventDoc.id, 'team'),
+          collection(db, 'events', eventId, 'team'),
           where('invitee', '==', userId),
           where('accepted', '==', false)
         );
         
-        try {
-          const teamSnapshot = await getDocs(teamQuery);
-          pendingInvitesCount += teamSnapshot.size;
-        } catch (err) {
-          console.error('Error checking team invites:', err);
-        }
-      }
+        const unsubscribeTeam = onSnapshot(teamQuery, (teamSnapshot) => {
+          // Update count for this specific event
+          eventListeners.set(eventId, teamSnapshot.size);
+          updateUnreadCount();
+        }, (error) => {
+          console.error(`Error listening to team invites for event ${eventId}:`, error);
+          // Set count to 0 for this event if there's an error
+          eventListeners.set(eventId, 0);
+          updateUnreadCount();
+        });
+        
+        unsubscribeFunctions.push(unsubscribeTeam);
+      });
       
-      setUnreadCount(pendingInvitesCount);
+      updateUnreadCount();
+    }, (error) => {
+      console.error('Error listening to events:', error);
     });
+    
+    unsubscribeFunctions.push(unsubscribeEvents);
 
-    // Clean up subscription on unmount
-    return () => unsubscribe();
+    // Clean up all subscriptions on unmount
+    return () => {
+      unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+    };
   }, [auth.currentUser]);
 
   // Get user role from sessionStorage on component mount

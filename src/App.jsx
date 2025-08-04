@@ -212,7 +212,7 @@ function App() {
             }
           />
           
-          {/* Quick Action Routes */}
+          {/* Quick Action Routes (admin only, enforced in ProtectedRoute) */}
           <Route 
             path="/create-event" 
             element={
