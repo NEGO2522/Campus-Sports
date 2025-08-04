@@ -19,15 +19,15 @@ const float = keyframes`
 `;
 
 const StyledAvatar = styled(Avatar)(({ theme }) => ({
-  width: theme.spacing(18),
-  height: theme.spacing(18),
+  width: theme.spacing(15),
+  height: theme.spacing(15),
   margin: '0 auto',
   border: '4px solid white',
   boxShadow: theme.shadows[10],
   animation: `${float} 6s ease-in-out infinite`,
-  [theme.breakpoints.down('sm')]: {
-    width: theme.spacing(15),
-    height: theme.spacing(15),
+  [theme.breakpoints.up('sm')]: {
+    width: theme.spacing(18),
+    height: theme.spacing(18),
   },
   '&:hover': {
     animation: `${float} 3s ease-in-out infinite`,
@@ -53,7 +53,8 @@ const FeatureCard = styled(Card)(({ theme }) => ({
     },
   },
   [theme.breakpoints.down('sm')]: {
-    margin: '0 8px',
+    margin: '0 0 16px 0',
+    borderRadius: '12px',
   },
 }));
 
@@ -77,7 +78,8 @@ const TeamMember = styled(Box)(({ theme }) => ({
     },
   },
   [theme.breakpoints.down('sm')]: {
-    padding: theme.spacing(3, 2),
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(2),
   },
 }));
 
@@ -140,217 +142,157 @@ const About = () => {
     },
   ];
 
-  const teamMembers = [
-    {
-      name: 'Kshitij Jain',
-      role: 'Co-founder & Lead Developer',
-      location: 'Jaipur, Rajasthan'
-    },
-    {
-      name: 'Harsh Agarwal',
-      role: 'Co-founder & Technical Lead',
-      location: 'Jaipur, Rajasthan'
-    }
-  ];
 
   return (
-    <Box sx={{ bgcolor: 'background.default', overflow: 'hidden' }}>
+    <Box sx={{ 
+      bgcolor: 'background.default', 
+      overflow: 'hidden',
+      pt: { xs: 4, sm: 6, md: 10 },
+      pb: { xs: 6, sm: 8, md: 10 },
+      px: { xs: 2, sm: 3 }
+    }}>
       {/* Our Story Section */}
-      <Box sx={{ py: 10 }}>
-        <Container maxWidth="lg">
-          <Box 
-            textAlign="center" 
-            mb={8}
-            data-aos="fade-up"
+      <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+        <Box 
+          textAlign="center" 
+          mb={{ xs: 4, sm: 6, md: 8 }}
+          data-aos="fade-up"
+        >
+          <Typography 
+            variant={isMobile ? 'h5' : 'h4'}
+            component="h2" 
+            fontWeight={800}
+            sx={{
+              display: 'inline-block',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                width: '60px',
+                height: '4px',
+                bottom: '-10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                borderRadius: '2px',
+              }
+            }}
           >
-            <Typography 
-              variant="h4" 
-              component="h2" 
-              fontWeight={800}
-              sx={{
-                display: 'inline-block',
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  width: '60px',
-                  height: '4px',
-                  bottom: '-10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  borderRadius: '2px',
-                }
-              }}
-            >
-              Our Story
-            </Typography>
-          </Box>
-          
-          <Grid container justifyContent="center">
-            <Grid item xs={12} md={8} data-aos="fade-up">
-              <Box>
-                <Typography 
-                  variant="h5" 
-                  component="h3" 
-                  fontWeight={700} 
-                  gutterBottom
-                  color="primary"
-                >
-                  Where Passion Meets Innovation
-                </Typography>
-                <Typography variant="body1" paragraph sx={{ mb: 3, lineHeight: 1.8 }}>
-                  Founded in 2023, Campus League emerged from a shared vision to revolutionize how students engage with sports on campus. 
-                  We recognized the untapped potential of student athletes and the lack of a unified platform to bring them together.
-                </Typography>
-                <Typography variant="body1" paragraph sx={{ mb: 4, lineHeight: 1.8 }}>
-                  What began as a passion project between two developers from Jaipur has evolved into a comprehensive platform 
-                  connecting thousands of students across multiple institutions. We're proud to be at the intersection of 
-                  sports and technology, making it easier than ever for students to discover, participate in, and organize 
-                  athletic activities.
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 4 }}>
-                  {sportsCategories.map((sport, index) => (
-                    <Box 
-                      key={index}
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        p: 2,
-                        borderRadius: '12px',
-                        background: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          transform: 'translateY(-3px)',
-                          boxShadow: `0 5px 15px ${theme.palette.primary.main}20`,
-                        },
-                      }}
-                    >
-                      <Box sx={{ color: 'primary.main' }}>{sport.icon}</Box>
-                      <Typography variant="body2" sx={{ mt: 1, fontWeight: 500 }}>{sport.name}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-
-
-
-      {/* Team Section */}
-      <Box sx={{ py: 10, bgcolor: 'background.default' }}>
-        <Container maxWidth="lg">
-          <Box 
-            textAlign="center" 
-            mb={8}
-            data-aos="fade-up"
-          >
-            <Typography 
-              variant="h4" 
-              component="h2" 
-              fontWeight={800}
-              sx={{
-                display: 'inline-block',
-                position: 'relative',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  width: '60px',
-                  height: '4px',
-                  bottom: '-10px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                  borderRadius: '2px',
-                }
-              }}
-            >
-              Meet Our Team
-            </Typography>
-            <Typography 
-              variant="subtitle1" 
-              color="text.secondary" 
-              sx={{ 
-                maxWidth: '700px', 
-                mx: 'auto', 
-                mt: 2,
-                fontSize: '1.1rem'
-              }}
-            >
-              The passionate individuals behind Campus League
-            </Typography>
-          </Box>
-
-          <Grid container spacing={4} justifyContent="center">
-            {teamMembers.map((member, index) => (
-              <Grid 
-                item 
-                xs={12} 
-                sm={6} 
-                md={6} 
-                key={index}
-                data-aos="fade-up"
-                data-aos-delay={`${index * 100}`}
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
+            Our Story
+          </Typography>
+        </Box>
+        
+        <Grid container justifyContent="center">
+          <Grid item xs={12} md={8} data-aos="fade-up">
+            <Box>
+              <Typography 
+                variant={isMobile ? 'h6' : 'h5'}
+                component="h3" 
+                fontWeight={700} 
+                gutterBottom
+                color="primary"
+                sx={{ mb: 2 }}
+              >
+                Where Passion Meets Innovation
+              </Typography>
+              <Typography 
+                variant="body1" 
+                paragraph 
+                sx={{ 
+                  mb: 3, 
+                  lineHeight: 1.8,
+                  fontSize: { xs: '0.9375rem', sm: '1rem' }
                 }}
               >
-                <TeamMember>
-                  <Box textAlign="center" flexGrow={1}>
+                Founded in 2025, Campus League emerged from a shared vision to revolutionize how students engage with sports on campus. 
+                We recognized the untapped potential of student athletes and the lack of a unified platform to bring them together.
+              </Typography>
+              <Typography 
+                variant="body1" 
+                paragraph 
+                sx={{ 
+                  mb: { xs: 3, sm: 4 }, 
+                  lineHeight: 1.8,
+                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                }}
+              >
+                What began as a passion project between two developers from Jaipur has evolved into a comprehensive platform 
+                connecting thousands of students across multiple institutions. We're proud to be at the intersection of 
+                sports and technology, making it easier than ever for students to discover, participate in, and organize 
+                athletic activities.
+              </Typography>
+              <Box sx={{ mt: 4 }}>
+                <Box 
+                  sx={{ 
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: 'repeat(2, 1fr)',
+                      sm: 'repeat(3, 1fr)',
+                      md: 'repeat(4, 1fr)',
+                      lg: 'repeat(5, 1fr)'
+                    },
+                    gap: 2,
+                  }}
+                >
+                  {sportsCategories.slice(0, isMobile ? 6 : sportsCategories.length).map((sport, index) => (
+                  <Box 
+                    key={index}
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      p: { xs: 1, sm: 2 },
+                      borderRadius: '12px',
+                      background: theme.palette.mode === 'dark' 
+                        ? 'rgba(255,255,255,0.05)' 
+                        : 'rgba(0,0,0,0.03)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-3px)',
+                        boxShadow: `0 5px 15px ${theme.palette.primary.main}20`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ 
+                      color: 'primary.main',
+                      '& .MuiSvgIcon-root': {
+                        fontSize: { xs: '32px', sm: '40px' }
+                      }
+                    }}>
+                      {sport.icon}
+                    </Box>
                     <Typography 
-                      variant="h5" 
-                      component="h3" 
-                      gutterBottom 
-                      fontWeight={700}
-                      sx={{
-                        background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        display: 'inline-block',
+                      variant="body2" 
+                      sx={{ 
+                        mt: 1, 
+                        fontWeight: 500,
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        textAlign: 'center'
                       }}
                     >
-                      {member.name}
+                      {sport.name}
                     </Typography>
-                    <Typography 
-                      variant="subtitle1" 
-                      color="primary" 
-                      gutterBottom 
-                      fontWeight={600}
-                      sx={{ mb: 2 }}
-                    >
-                      {member.role}
-                    </Typography>
-                    <Box 
-                      display="flex" 
-                      alignItems="center" 
-                      justifyContent="center" 
-                      mb={2}
-                    >
-                      <Box
-                        sx={{
-                          '& svg': {
-                            color: theme.palette.primary.main,
-                            mr: 1,
-                          }
-                        }}
-                      >
-                        <LocationOn fontSize="small" />
-                        <Typography variant="body2" color="text.secondary">
-                          {member.location}
-                        </Typography>
-                      </Box>
-                    </Box>
                   </Box>
-                </TeamMember>
-              </Grid>
-            ))}
+                ))}
+                </Box>
+                {isMobile && sportsCategories.length > 6 && (
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      textAlign: 'center', 
+                      mt: 2, 
+                      color: 'text.secondary',
+                      fontStyle: 'italic'
+                    }}
+                  >
+                    and many more...
+                  </Typography>
+                )}
+              </Box>
+            </Box>
           </Grid>
-        </Container>
-      </Box>
+        </Grid>
+      </Container>
     </Box>
   );
 };

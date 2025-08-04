@@ -9,13 +9,15 @@ import { useNavigate } from 'react-router-dom';
 const UpcomingEvents = ({ onEventClick }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showSchedule, setShowSchedule] = useState(null);
-  const [eventSchedule, setEventSchedule] = useState(null);
-  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [showDetails, setShowDetails] = useState(null);
   const navigate = useNavigate();
   const [showConfirm, setShowConfirm] = useState({ open: false, eventId: null });
   const [saving, setSaving] = useState(false);
   const [participatingEvents, setParticipatingEvents] = useState({});
+
+  const toggleEventDetails = (eventId) => {
+    setShowDetails(showDetails === eventId ? null : eventId);
+  };
 
   useEffect(() => {
     // Create a query against the collection
@@ -25,8 +27,10 @@ const UpcomingEvents = ({ onEventClick }) => {
       orderBy('dateTime')
     );
 
-    // Subscribe to query updates
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+    // Subscribe to query updates with error handling
+    const unsubscribe = onSnapshot(
+      q, 
+      (querySnapshot) => {
       const now = new Date();
       const eventsData = [];
       
@@ -75,11 +79,16 @@ const UpcomingEvents = ({ onEventClick }) => {
         setParticipatingEvents({});
       }
       setLoading(false);
-    }, (error) => {
+    }, 
+    (error) => {
       console.error('Error getting events:', error);
       setEvents([]);
       setLoading(false);
-    });
+      // You might want to show an error message to the user here
+    },
+    // Include metadata changes to ensure we get the most up-to-date data
+    { includeMetadataChanges: true }
+    );
 
     // Cleanup subscription on unmount
     return () => unsubscribe();
@@ -87,11 +96,11 @@ const UpcomingEvents = ({ onEventClick }) => {
 
   
   const handleViewSchedule = (event) => {
-    if (showSchedule === event.id) {
-      setShowSchedule(null);
+    if (showDetails === event.id) {
+      setShowDetails(null);
       return;
     }
-    setShowSchedule(event.id);
+    setShowDetails(event.id);
   };
 
   if (loading) {
@@ -111,10 +120,9 @@ const UpcomingEvents = ({ onEventClick }) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {events.map((event, index) => {
         const isFull = event.participants?.length >= event.playersNeeded;
-        
         return (
           <motion.div
             key={event.id}
@@ -124,68 +132,77 @@ const UpcomingEvents = ({ onEventClick }) => {
             className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 active:ring-blue-200"
             onClick={() => onEventClick && onEventClick(event)}
           >
-            <div className="p-4 sm:p-5">
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{event.eventName}</h3>
-                  <div className="mt-1 flex items-center text-sm justify-between">
-                    <div className="flex items-center text-gray-500">
-                      <FaCalendarAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                      <span className="font-medium">Event Starts:</span>
-                      <span className="ml-1">{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
-                      <span className="mx-2">•</span>
-                      <span>{format(new Date(event.dateTime), 'h:mm a')}</span>
+            <div className="p-3 xs:p-4 sm:p-5">
+              <div className="flex flex-col xs:flex-row justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base xs:text-lg font-semibold text-gray-900 truncate">{event.eventName}</h3>
+                  <div className="mt-1.5 flex flex-col xs:flex-row xs:items-center text-xs xs:text-sm text-gray-500 gap-1.5">
+                    <div className="flex items-center">
+                      <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
+                      <span className="font-medium">Starts:</span>
+                      <span className="ml-1 xs:ml-1.5">
+                        <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
+                        <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d, yyyy')}</span>
+                        <span className="mx-1.5">•</span>
+                        {format(new Date(event.dateTime), 'h:mm a')}
+                      </span>
                     </div>
-                    
                   </div>
-                  <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <FaMapMarkerAlt className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                  <div className="mt-2 flex items-center text-xs xs:text-sm text-gray-500">
+                    <FaMapMarkerAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
                     <span className="truncate">{event.location}</span>
                   </div>
-                  <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <FaUsers className="mr-1.5 h-4 w-4 flex-shrink-0" />
+                  <div className="mt-2 flex items-center text-xs xs:text-sm text-gray-500">
+                    <FaUsers className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
                     {event.participationType === 'team' ? (
-                      <span>{event.participants?.length || 0} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
+                      <span>{Object.keys(event.team || {}).length} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
                     ) : (
                       <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
                     )}
                   </div>
                   {/* Remove description from card, only show in details toggle */}
                 </div>
-                <div className="ml-4 flex-shrink-0 flex flex-col items-end">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    event.sport?.toLowerCase() === 'football' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-blue-100 text-blue-800'
-                  } mb-2`}>
-                    {event.sport}
-                    {event.location?.toLowerCase().includes('poornima') && (
-                      <span className="ml-1 text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1.5">Featured</span>
-                    )}
-                  </span>
-                  {event.registrationDeadline && (
-                      <div className="flex items-center text-sm mt-3 text-gray-600 ml-4 whitespace-nowrap">
-                        <FaClock className="mr-1.5 h-4 w-4 flex-shrink-0" />
-                        <span className="font-medium">Register by:</span>
-                        <span className="ml-1">{format(new Date(event.registrationDeadline), 'MMM d, yyyy')}</span>
-                        <span className="mx-2">•</span>
-                        <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
+                <div className="flex-shrink-0 flex flex-col items-end mt-2 xs:mt-0">
+                  <div className="flex flex-col items-end">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] xs:text-xs font-medium ${
+                      event.sport?.toLowerCase() === 'football' 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    } mb-2`}>
+                      {event.sport}
+                      {event.location?.toLowerCase().includes('poornima') && (
+                        <span className="ml-1 text-[8px] xs:text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1">Featured</span>
+                      )}
+                    </span>
+                    {event.registrationDeadline && (
+                      <div className="flex flex-col xs:flex-row items-end xs:items-center text-xs xs:text-sm text-gray-600 whitespace-nowrap mt-1">
+                        <div className="flex items-center">
+                          <FaClock className="mr-1 h-3 w-3 xs:h-3.5 xs:w-3.5 flex-shrink-0" />
+                          <span className="font-medium">Register by:</span>
+                        </div>
+                        <div className="flex items-center ml-4 xs:ml-1.5 mt-0.5 xs:mt-0">
+                          <span className="ml-1">{format(new Date(event.registrationDeadline), 'MMM d')}</span>
+                          <span className="mx-1">•</span>
+                          <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
+                        </div>
                       </div>
                     )}
-                                  </div>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 flex justify-end space-x-2">
+              <div className="mt-3 xs:mt-4 flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleViewSchedule(event);
                   }}
-                  className={`inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${showSchedule === event.id ? 'bg-blue-100 text-blue-700' : ''}`}
+                  className={`inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${showDetails === event.id ? 'bg-blue-100 text-blue-700' : ''}`}
                 >
                   <FaClock className="mr-1.5 h-3 w-3" />
-                  {showSchedule === event.id ? 'Hide Details' : 'View Details'}
+                  {showDetails === event.id ? 'Hide Details' : 'View Details'}
                 </button>
+
                 {event.participationType === 'player' ? (
                   <button
                     type="button"
@@ -236,7 +253,7 @@ const UpcomingEvents = ({ onEventClick }) => {
               </div>
 
               {/* Details Section: Only show description in details toggle */}
-              {showSchedule === event.id && (
+              {showDetails === event.id && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <h4 className="text-sm font-medium text-gray-900 mb-3">Event Description</h4>
                   <p className="text-sm text-gray-700">{event.description || 'No description provided.'}</p>
@@ -260,6 +277,7 @@ const UpcomingEvents = ({ onEventClick }) => {
                   const user = auth.currentUser;
                   if (!user) {
                     alert('You must be logged in to participate.');
+                    setSaving(false);
                     return;
                   }
                   const eventRef = doc(db, 'events', showConfirm.eventId);
@@ -277,7 +295,7 @@ const UpcomingEvents = ({ onEventClick }) => {
               }}
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Yes'}
+              Yes
             </button>
             <button
               className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"

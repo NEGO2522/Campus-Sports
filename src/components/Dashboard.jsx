@@ -60,30 +60,29 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4 md:py-6">
+      <div className="max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 md:px-6 py-2 xs:py-3 sm:py-4 md:py-6">
         
-
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 xs:gap-3 sm:gap-4 mb-4 xs:mb-5 sm:mb-8">
           {stats.map((stat) => (
             <motion.div
               key={stat.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: stat.id * 0.1 }}
-              className="bg-white p-3 sm:p-4 md:p-5 rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 border border-gray-100 h-full flex flex-col"
+              className="bg-white p-2 xs:p-3 sm:p-4 md:p-5 rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 border border-gray-100 h-full flex flex-col"
             >
               <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-gray-500 truncate">{stat.name}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <div className="min-w-0">
+                  <p className="text-[10px] xs:text-xs sm:text-sm font-medium text-gray-500 truncate">{stat.name}</p>
+                  <p className="text-lg xs:text-xl sm:text-2xl font-bold text-gray-900 mt-0.5 xs:mt-1">{stat.value}</p>
                 </div>
-                <div className={`p-2 sm:p-3 rounded-lg ${stat.changeType === 'positive' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
-                  <stat.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                <div className={`p-1.5 xs:p-2 sm:p-3 rounded-lg ${stat.changeType === 'positive' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}>
+                  <stat.icon className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6" />
                 </div>
               </div>
-              <div className="mt-2 xs:mt-3 sm:mt-4 flex items-center flex-wrap">
-                <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+              <div className="mt-1.5 xs:mt-2 sm:mt-3 flex items-center flex-wrap">
+                <div className={`inline-flex items-center px-1.5 xs:px-2 py-0.5 rounded-full text-[10px] xs:text-xs font-medium ${
                   stat.changeType === 'positive' 
                     ? 'bg-green-100 text-green-800' 
                     : stat.changeType === 'negative'
@@ -92,16 +91,16 @@ const Dashboard = () => {
                 }`}>
                   {stat.changeType === 'positive' ? '↑' : stat.changeType === 'negative' ? '↓' : '→'} {stat.change}
                 </div>
-                <span className="ml-1.5 text-xs text-gray-500 whitespace-nowrap">from last week</span>
+                <span className="ml-1 text-[10px] xs:text-xs text-gray-500 whitespace-nowrap">from last week</span>
               </div>
             </motion.div>
           ))}
         </div>
 
         {/* Ongoing Events */}
-        <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-4 sm:p-6 mb-6 sm:mb-8">
-          <div className="mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+        <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 xs:p-4 sm:p-6 mb-4 xs:mb-5 sm:mb-8">
+          <div className="mb-3 xs:mb-4">
+            <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-gray-900">
               Ongoing Events
             </h2>
           </div>
@@ -116,11 +115,13 @@ const Dashboard = () => {
         </div>
 
         {/* Upcoming Events */}
-        <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-4 sm:p-6 mb-6 sm:mb-8">
-          <div className="mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
+        <div className="bg-white rounded-lg shadow-xs hover:shadow-sm transition-shadow duration-200 p-3 xs:p-4 sm:p-6 mb-4 xs:mb-5 sm:mb-8">
+          <div className="mb-3 xs:mb-4">
+            <h2 className="text-base xs:text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
           </div>
-          <UpcomingEvents />
+          <div className="-mx-2 xs:mx-0">
+            <UpcomingEvents />
+          </div>
         </div>
 
               </div>

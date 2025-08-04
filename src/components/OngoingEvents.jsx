@@ -192,12 +192,12 @@ const OngoingEvents = ({ onEventClick }) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="border-t border-gray-200">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 p-2 sm:p-4">
             <div className="lg:col-span-2">
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {events.map((event, index) => (
                   <motion.div
                     key={event.id}
@@ -205,48 +205,58 @@ const OngoingEvents = ({ onEventClick }) => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                     className="bg-gray-50 rounded-lg shadow-sm overflow-hidden border border-gray-200 hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-gray-100 active:ring-gray-200"
+                    onClick={() => onEventClick && onEventClick(event)}
                   >
-                    <div className="p-4 sm:p-5">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="font-semibold text-gray-900 text-base">
+                    <div className="p-3 sm:p-4">
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 xs:gap-2 mb-2">
+                        <h3 className="text-sm xs:text-base font-semibold text-gray-900 truncate">
                           {event.eventName || event.title || 'Event'}
-                        </div>
-                        <div className="text-xs text-gray-500">{event.sport}</div>
+                        </h3>
+                       
                       </div>
                       
-                      
-                      <div className="mt-2">
+                      <div className="mt-6 space-y-2">
                         {matchesByEvent[event.id] && matchesByEvent[event.id].length > 0 ? (
                           matchesByEvent[event.id].map((match) => (
-                            <div key={match.id} className="mb-2">
+                            <div key={match.id} className="mb-2 last:mb-0">
                               {match.matchName && (
-                                <div className="font-bold text-orange-600 text-sm mb-1">{match.matchName}</div>
+                                <div className="font-bold text-orange-600 text-lg xs:text-xs mb-1 truncate">
+                                  {match.matchName}
+                                </div>
                               )}
-                              <div className="p-3 bg-white rounded border border-green-300">
-                                <div className="text-lg text-black font-medium mt-1 mb-2">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div>{(match.team1?.name || match.team1) || 'Team 1'}</div>
+                              <div className="p-2 xs:p-3 bg-white rounded border border-green-200">
+                                <div className="text-sm xs:text-base text-black font-medium space-y-1.5">
+                                  <div className="flex flex-row items-center justify-between gap-1">
+                                    <span className="truncate">{(match.team1?.name || match.team1) || 'Team 1'}</span>
+                                    <div className="flex-1"></div>
                                     {match.matchStarted === true ? (
-                                      <div className="flex items-center text-red-600 font-bold text-xs ml-4 whitespace-nowrap">
-                                        <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                                      <div className="flex items-center text-red-600 font-bold text-[10px] xs:text-xs whitespace-nowrap ml-2">
+                                        <span className="w-1.5 h-1.5 xs:w-2 xs:h-2 bg-red-500 rounded-full mr-1.5 animate-pulse"></span>
                                         LIVE
                                       </div>
                                     ) : (
                                       match.dateTime && (
-                                        <div className="text-xs text-gray-700 ml-4 whitespace-nowrap">{format(match.dateTime, 'dd MMM, hh:mm a')}</div>
+                                        <div className="text-[10px] xs:text-xs text-gray-600 whitespace-nowrap ml-2">
+                                          {format(match.dateTime, 'MMM d, h:mma').toLowerCase()}
+                                        </div>
                                       )
                                     )}
                                   </div>
-                                  <div>{(match.team2?.name || match.team2) || 'Team 2'}</div>
+                                  <div className="flex flex-row items-center justify-between gap-1 mt-1">
+                                    <span className="truncate">{(match.team2?.name || match.team2) || 'Team 2'}</span>
+                                  </div>
                                 </div>
-                                <div className="text-xs text-gray-700">
-                                  <div>Location: {match.location}</div>
-                                </div>
+                                {match.location && (
+                                  <div className="mt-1.5 flex items-center text-[10px] xs:text-xs text-gray-600">
+                                    <FaMapMarkerAlt className="mr-1 h-2.5 w-2.5 flex-shrink-0" />
+                                    <span className="truncate">{match.location}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))
                         ) : (
-                          <div className="text-xs text-gray-500">No matches scheduled yet.</div>
+                          <div className="text-xs text-gray-500 text-center py-2">No matches scheduled yet.</div>
                         )}
                       </div>
                     </div>
