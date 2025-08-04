@@ -38,7 +38,9 @@ const OngoingEvents = ({ onEventClick }) => {
             } else if (dateTime) {
               dateTime = new Date(dateTime);
             }
+            // Include all fields from Firestore, including scores
             return {
+              ...match,
               id: matchDoc.id,
               matchName: match.round || match.matchName || match.title || '',
               team1: { name: match.team1 },
@@ -227,7 +229,18 @@ const OngoingEvents = ({ onEventClick }) => {
                               <div className="p-2 xs:p-3 bg-white rounded border border-green-200">
                                 <div className="text-sm xs:text-base text-black font-medium space-y-1.5">
                                   <div className="flex flex-row items-center justify-between gap-1">
-                                    <span className="truncate">{(match.team1?.name || match.team1) || 'Team 1'}</span>
+                                    <span className="truncate">
+                                      {(match.team1?.name || match.team1) || 'Team 1'}
+                                      {/* Team 1 Score */}
+                                      <span className="ml-20 text-base text-blue-500 font-bold">
+                                        {(() => {
+                                          const safeTeam1 = (match.team1?.name || match.team1 || 'Team 1').replace(/[~*\/\[\]]/g, '_');
+                                          const team1Key = `score_${safeTeam1}`;
+                                          const score = match[team1Key];
+                                          return score !== undefined && score !== '' ? score : <span className="text-gray-400 font-normal">No score</span>;
+                                        })()}
+                                      </span>
+                                    </span>
                                     <div className="flex-1"></div>
                                     {match.matchStarted === true ? (
                                       <div className="flex items-center text-red-600 font-bold text-[10px] xs:text-xs whitespace-nowrap ml-2">
@@ -243,7 +256,18 @@ const OngoingEvents = ({ onEventClick }) => {
                                     )}
                                   </div>
                                   <div className="flex flex-row items-center justify-between gap-1 mt-1">
-                                    <span className="truncate">{(match.team2?.name || match.team2) || 'Team 2'}</span>
+                                    <span className="truncate">
+                                      {(match.team2?.name || match.team2) || 'Team 2'}
+                                      {/* Team 2 Score */}
+                                      <span className="ml-20 text-base text-blue-500 font-bold">
+                                        {(() => {
+                                          const safeTeam2 = (match.team2?.name || match.team2 || 'Team 2').replace(/[~*\/\[\]]/g, '_');
+                                          const team2Key = `score_${safeTeam2}`;
+                                          const score = match[team2Key];
+                                          return score !== undefined && score !== '' ? score : <span className="text-gray-400 font-normal">No score</span>;
+                                        })()}
+                                      </span>
+                                    </span>
                                   </div>
                                 </div>
                                 {match.location && (

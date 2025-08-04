@@ -86,9 +86,27 @@ const EventMatches = ({ eventId }) => {
                   </button>
                   <div className="text-lg text-black font-medium mt-1 mb-2">
                     <div className="flex items-center justify-between mb-2">
-                      <div>{(match.team1?.name || match.team1) || 'Team 1'}</div>
+                      <div>
+                        {(match.team1?.name || match.team1) || 'Team 1'}
+                        <div className="text-xs text-gray-500 mt-1">
+                          {(() => {
+                            const safeTeam1 = (match.team1?.name || match.team1 || 'Team 1').replace(/[~*\/\[\]]/g, '_');
+                            const team1Key = `score_${safeTeam1}`;
+                            return match[team1Key] !== undefined ? `Score: ${match[team1Key]}` : '';
+                          })()}
+                        </div>
+                      </div>
                       <div>vs</div>
-                      <div>{(match.team2?.name || match.team2) || 'Team 2'}</div>
+                      <div>
+                        {(match.team2?.name || match.team2) || 'Team 2'}
+                        <div className="text-xs text-gray-500 mt-1">
+                          {(() => {
+                            const safeTeam2 = (match.team2?.name || match.team2 || 'Team 2').replace(/[~*\/\[\]]/g, '_');
+                            const team2Key = `score_${safeTeam2}`;
+                            return match[team2Key] !== undefined ? `Score: ${match[team2Key]}` : '';
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="text-xs text-gray-700 mb-1">Location: {match.location}</div>
@@ -125,30 +143,36 @@ const EventMatches = ({ eventId }) => {
                   {/* Start/Pause Button for match */}
                   <div className="mt-2 flex space-x-2">
                     {match.matchStarted === false && (
-                      <button
-                        className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 shadow"
-                        title="Start Match"
-                        onClick={async () => {
-                          const matchRef = doc(db, 'events', eventId, 'matches', match.id);
-                          await updateDoc(matchRef, { matchStarted: true });
-                          setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: true } : m));
-                        }}
-                      >
-                        <FaPlay className="w-3 h-3" />
-                      </button>
+                      <>
+                        <button
+                          className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 shadow"
+                          title="Start Match"
+                          onClick={async () => {
+                            const matchRef = doc(db, 'events', eventId, 'matches', match.id);
+                            await updateDoc(matchRef, { matchStarted: true });
+                            setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: true } : m));
+                          }}
+                        >
+                          <FaPlay className="w-3 h-3" />
+                        </button>
+                        <ScoreButton match={match} eventId={eventId} setMatches={setMatches} />
+                      </>
                     )}
                     {match.matchStarted === true && (
-                      <button
-                        className="bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"
-                        title="Pause Match"
-                        onClick={async () => {
-                          const matchRef = doc(db, 'events', eventId, 'matches', match.id);
-                          await updateDoc(matchRef, { matchStarted: false });
-                          setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: false } : m));
-                        }}
-                      >
-                        <FaPause className="w-3 h-3" />
-                      </button>
+                      <>
+                        <button
+                          className="bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"
+                          title="Pause Match"
+                          onClick={async () => {
+                            const matchRef = doc(db, 'events', eventId, 'matches', match.id);
+                            await updateDoc(matchRef, { matchStarted: false });
+                            setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: false } : m));
+                          }}
+                        >
+                          <FaPause className="w-3 h-3" />
+                        </button>
+                        <ScoreButton match={match} eventId={eventId} setMatches={setMatches} />
+                      </>
                     )}
                   </div>
                   {match.description && <div className="text-xs text-gray-500 mt-1">{match.description}</div>}
@@ -174,5 +198,87 @@ const EventMatches = ({ eventId }) => {
     </div>
   );
 };
+
+// ScoreButton component
+function ScoreButton({ match, eventId, setMatches }) {
+  const [showInput, setShowInput] = useState(false);
+  const [score1, setScore1] = useState(match.score1 || '');
+  const [score2, setScore2] = useState(match.score2 || '');
+  const [saving, setSaving] = useState(false);
+
+  if (!match.matchStarted) return null;
+
+  return (
+    <>
+      <button
+        className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 shadow ml-2"
+        title="Add Score"
+        onClick={() => setShowInput(true)}
+      >
+        Score
+      </button>
+      {showInput && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-50 w-80 max-h-[90vh] overflow-y-auto">
+          <div className="mb-2 font-semibold text-gray-800">Enter Scores</div>
+          <div className="flex flex-col gap-2 mb-2">
+            <label className="text-sm text-gray-700">{(match.team1?.name || match.team1) || 'Team 1'}:</label>
+            <input
+              type="number"
+              value={score1}
+              onChange={e => setScore1(e.target.value)}
+              className="border rounded px-2 py-1 w-full"
+              min="0"
+            />
+            <label className="text-sm text-gray-700">{(match.team2?.name || match.team2) || 'Team 2'}:</label>
+            <input
+              type="number"
+              value={score2}
+              onChange={e => setScore2(e.target.value)}
+              className="border rounded px-2 py-1 w-full"
+              min="0"
+            />
+          </div>
+          <div className="flex gap-2 justify-end mt-2">
+            <button
+              className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true);
+                const matchRef = doc(db, 'events', eventId, 'matches', match.id);
+                const safeTeam1 = (match.team1?.name || match.team1 || 'Team 1').replace(/[~*\/[\]]/g, '_');
+                const safeTeam2 = (match.team2?.name || match.team2 || 'Team 2').replace(/[~*\/[\]]/g, '_');
+                const team1Key = `score_${safeTeam1}`;
+                const team2Key = `score_${safeTeam2}`;
+                await updateDoc(matchRef, {
+                  [team1Key]: Number(score1),
+                  [team2Key]: Number(score2)
+                });
+                setMatches(prev => prev.map(m =>
+                  m.id === match.id
+                    ? {
+                        ...m,
+                        [team1Key]: Number(score1),
+                        [team2Key]: Number(score2)
+                      }
+                    : m
+                ));
+                setSaving(false);
+                setShowInput(false);
+              }}
+            >
+              Save
+            </button>
+            <button
+              className="px-4 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              onClick={() => setShowInput(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export default EventMatches;
