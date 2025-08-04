@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { db, auth } from '../firebase/firebase';
 import { collection, getDocs, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { updateDoc } from 'firebase/firestore';
 import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell, FaTrophy, FaPencilAlt, FaInfoCircle, FaEnvelope } from 'react-icons/fa';
+import { FaTrash } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -497,14 +499,49 @@ const Navbar = () => {
                         <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow-sm border border-blue-100 relative">
                           {/* Pencil Button - only for leader */}
                           {item.leader === currentUid && (
-                            <button
-                              className="absolute top-3 right-3 p-1.5 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
-                              title="Edit Team"
-                              onClick={() => handleEditTeam(item.eventId)}
-                              aria-label="Edit team"
-                            >
-                              <FaPencilAlt className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="absolute top-3 right-3 flex gap-2">
+                              <button
+                                className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
+                                title="Edit Team"
+                                onClick={() => handleEditTeam(item.eventId)}
+                                aria-label="Edit team"
+                              >
+                                <FaPencilAlt className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                className="p-1.5 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                                title="Delete Team"
+                                aria-label="Delete team"
+                                onClick={async () => {
+                                  if (window.confirm('Are you sure you want to delete your team?')) {
+                                    try {
+                                      const eventRef = doc(db, 'events', item.eventId);
+                                      const eventDoc = await getDoc(eventRef);
+                                      if (eventDoc.exists()) {
+                                        const teamObj = eventDoc.data().team || {};
+                                        // Find the correct key for the team
+                                        const teamKey = Object.keys(teamObj).find(key => key === item.teamName);
+                                        if (teamKey) {
+                                          delete teamObj[teamKey];
+                                          await updateDoc(eventRef, { team: teamObj });
+                                          setParticipationData(prev => prev.filter((p, i) => i !== idx));
+                                          alert('Team deleted successfully.');
+                                        } else {
+                                          alert('Team not found.');
+                                        }
+                                      } else {
+                                        alert('Event not found.');
+                                      }
+                                    } catch (err) {
+                                      alert('Failed to delete team.');
+                                      console.error('Delete team error:', err);
+                                    }
+                                  }
+                                }}
+                              >
+                                <FaTrash className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           )}
                           <div className="font-semibold text-blue-900 text-base mb-1 pr-6">{item.eventName}</div>
                           <div className="grid grid-cols-2 gap-2 text-sm mt-3">
