@@ -54,30 +54,30 @@ const sports = [
 
 const features = [
   {
-    icon: <FaUsers className="text-5xl mb-4" />,
-    title: 'Find Teammates',
-    description: 'Connect with players who share your passion for sports and form teams easily.',
+    icon: <FaCalendarAlt className="text-5xl mb-4" />,
+    title: 'Upcoming Events',
+    description: 'Browse and join upcoming sports events happening on campus.',
     color: 'from-blue-500 to-blue-600',
     iconColor: 'text-blue-500'
   },
   {
-    icon: <FaCalendarAlt className="text-5xl mb-4" />,
-    title: 'Schedule Games',
-    description: 'Plan and organize matches during your free time with our easy scheduling system.',
+    icon: <FaTrophy className="text-5xl mb-4" />,
+    title: 'Tournaments',
+    description: 'Compete in exciting tournaments and showcase your skills.',
+    color: 'from-yellow-500 to-yellow-600',
+    iconColor: 'text-yellow-500'
+  },
+  {
+    icon: <FaUserFriends className="text-5xl mb-4" />,
+    title: 'Find Teammates',
+    description: 'Connect with other players and form your dream team.',
     color: 'from-green-500 to-green-600',
     iconColor: 'text-green-500'
   },
   {
-    icon: <FaTrophy className="text-5xl mb-4" />,
-    title: 'Compete & Win',
-    description: 'Join tournaments and compete with other teams to showcase your skills.',
-    color: 'from-amber-500 to-amber-600',
-    iconColor: 'text-amber-500'
-  },
-  {
-    icon: <FaRegClock className="text-5xl mb-4" />,
-    title: 'Save Time',
-    description: 'Quickly find and join games without the hassle of manual coordination.',
+    icon: <FaRunning className="text-5xl mb-4" />,
+    title: 'Participate',
+    description: 'Join existing events and connect with other players.',
     color: 'from-purple-500 to-purple-600',
     iconColor: 'text-purple-500'
   }
@@ -194,11 +194,10 @@ const Home = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </button>
           </motion.div>
-          
-
         </div>
       </motion.section>
-      
+
+
       {/* Features Section */}
       <motion.section 
         ref={featuresRef}
@@ -206,7 +205,7 @@ const Home = () => {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8, ease: [0.6, 0.05, 0.01, 0.9] }}
+        transition={{ duration: 0.8 }}
       >
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="container mx-auto px-6 relative z-10">
@@ -242,6 +241,7 @@ const Home = () => {
             >
               Everything you need to connect, compete, and grow as an athlete
             </motion.p>
+            
             <motion.div 
               className="mt-8"
               initial={{ opacity: 0, y: 20 }}
@@ -269,7 +269,7 @@ const Home = () => {
               </button>
             </motion.div>
           </motion.div>
-        
+          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {features.map((feature, index) => (
               <motion.div

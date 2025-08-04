@@ -12,6 +12,7 @@ const Login = () => {
   const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showOrganizerLogin, setShowOrganizerLogin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -246,19 +247,21 @@ const Login = () => {
             <div className="space-y-6">
               {/* Email Input */}
               <div className="space-y-4">
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <FaEnvelope className="text-gray-400 group-hover:text-blue-400 transition-colors" />
+                {showOrganizerLogin && (
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <FaEnvelope className="text-gray-400 group-hover:text-blue-400 transition-colors" />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your organizer email"
+                      className="w-full pl-12 pr-4 py-3.5 bg-gray-700/30 border border-gray-600/50 hover:border-blue-500/50 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                      required
+                    />
                   </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="w-full pl-12 pr-4 py-3.5 bg-gray-700/30 border border-gray-600/50 hover:border-blue-500/50 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-gray-400 text-sm transition-all duration-300"
-                    required
-                  />
-                </div>
+                )}
 
                 {error && (
                   <div className="text-red-400 text-sm">
@@ -270,17 +273,23 @@ const Login = () => {
                   {/* Organizer Login */}
                   <motion.button
                     type="button"
-                    onClick={(e) => handleSubmit(e, 'organizer')}
+                    onClick={() => {
+                      if (!showOrganizerLogin) {
+                        setShowOrganizerLogin(true);
+                      } else if (email && isOrganizerEmail(email)) {
+                        handleSubmit({ preventDefault: () => {} }, 'organizer');
+                      }
+                    }}
                     whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(124, 58, 237, 0.3)' }}
                     whileTap={{ scale: 0.98 }}
-                    disabled={isLoading || !email || !isOrganizerEmail(email)}
+                    disabled={isLoading || (showOrganizerLogin && (!email || !isOrganizerEmail(email)))}
                     className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isLoading || !email || !isOrganizerEmail(email) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:opacity-90'
+                      isLoading || (showOrganizerLogin && (!email || !isOrganizerEmail(email))) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:opacity-90'
                     }`}
-                    title={!isOrganizerEmail(email) ? 'Only specific emails can log in as organizers' : ''}
+                    title={showOrganizerLogin && !isOrganizerEmail(email) ? 'Only specific emails can log in as organizers' : ''}
                   >
-                    <span>Login as Organizer</span>
-                    <FaArrowRight />
+                    <span>{showOrganizerLogin ? 'Submit Organizer Login' : 'Login as Organizer'}</span>
+                    {showOrganizerLogin && <FaArrowRight />}
                   </motion.button>
 
                   {/* Player Login */}
@@ -298,8 +307,8 @@ const Login = () => {
                     <span>Login as Player</span>
                   </motion.button>
                 </div>
-                {!isOrganizerEmail(email) && email && (
-                  <p className="text-xs text-gray-400 text-center mt-1">
+                {showOrganizerLogin && !isOrganizerEmail(email) && email && (
+                  <p className="text-xs text-yellow-400 text-center mt-1">
                     Only authorized emails can log in as organizers
                   </p>
                 )}
