@@ -4,7 +4,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/firebase';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaUser, FaPhone, FaVenusMars, FaChevronLeft, FaSwimmer } from 'react-icons/fa';
+import { FaUser, FaPhone, FaVenusMars, FaChevronLeft, FaSwimmer, FaEnvelope } from 'react-icons/fa';
 import { GiSoccerBall, GiBasketballBasket, GiCricketBat, GiTennisBall, GiVolleyballBall, GiTennisRacket } from 'react-icons/gi';
 
 const sportsOptions = [
@@ -76,7 +76,7 @@ const UserProfileForm = () => {
     age: '',
     gender: '',
     phoneNumber: '',
-    experienceLevel: 'beginner'
+    email: auth.currentUser?.email || ''
   });
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,7 +102,7 @@ const UserProfileForm = () => {
             age: userData.age || '',
             gender: userData.gender || '',
             phoneNumber: userData.phoneNumber || '',
-            experienceLevel: userData.experienceLevel || 'beginner',
+            email: auth.currentUser?.email || '',
             selectedSports: userData.selectedSports || [],
           }));
         }
@@ -242,6 +242,26 @@ const UserProfileForm = () => {
 
             <form onSubmit={handleSubmit} className="space-y-10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Email field (read-only) */}
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.08 }}
+                  className="relative group"
+                >
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                    <FaEnvelope className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    readOnly
+                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 bg-gray-100 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 cursor-not-allowed"
+                    placeholder="Email"
+                  />
+                </motion.div>
                 <motion.div 
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -371,72 +391,7 @@ const UserProfileForm = () => {
                 </motion.div>
               </div>
 
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="mt-10"
-              >
-                <h3 className="text-lg font-medium text-gray-800 mb-4">Experience Level</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { 
-                      level: 'beginner', 
-                      label: 'Beginner', 
-                      desc: 'Just starting out',
-                      icon: '👶',
-                      color: 'from-blue-500/90 to-cyan-500/90',
-                      border: 'border-blue-500/30',
-                      hover: 'hover:border-blue-500/50'
-                    },
-                    { 
-                      level: 'intermediate', 
-                      label: 'Intermediate', 
-                      desc: 'Play regularly',
-                      icon: '👍',
-                      color: 'from-purple-500/90 to-fuchsia-500/90',
-                      border: 'border-purple-500/30',
-                      hover: 'hover:border-purple-500/50'
-                    },
-                    { 
-                      level: 'advanced', 
-                      label: 'Advanced', 
-                      desc: 'Competitive player',
-                      icon: '🏆',
-                      color: 'from-amber-500/90 to-orange-500/90',
-                      border: 'border-amber-500/30',
-                      hover: 'hover:border-amber-500/50'
-                    }
-                  ].map(({ level, label, desc, icon, color, border, hover }) => (
-                    <motion.div
-                      key={level}
-                      whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)' }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`p-5 rounded-xl cursor-pointer transition-all duration-200 ${
-                        formData.experienceLevel === level
-                          ? `bg-gradient-to-br ${color} border-transparent text-white shadow-lg`
-                          : `bg-white border ${border} text-gray-700 ${hover} hover:shadow-lg`
-                      }`}
-                      onClick={() => setFormData(prev => ({ ...prev, experienceLevel: level }))}
-                    >
-                      <div className="flex items-start">
-                        <div className="text-2xl mr-3">{icon}</div>
-                        <div>
-                          <div className="font-medium">{label}</div>
-                          <div className="text-sm text-gray-600">{desc}</div>
-                        </div>
-                        {formData.experienceLevel === level && (
-                          <div className="ml-auto bg-white/20 rounded-full p-1">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
+              {/* Experience Level removed as requested */}
 
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}

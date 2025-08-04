@@ -154,8 +154,8 @@ const UpcomingEvents = ({ onEventClick }) => {
                         <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
                         <span className="font-medium">Starts:</span>
                         <span className="ml-1 xs:ml-1.5">
-                          <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d, yyyy')}</span>
-                          <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d, yyyy')}</span>
+                          <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d')}</span>
+                          <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d,')}</span>
                           <span className="mx-1.5">•</span>
                           {format(new Date(event.dateTime), 'h:mm a')}
                         </span>
