@@ -86,30 +86,12 @@ const UpcomingEvents = ({ onEventClick }) => {
   }, []);
 
   
-  const handleViewSchedule = async (event) => {
-    setShowSchedule(event.id);
-    setScheduleLoading(true);
-    
-    try {
-      // In a real app, you would fetch the actual schedule from Firestore
-      // For now, we'll use a mock schedule
-      const mockSchedule = {
-        date: event.dateTime,
-        location: event.location,
-        duration: '2 hours',
-        organizer: event.createdBy || 'Event Organizer',
-        participants: event.participants?.length || 0,
-        maxParticipants: event.playersNeeded || 10,
-        description: event.description || 'No additional details provided.'
-      };
-      
-      setEventSchedule(mockSchedule);
-    } catch (error) {
-      console.error('Error fetching schedule:', error);
-      toast.error('Failed to load event schedule');
-    } finally {
-      setScheduleLoading(false);
+  const handleViewSchedule = (event) => {
+    if (showSchedule === event.id) {
+      setShowSchedule(null);
+      return;
     }
+    setShowSchedule(event.id);
   };
 
   if (loading) {
@@ -168,9 +150,7 @@ const UpcomingEvents = ({ onEventClick }) => {
                       <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
                     )}
                   </div>
-                  {event.description && (
-                    <p className="mt-2 text-sm text-gray-600 line-clamp-2">{event.description}</p>
-                  )}
+                  {/* Remove description from card, only show in details toggle */}
                 </div>
                 <div className="ml-4 flex-shrink-0 flex flex-col items-end">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -198,13 +178,13 @@ const UpcomingEvents = ({ onEventClick }) => {
                 <button
                   type="button"
                   onClick={(e) => {
-              e.stopPropagation();
-              handleViewSchedule(event);
-            }}
-                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    e.stopPropagation();
+                    handleViewSchedule(event);
+                  }}
+                  className={`inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${showSchedule === event.id ? 'bg-blue-100 text-blue-700' : ''}`}
                 >
                   <FaClock className="mr-1.5 h-3 w-3" />
-                  View Details
+                  {showSchedule === event.id ? 'Hide Details' : 'View Details'}
                 </button>
                 {event.participationType === 'player' ? (
                   <button
@@ -255,48 +235,11 @@ const UpcomingEvents = ({ onEventClick }) => {
                 )}
               </div>
 
-              {/* Schedule/Timetable Section */}
+              {/* Details Section: Only show description in details toggle */}
               {showSchedule === event.id && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Event Schedule</h4>
-                  {scheduleLoading ? (
-                    <div className="flex justify-center p-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
-                    </div>
-                  ) : eventSchedule ? (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-500">Date & Time</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {format(new Date(eventSchedule.date), 'EEEE, MMMM d, yyyy')} at {format(new Date(eventSchedule.date), 'h:mm a')}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Location</p>
-                          <p className="text-sm font-medium text-gray-900">{eventSchedule.location}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Duration</p>
-                          <p className="text-sm font-medium text-gray-900">{eventSchedule.duration}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">Participants</p>
-                          <p className="text-sm font-medium text-gray-900">
-                            {eventSchedule.participants} / {eventSchedule.maxParticipants} players
-                          </p>
-                        </div>
-                      </div>
-                      {eventSchedule.description && (
-                        <div className="mt-4">
-                          <p className="text-sm text-gray-500 mb-1">Additional Details</p>
-                          <p className="text-sm text-gray-700">{eventSchedule.description}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500">No schedule details available.</p>
-                  )}
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Event Description</h4>
+                  <p className="text-sm text-gray-700">{event.description || 'No description provided.'}</p>
                 </div>
               )}
             </div>

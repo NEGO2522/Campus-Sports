@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
-import { FaChevronDown, FaChevronUp, FaCheck, FaEdit, FaPlay } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaCheck, FaEdit, FaPlay, FaPause } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -122,9 +122,9 @@ const EventMatches = ({ eventId }) => {
                       }
                     })()}
                   </div>
-                  {/* Start Button at the bottom of date/time */}
-                  {match.matchStarted === false && (
-                    <div className="mt-2">
+                  {/* Start/Pause Button for match */}
+                  <div className="mt-2 flex space-x-2">
+                    {match.matchStarted === false && (
                       <button
                         className="bg-green-600 text-white p-2 rounded-full hover:bg-green-700 shadow"
                         title="Start Match"
@@ -134,10 +134,23 @@ const EventMatches = ({ eventId }) => {
                           setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: true } : m));
                         }}
                       >
-                        <FaPlay className="w-3 h-3  " />
+                        <FaPlay className="w-3 h-3" />
                       </button>
-                    </div>
-                  )}
+                    )}
+                    {match.matchStarted === true && (
+                      <button
+                        className="bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"
+                        title="Pause Match"
+                        onClick={async () => {
+                          const matchRef = doc(db, 'events', eventId, 'matches', match.id);
+                          await updateDoc(matchRef, { matchStarted: false });
+                          setMatches(prev => prev.map(m => m.id === match.id ? { ...m, matchStarted: false } : m));
+                        }}
+                      >
+                        <FaPause className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
                   {match.description && <div className="text-xs text-gray-500 mt-1">{match.description}</div>}
                   {/* Delete Button */}
                   <button

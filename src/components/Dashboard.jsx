@@ -108,7 +108,7 @@ const Dashboard = () => {
           
           <div className="sm:p-2">
             <div>
-              <OngoingEvents onEventClick={() => navigate('/schedule')} />
+              <OngoingEvents />
               
               
             </div>
@@ -120,7 +120,7 @@ const Dashboard = () => {
           <div className="mb-4">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Upcoming Events</h2>
           </div>
-          <UpcomingEvents onEventClick={() => navigate('/schedule')} />
+          <UpcomingEvents />
         </div>
 
               </div>

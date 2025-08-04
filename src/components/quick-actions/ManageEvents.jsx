@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaCog, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaSpinner, FaPlay, FaEye, FaTrash, FaEdit } from 'react-icons/fa';
+import { FaCog, FaMapMarkerAlt, FaUsers, FaCalendarAlt, FaSpinner, FaPlay, FaEye, FaTrash, FaEdit, FaPause } from 'react-icons/fa';
+// ...existing code...
 import EventMatches from './EventMatches';
 import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase/firebase';
@@ -13,7 +14,26 @@ const ManageEvents = () => {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [startingEventId, setStartingEventId] = useState(null);
   const [deletingEventId, setDeletingEventId] = useState(null);
+  const [pausingEventId, setPausingEventId] = useState(null);
   const navigate = useNavigate();
+
+  const handlePauseTournament = async (eventId) => {
+    if (!window.confirm('Pause this tournament? This will set its status back to upcoming.')) {
+      return;
+    }
+    try {
+      setPausingEventId(eventId);
+      await updateDoc(doc(db, 'events', eventId), {
+        status: 'upcoming'
+      });
+      toast.success('Tournament paused and set to upcoming!');
+    } catch (error) {
+      console.error('Error pausing tournament:', error);
+      toast.error('Failed to pause tournament');
+    } finally {
+      setPausingEventId(null);
+    }
+  };
 
   useEffect(() => {
     const q = query(
@@ -70,6 +90,7 @@ const ManageEvents = () => {
     }
   };
 
+  const [detailsOpen, setDetailsOpen] = useState({});
   const renderUpcomingEvents = () => {
     if (loadingEvents) {
       return (
@@ -111,32 +132,41 @@ const ManageEvents = () => {
                     {event.sport}
                   </span>
                 </div>
-
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <FaCalendarAlt className="mr-2 h-4 w-4 text-gray-400" />
-                    {format(new Date(event.dateTime), 'MMM dd, yyyy • h:mm a')}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <FaMapMarkerAlt className="mr-2 h-4 w-4 text-gray-400" />
-                    {event.location}
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <FaUsers className="mr-2 h-4 w-4 text-gray-400" />
-                    {event.participationType === 'team' ? (
-                      <span>{event.participants?.length || 0} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
-                    ) : (
-                      <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
+                {event.status === 'upcoming' && (
+                  <>
+                    <button
+                      className="mb-2 px-3 py-1 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200 focus:outline-none"
+                      onClick={() => setDetailsOpen(prev => ({ ...prev, [event.id]: !prev[event.id] }))}
+                    >
+                      {detailsOpen[event.id] ? 'Hide Details' : 'View Details'}
+                    </button>
+                    {detailsOpen[event.id] && (
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <FaCalendarAlt className="mr-2 h-4 w-4 text-gray-400" />
+                          {format(new Date(event.dateTime), 'MMM dd, yyyy • h:mm a')}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <FaMapMarkerAlt className="mr-2 h-4 w-4 text-gray-400" />
+                          {event.location}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <FaUsers className="mr-2 h-4 w-4 text-gray-400" />
+                          {event.participationType === 'team' ? (
+                            <span>{event.participants?.length || 0} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
+                          ) : (
+                            <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
+                          )}
+                        </div>
+                        {event.description && (
+                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                            {event.description}
+                          </p>
+                        )}
+                      </div>
                     )}
-                  </div>
-                </div>
-
-                {event.description && (
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                    {event.description}
-                  </p>
+                  </>
                 )}
-
                 <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                   <div className="flex space-x-2">
                     {event.status === 'upcoming' ? (
@@ -156,10 +186,21 @@ const ManageEvents = () => {
                     ) : (
                       <span className="inline-flex items-center px-3 py-1.5 border border-green-200 text-xs font-medium rounded-md text-green-700 bg-green-50 cursor-default" title="Ongoing">
                         <FaPlay className="h-3 w-3 mr-1" /> Ongoing
+                        <button
+                          onClick={() => handlePauseTournament(event.id)}
+                          disabled={pausingEventId === event.id}
+                          className="ml-2 inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Pause Tournament"
+                        >
+                          {pausingEventId === event.id ? (
+                            <FaSpinner className="animate-spin h-3 w-3" />
+                          ) : (
+                            <FaPause className="h-3 w-3" />
+                          )}
+                        </button>
                       </span>
                     )}
                   </div>
-
                   <div className="flex space-x-2">
                     <button
                       className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -168,7 +209,6 @@ const ManageEvents = () => {
                     >
                       <FaEdit className="h-3 w-3" />
                     </button>
-                    
                     <button
                       onClick={() => handleDeleteEvent(event.id)}
                       disabled={deletingEventId === event.id}
@@ -184,7 +224,6 @@ const ManageEvents = () => {
                   </div>
                 </div>
               </div>
-
             </div>
           </motion.div>
         ))}

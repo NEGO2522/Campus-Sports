@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
 import { useNavigate } from 'react-router-dom';
-import { FaSearch, FaUser } from 'react-icons/fa';
+import { FaSearch, FaUser, FaTimes } from 'react-icons/fa';
 import { useParams } from 'react-router-dom';
 
 const CreateTeam = () => {
@@ -231,7 +231,21 @@ const CreateTeam = () => {
               onChange={e => setSearch(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
               autoComplete="off"
+              onKeyDown={e => {
+                if (e.key === 'Escape') setSearch('');
+              }}
             />
+            {search.trim() !== '' && (
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 focus:outline-none"
+                onClick={() => setSearch('')}
+                tabIndex={0}
+                aria-label="Clear search"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            )}
             {search.trim() !== '' && (
               <div className="absolute left-0 top-full mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-2xl z-20 max-h-80 overflow-y-auto transition-all">
                 {loading ? (
