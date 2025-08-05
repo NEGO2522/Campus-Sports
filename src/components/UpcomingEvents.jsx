@@ -150,23 +150,35 @@ const UpcomingEvents = ({ onEventClick }) => {
                   </div>
                   <div className="mt-1.5 flex flex-col xs:flex-row xs:items-center text-xs xs:text-sm text-gray-500 gap-1.5">
                     <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
-                        <span className="font-medium">Starts:</span>
-                        <span className="ml-1 xs:ml-1.5">
-                          <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d')}</span>
-                          <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d,')}</span>
-                          <span className="mx-1.5">•</span>
-                          {format(new Date(event.dateTime), 'h:mm a')}
-                        </span>
+                      <div className="flex flex-col xs:flex-row xs:items-center">
+                        <div className="flex items-center">
+                          <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
+                          <span className="font-medium block xs:hidden">Starts:</span>
+                        </div>
+                        <div className="mt-1 xs:mt-0">
+                          <span className="font-medium hidden xs:inline mr-1">Starts:</span>
+                          <span>
+                            <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d')}</span>
+                            <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d,')}</span>
+                            <span className="mx-1.5">•</span>
+                            {format(new Date(event.dateTime), 'h:mm a')}
+                          </span>
+                        </div>
                       </div>
                       {event.registrationDeadline && (
-                        <div className="flex items-center text-xs xs:text-sm text-gray-600 whitespace-nowrap ml-2">
-                          <FaClock className="mr-1 h-3 w-3 xs:h-3.5 xs:w-3.5 flex-shrink-0" />
-                          <span className="font-medium">Register by:</span>
-                          <span className="ml-1">{format(new Date(event.registrationDeadline), 'MMM d')}</span>
-                          <span className="mx-1">•</span>
-                          <span>{format(new Date(event.registrationDeadline), 'h:mm a')}</span>
+                        <div className="flex flex-col xs:flex-row xs:items-center text-gray-600 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FaClock className="mr-1.5 h-3.5 w-3.5 xs:h-3.5 xs:w-3.5 flex-shrink-0" />
+                            <span className="font-medium block xs:hidden">Register by:</span>
+                          </div>
+                          <div className="mt-1 xs:mt-0">
+                            <span className="font-medium hidden xs:inline mr-1">Register by:</span>
+                            <span>
+                              {format(new Date(event.registrationDeadline), 'MMM d')}
+                              <span className="mx-1.5">•</span>
+                              {format(new Date(event.registrationDeadline), 'h:mm a')}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>

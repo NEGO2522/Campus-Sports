@@ -89,29 +89,35 @@ const Participate = () => {
     borderRadius: '16px',
     boxShadow: '0 4px 32px rgba(0,0,0,0.1)',
     backdropFilter: 'blur(8px)',
-    padding: '2rem',
-    minWidth: '320px',
+    padding: '1.5rem',
+    minWidth: '280px',
     maxWidth: '90vw',
+    '@media (min-width: 640px)': {
+      padding: '2rem',
+      minWidth: '320px'
+    },
   };
 
   if (participationType === 'player') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen transition-all duration-300">
-        <div style={glassStyle}>
-          <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
-          <button
-            className={`px-6 py-3 rounded-lg shadow transition font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
-            onClick={() => setShowConfirm(true)}
-            disabled={saving || alreadyParticipated}
-          >
-            {alreadyParticipated ? 'Participated' : 'Participate'}
-          </button>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-0">
+        <div style={glassStyle} className="w-full sm:w-auto">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">Participate in Event</h2>
+          <div className="flex justify-center">
+            <button
+              className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+              onClick={() => setShowConfirm(true)}
+              disabled={saving || alreadyParticipated}
+            >
+              {alreadyParticipated ? 'Participated' : 'Participate'}
+            </button>
+          </div>
         </div>
         {showConfirm && !alreadyParticipated && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
-              <h3 className="text-xl font-semibold mb-4">Are you sure?</h3>
-              <div className="flex space-x-4">
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 p-4">
+            <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg w-full max-w-sm">
+              <h3 className="text-lg sm:text-xl font-semibold mb-4 text-center">Confirm Participation</h3>
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                   onClick={handleParticipate}
@@ -120,7 +126,7 @@ const Participate = () => {
                   {saving ? 'Saving...' : 'Yes'}
                 </button>
                 <button
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
                   onClick={() => setShowConfirm(false)}
                   disabled={saving}
                 >
@@ -136,12 +142,12 @@ const Participate = () => {
 
   // For team-based events
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen transition-all duration-300">
-      <div style={glassStyle}>
-        <h2 className="text-2xl font-bold mb-6">Participate in Event</h2>
-        <div className="space-x-4">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 sm:p-0">
+      <div style={glassStyle} className="w-full sm:w-auto">
+        <h2 className="text-xl sm:text-2xl font-bold mb-6 text-center">Participate in Event</h2>
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
-            className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+            className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
             onClick={() => {
               if (!alreadyParticipated && userReg) {
                 navigate(`/events/${id}/create-team/`);
@@ -152,7 +158,7 @@ const Participate = () => {
             {alreadyParticipated ? 'Participated' : 'Create Team'}
           </button>
           <button
-            className={`px-6 py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
+            className={`w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow font-semibold text-white ${alreadyParticipated ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
             onClick={() => !alreadyParticipated && navigate('/notification')}
             disabled={alreadyParticipated}
           >

@@ -71,17 +71,17 @@ const Notification = () => {
 
   if (loading) {
     return (
-      <div>
+      <div className="min-h-screen sm:min-h-0">
         <div className="w-full h-1 bg-blue-100">
-          <div className="h-1 bg-blue-600 animate-pulse w-1/2" style={{ width: '50%' }}></div>
+          <div className="h-1 bg-blue-600 animate-pulse w-1/2"></div>
         </div>
-        <div className="p-8 text-center">Loading...</div>
+        <div className="p-4 sm:p-8 text-center">Loading...</div>
       </div>
     );
   }
 
   if (invites.length === 0) {
-    return <div className="p-8 text-center text-gray-500">No invitations found.</div>;
+    return <div className="p-4 sm:p-8 text-center text-gray-500">No invitations found.</div>;
   }
 
   // Accept invite handler
@@ -99,31 +99,31 @@ const Notification = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <h2 className="text-2xl font-bold mb-6">Invitations</h2>
-      <ul className="space-y-4">
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 md:p-8 w-full">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Invitations</h2>
+      <ul className="space-y-3 sm:space-y-4">
         {invites.map(invite => (
-          <li key={invite.inviteId} className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-            <div>
-              <div className="font-semibold text-blue-800">
-                You have been invited to join a team in event: <span className="font-bold">{invite.eventName}</span>
+          <li key={invite.inviteId} className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="font-medium sm:font-semibold text-sm sm:text-base text-blue-800">
+                You have been invited to join a team in event: <span className="font-bold break-words">{invite.eventName}</span>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Invited by: <span className="font-semibold">{invite.inviterName}</span>
+              <div className="text-xs text-gray-500 mt-1 truncate">
+                Invited by: <span className="font-medium sm:font-semibold">{invite.inviterName}</span>
                 {invite.inviterEmail && (
-                  <span className="ml-2 text-gray-400">({invite.inviterEmail})</span>
+                  <span className="ml-1 sm:ml-2 text-gray-400 hidden sm:inline">({invite.inviterEmail})</span>
                 )}
               </div>
             </div>
             <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center min-w-[80px]"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center min-w-[100px] sm:min-w-[80px] text-sm sm:text-base"
               onClick={() => handleAccept(invite.eventId, invite.inviteId)}
               disabled={acceptingId === invite.inviteId}
             >
               {acceptingId === invite.inviteId ? (
                 <span className="flex items-center justify-center">
-                  <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                  Accepting...
+                  <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                  <span className="text-sm sm:text-base">Accepting...</span>
                 </span>
               ) : (
                 'Accept'
