@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebase/firebase';
 import { motion, useScroll } from 'framer-motion';
 import { FaUsers, FaCalendarAlt, FaRunning, FaTableTennis, FaTrophy, FaRegClock, FaUserFriends } from 'react-icons/fa';
 import { GiCricketBat, GiSoccerBall, GiBasketballBasket, GiVolleyballBall } from 'react-icons/gi';
@@ -98,8 +99,19 @@ const Home = () => {
     };
   }, []);
   
-  const handleGetStarted = () => {
-    featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleGetStarted = (isMobile = false) => {
+    if (isMobile) {
+      // For mobile: Check auth and navigate accordingly
+      const user = auth.currentUser;
+      if (user) {
+        navigate('/dashboard');
+      } else {
+        navigate('/login');
+      }
+    } else {
+      // For desktop: Smooth scroll to features
+      featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
   
   const { scrollYProgress } = useScroll({
@@ -175,9 +187,30 @@ const Home = () => {
           </motion.p>
           
           <motion.div variants={itemVariants} className="mt-12">
+            {/* Mobile Get Started Button */}
             <button 
-              onClick={handleGetStarted}
-              className="relative group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 sm:py-5 px-8 sm:px-12 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/30 flex items-center space-x-2 sm:space-x-3 cursor-pointer mx-auto text-base sm:text-lg"
+              onClick={() => handleGetStarted(true)}
+              className="sm:hidden relative group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-8 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/30 flex items-center space-x-2 cursor-pointer mx-auto text-base"
+            >
+              <span className="relative z-10">Get Started</span>
+              <motion.span 
+                animate={{ x: [0, 4, 0] }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 2,
+                  ease: "easeInOut"
+                }}
+                className="relative z-10 text-xl"
+              >
+                →
+              </motion.span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-700 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </button>
+            
+            {/* Desktop Get Started Button */}
+            <button 
+              onClick={() => handleGetStarted(false)}
+              className="hidden sm:flex relative group bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-5 px-12 rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-2xl hover:shadow-blue-500/30 items-center space-x-3 cursor-pointer mx-auto text-lg"
             >
               <span className="relative z-10">Get Started</span>
               <motion.span 
@@ -201,7 +234,7 @@ const Home = () => {
       {/* Features Section */}
       <motion.section 
         ref={featuresRef}
-        className="py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-b from-gray-800 to-gray-900 relative"
+        className="hidden sm:block py-12 sm:py-20 px-4 sm:px-6 bg-gradient-to-b from-gray-800 to-gray-900 relative"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true, margin: "-100px" }}
