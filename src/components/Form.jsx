@@ -130,6 +130,7 @@ const UserProfileForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
 
     try {
       if (!auth.currentUser) {
@@ -139,44 +140,63 @@ const UserProfileForm = () => {
       }
 
       // Validation
+      if (!formData.fullName) {
+        setError('Full name is required');
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!formData.registrationNumber) {
         setError('Registration number is required');
+        setIsSubmitting(false);
         return;
       }
 
       if (!formData.courseName) {
         setError('Course name is required');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.phoneNumber) {
+        setError('Phone number is required');
+        setIsSubmitting(false);
         return;
       }
 
       const userRef = doc(db, 'users', auth.currentUser.uid);
 
-      await setDoc(userRef, {
+      // Check if this is a new profile or an update
+      const userDoc = await getDoc(userRef);
+      const isNewProfile = !userDoc.exists();
+
+      const userData = {
         ...formData,
         userId: auth.currentUser.uid,
         email: auth.currentUser.email,
         profileCompleted: true,
-        createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
-      }, { merge: true });
+      };
 
-      // Update auth state or local storage to indicate profile is complete
-      localStorage.setItem('profileCompleted', 'true');
+      // Only set createdAt for new profiles
+      if (isNewProfile) {
+        userData.createdAt = serverTimestamp();
+      }
+
+      await setDoc(userRef, userData, { merge: true });
       
-      console.log('Profile saved successfully:', formData);
+      console.log('Profile saved successfully:', userData);
       
-      // Force a small delay to ensure the state is updated before navigation
+      // Show success message
+      toast.success('Profile saved successfully!');
+      
+      // Redirect to dashboard after a short delay
       setTimeout(() => {
-        // Use replace: true to prevent going back to the form
         navigate('/dashboard', { 
           replace: true,
           state: { from: 'profile-completion' } 
         });
-        
-        // Show success message after navigation
-        toast.success('Profile saved successfully!');
-      }, 100);
+      }, 500);
     } catch (error) {
       console.error('Error saving profile:', error);
       setError('Failed to save profile. Please try again.');
