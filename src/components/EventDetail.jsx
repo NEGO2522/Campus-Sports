@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+const TeamDetailOverlayLazy = React.lazy(() => import('./TeamDetailOverlay'));
 import EventMatches from './quick-actions/EventMatches';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, updateDoc, arrayRemove, addDoc } from 'firebase/firestore';
@@ -6,6 +7,8 @@ import { db } from '../firebase/firebase';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaInfoCircle, FaEdit, FaTrash } from 'react-icons/fa';
 
 const EventDetail = () => {
+  const [showTeamOverlay, setShowTeamOverlay] = useState(false);
+  const [teamDetail, setTeamDetail] = useState({ teamName: '', leader: null, members: [] });
   const { id } = useParams();
   const [event, setEvent] = useState(null);
   const [deletingTeam, setDeletingTeam] = useState(null);
@@ -370,7 +373,31 @@ const EventDetail = () => {
           <ul className="list-disc ml-6 text-blue-800">
             {Object.keys(event.team).map(teamName => (
               <li key={teamName} className="mb-1 font-medium flex items-center justify-between">
-                <span>{teamName}</span>
+                <span
+                  className="cursor-pointer hover:underline text-blue-700"
+                  onClick={async () => {
+                    // Fetch team leader and members details
+                    const teamObj = event.team[teamName];
+                    let leader = null;
+                    let members = [];
+                    if (teamObj && teamObj.leader) {
+                      const leaderSnap = await getDoc(doc(db, 'users', teamObj.leader));
+                      if (leaderSnap.exists()) leader = { id: teamObj.leader, ...leaderSnap.data() };
+                    }
+                    if (Array.isArray(teamObj.members) && teamObj.members.length > 0) {
+                      const membersSnap = await getDocs(collection(db, 'users'));
+                      membersSnap.forEach(userDoc => {
+                        if (teamObj.members.includes(userDoc.id)) {
+                          members.push({ id: userDoc.id, ...userDoc.data() });
+                        }
+                      });
+                    }
+                    setTeamDetail({ teamName, leader, members });
+                    setShowTeamOverlay(true);
+                  }}
+                >
+                  {teamName}
+                </span>
                 <button
                   className="ml-2 p-1 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-800 transition"
                   title="Delete Team"
@@ -462,6 +489,18 @@ const EventDetail = () => {
       </div>
       </div>
       {/* Match Card at right side */}
+      {/* Team Detail Overlay */}
+      {showTeamOverlay && (
+        <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"><div className="bg-white p-8 rounded-lg shadow-lg">Loading...</div></div>}>
+          <TeamDetailOverlayLazy
+            open={showTeamOverlay}
+            onClose={() => setShowTeamOverlay(false)}
+            team={teamDetail}
+            leader={teamDetail.leader}
+            members={teamDetail.members}
+          />
+        </React.Suspense>
+      )}
       <div className="lg:w-96 w-full border-l border-gray-200 bg-gray-50 mt-8 lg:mt-0">
         <EventMatches eventId={id} />
       </div>

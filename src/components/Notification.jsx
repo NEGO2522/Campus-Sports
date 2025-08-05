@@ -4,6 +4,8 @@ import { db, auth } from '../firebase/firebase';
 // import { Link } from 'react-router-dom';
 
 const Notification = () => {
+  const [dismissingId, setDismissingId] = useState(null);
+  const [showConfirm, setShowConfirm] = useState({ open: false, inviteId: null });
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -103,7 +105,17 @@ const Notification = () => {
       <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Invitations</h2>
       <ul className="space-y-3 sm:space-y-4">
         {invites.map(invite => (
-          <li key={invite.inviteId} className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <li key={invite.inviteId} className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col relative">
+            {/* Cross button at top right, flush with border */}
+            <button
+              className="absolute top-0 right-0 mt-1 mr-1 text-gray-400 hover:text-red-600 text-xl sm:text-2xl p-0 bg-transparent border-none"
+              style={{ lineHeight: 1 }}
+              title="Dismiss"
+              onClick={() => setShowConfirm({ open: true, inviteId: invite.inviteId, eventId: invite.eventId })}
+              disabled={dismissingId === invite.inviteId}
+            >
+              &times;
+            </button>
             <div className="flex-1 min-w-0">
               <div className="font-medium sm:font-semibold text-sm sm:text-base text-blue-800">
                 You have been invited to join a team in event: <span className="font-bold break-words">{invite.eventName}</span>
@@ -116,7 +128,7 @@ const Notification = () => {
               </div>
             </div>
             <button
-              className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center min-w-[100px] sm:min-w-[80px] text-sm sm:text-base"
+              className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center text-sm sm:text-base"
               onClick={() => handleAccept(invite.eventId, invite.inviteId)}
               disabled={acceptingId === invite.inviteId}
             >
@@ -129,6 +141,51 @@ const Notification = () => {
                 'Accept'
               )}
             </button>
+            {/* Confirmation Modal */}
+            {showConfirm.open && showConfirm.inviteId === invite.inviteId && (
+              <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative">
+                  <div className="text-lg font-semibold mb-4 text-center">Are you sure you want to dismiss this invitation?</div>
+                  <div className="flex gap-4 justify-center">
+                    <button
+                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                      onClick={() => setShowConfirm({ open: false, inviteId: null })}
+                      disabled={dismissingId === invite.inviteId}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center justify-center"
+                      onClick={async () => {
+                        setDismissingId(invite.inviteId);
+                        try {
+                          // Delete the invite document from Firestore
+                          await import('firebase/firestore').then(firestore =>
+                            firestore.deleteDoc(doc(db, 'events', showConfirm.eventId, 'team', invite.inviteId))
+                          );
+                          setInvites(prev => prev.filter(i => i.inviteId !== invite.inviteId));
+                        } catch (err) {
+                          alert('Failed to dismiss invitation.');
+                        } finally {
+                          setShowConfirm({ open: false, inviteId: null });
+                          setDismissingId(null);
+                        }
+                      }}
+                      disabled={dismissingId === invite.inviteId}
+                    >
+                      {dismissingId === invite.inviteId ? (
+                        <span className="flex items-center justify-center">
+                          <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                          Dismissing...
+                        </span>
+                      ) : (
+                        'Dismiss'
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
