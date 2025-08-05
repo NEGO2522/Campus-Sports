@@ -144,145 +144,138 @@ const About = () => {
 
 
   return (
-    <Box sx={{ 
-      bgcolor: 'background.default', 
+    <Box sx={{
+      minHeight: '100vh',
+      bgcolor: theme.palette.mode === 'dark' ? '#181818' : '#f7f7f7',
       overflow: 'hidden',
       pt: { xs: 4, sm: 6, md: 10 },
       pb: { xs: 6, sm: 8, md: 10 },
-      px: { xs: 2, sm: 3 }
+      px: { xs: 2, sm: 3 },
+      position: 'relative',
     }}>
       {/* Our Story Section */}
-      <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-        <Box 
-          textAlign="center" 
-          mb={{ xs: 4, sm: 6, md: 8 }}
-          data-aos="fade-up"
-        >
-          <Typography 
-            variant={isMobile ? 'h5' : 'h4'}
-            component="h2" 
-            fontWeight={800}
-            sx={{
-              display: 'inline-block',
-              position: 'relative',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                width: '60px',
-                height: '4px',
-                bottom: '-10px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                borderRadius: '2px',
-              }
-            }}
-          >
-            Our Story
-          </Typography>
-        </Box>
+      <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 }, position: 'relative' }}>
         
         <Grid container justifyContent="center">
           <Grid item xs={12} md={8} data-aos="fade-up">
-            <Box>
-              <Typography 
+            <Box sx={{
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 4px 24px #2228'
+                : '0 4px 24px #e0e0e0',
+              borderRadius: '18px',
+              background: theme.palette.mode === 'dark'
+                ? '#232323'
+                : '#fff',
+              p: { xs: 2, sm: 4, md: 5 },
+              mb: 2,
+              position: 'relative',
+            }}>
+              <Typography
                 variant={isMobile ? 'h6' : 'h5'}
-                component="h3" 
-                fontWeight={700} 
+                component="h3"
+                fontWeight={700}
                 gutterBottom
-                color="primary"
-                sx={{ mb: 2 }}
-              >
-                Where Passion Meets Innovation
-              </Typography>
-              <Typography 
-                variant="body1" 
-                paragraph 
-                sx={{ 
-                  mb: 3, 
-                  lineHeight: 1.8,
-                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                sx={{
+                  mb: 2,
+                  letterSpacing: 0.5,
+                  color: theme.palette.primary.main,
+                  textShadow: `0 1px 6px ${theme.palette.primary.light}40`,
                 }}
               >
-                Founded in 2025, Campus League emerged from a shared vision to revolutionize how students engage with sports on campus. 
-                We recognized the untapped potential of student athletes and the lack of a unified platform to bring them together.
+                What is Campus League?
               </Typography>
-              <Typography 
-                variant="body1" 
-                paragraph 
-                sx={{ 
-                  mb: { xs: 3, sm: 4 }, 
+              <Typography
+                variant="body1"
+                paragraph
+                sx={{
+                  mb: 3,
                   lineHeight: 1.8,
-                  fontSize: { xs: '0.9375rem', sm: '1rem' }
+                  fontSize: { xs: '0.9375rem', sm: '1rem' },
+                  color: theme.palette.text.secondary,
                 }}
               >
-                What began as a passion project between two developers from Jaipur has evolved into a comprehensive platform 
-                connecting thousands of students across multiple institutions. We're proud to be at the intersection of 
-                sports and technology, making it easier than ever for students to discover, participate in, and organize 
-                athletic activities.
+                Campus League is a modern web platform designed to simplify and energize college sports management. Our website enables students, organizers, and teams to easily create, join, and manage sports events and tournaments on campus.
+                <br /><br />
+                <Box component="ul" sx={{ ml: 3, mb: 2, fontSize: '1rem', color: theme.palette.secondary.main, fontWeight: 600 }}>
+                  <li>Event creation and registration for multiple sports</li>
+                  <li>Team building and participation management</li>
+                  <li>Live match updates, scores, and notifications</li>
+                  <li>Role-based access for organizers and players</li>
+                  <li>Real-time dashboards and activity feeds</li>
+                  <li>Secure login and college-only access</li>
+                </Box>
+                <span style={{ color: theme.palette.primary.main, fontWeight: 600 }}>
+                  Whether you're a student athlete, a team leader, or an event organizer, Campus League provides all the tools you need to make campus sports more organized, engaging, and fun.
+                </span>
               </Typography>
               <Box sx={{ mt: 4 }}>
-                <Box 
-                  sx={{ 
+                <Box
+                  sx={{
                     display: 'grid',
                     gridTemplateColumns: {
                       xs: 'repeat(2, 1fr)',
                       sm: 'repeat(3, 1fr)',
                       md: 'repeat(4, 1fr)',
-                      lg: 'repeat(5, 1fr)'
+                      lg: 'repeat(5, 1fr)',
                     },
                     gap: 2,
                   }}
                 >
                   {sportsCategories.slice(0, isMobile ? 6 : sportsCategories.length).map((sport, index) => (
-                  <Box 
-                    key={index}
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      p: { xs: 1, sm: 2 },
-                      borderRadius: '12px',
-                      background: theme.palette.mode === 'dark' 
-                        ? 'rgba(255,255,255,0.05)' 
-                        : 'rgba(0,0,0,0.03)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: `0 5px 15px ${theme.palette.primary.main}20`,
-                      },
-                    }}
-                  >
-                    <Box sx={{ 
-                      color: 'primary.main',
-                      '& .MuiSvgIcon-root': {
-                        fontSize: { xs: '32px', sm: '40px' }
-                      }
-                    }}>
-                      {sport.icon}
-                    </Box>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        mt: 1, 
-                        fontWeight: 500,
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        textAlign: 'center'
+                    <Box
+                      key={index}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        p: { xs: 1.5, sm: 2.5 },
+                        borderRadius: '14px',
+                        background: theme.palette.mode === 'dark' ? '#222' : '#f5f5f5',
+                        boxShadow: theme.palette.mode === 'dark' ? '0 2px 8px #1116' : '0 2px 8px #e0e0e0',
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        border: `1px solid ${theme.palette.divider}`,
+                        '&:hover': {
+                          transform: 'translateY(-4px) scale(1.03)',
+                          boxShadow: theme.palette.mode === 'dark' ? '0 8px 24px #111a' : '0 8px 24px #e0e0e0',
+                          background: theme.palette.mode === 'dark' ? '#292929' : '#ededed',
+                        },
                       }}
                     >
-                      {sport.name}
-                    </Typography>
-                  </Box>
-                ))}
+                      <Box sx={{
+                        color: theme.palette.text.secondary,
+                        mb: 1,
+                        '& .MuiSvgIcon-root': {
+                          fontSize: { xs: '36px', sm: '44px' },
+                        },
+                      }}>
+                        {sport.icon}
+                      </Box>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          mt: 1,
+                          fontWeight: 700,
+                          fontSize: { xs: '0.8rem', sm: '1rem' },
+                          textAlign: 'center',
+                          color: theme.palette.primary.main,
+                          letterSpacing: 0.5,
+                        }}
+                      >
+                        {sport.name}
+                      </Typography>
+                    </Box>
+                  ))}
                 </Box>
                 {isMobile && sportsCategories.length > 6 && (
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      textAlign: 'center', 
-                      mt: 2, 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      textAlign: 'center',
+                      mt: 2,
                       color: 'text.secondary',
-                      fontStyle: 'italic'
+                      fontStyle: 'italic',
+                      fontWeight: 500,
                     }}
                   >
                     and many more...
