@@ -183,20 +183,22 @@ const UserProfileForm = () => {
         userData.createdAt = serverTimestamp();
       }
 
-      await setDoc(userRef, userData, { merge: true });
+      // First update the user document with profile completion status
+      await setDoc(userRef, { ...userData, profileCompleted: true }, { merge: true });
       
       console.log('Profile saved successfully:', userData);
+      
+      // Update local storage to indicate profile is complete
+      localStorage.setItem('profileCompleted', 'true');
       
       // Show success message
       toast.success('Profile saved successfully!');
       
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        navigate('/dashboard', { 
-          replace: true,
-          state: { from: 'profile-completion' } 
-        });
-      }, 500);
+      // Redirect to dashboard immediately with state to prevent redirect loop
+      navigate('/dashboard', { 
+        replace: true,
+        state: { from: { pathname: '/complete-profile', state: { from: location } } } 
+      });
     } catch (error) {
       console.error('Error saving profile:', error);
       setError('Failed to save profile. Please try again.');

@@ -73,10 +73,11 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If authenticated but profile not complete, redirect to form
+  // If authenticated but profile not complete, only redirect if not on the complete-profile page
+  // and not coming from a successful profile submission
   if (!status.profileChecked) {
-    // Only redirect if not already on the complete-profile page
-    if (!location.pathname.startsWith('/complete-profile')) {
+    const isComingFromProfileSubmit = location.state?.from?.pathname === '/complete-profile';
+    if (!location.pathname.startsWith('/complete-profile') && !isComingFromProfileSubmit) {
       return <Navigate to="/complete-profile" state={{ from: location }} replace />;
     }
     return children;

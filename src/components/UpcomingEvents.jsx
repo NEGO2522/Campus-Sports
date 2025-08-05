@@ -122,7 +122,10 @@ const UpcomingEvents = ({ onEventClick }) => {
   return (
     <div className="space-y-3 sm:space-y-4">
       {events.map((event, index) => {
-        const isFull = event.participants?.length >= event.playersNeeded;
+        const isPlayersFull = event.participants?.length >= event.playersNeeded;
+        const isTeamsFull = event.participationType === 'team' && 
+                         Object.keys(event.team || {}).length >= event.teamsNeeded;
+        const isFull = event.participationType === 'team' ? isTeamsFull : isPlayersFull;
         return (
           <motion.div
             key={event.id}
@@ -190,9 +193,15 @@ const UpcomingEvents = ({ onEventClick }) => {
                   <div className="mt-2 flex items-center text-xs xs:text-sm text-gray-500">
                     <FaUsers className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
                     {event.participationType === 'team' ? (
-                      <span>{Object.keys(event.team || {}).length} / {event.teamsNeeded || event.TeamsNeeded || 0} teams</span>
+                      <span className={isTeamsFull ? 'text-red-600 font-medium' : ''}>
+                        {Object.keys(event.team || {}).length} / {event.teamsNeeded || event.TeamsNeeded || 0} teams
+                        {isTeamsFull && ' (Full)'}
+                      </span>
                     ) : (
-                      <span>{event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players</span>
+                      <span className={isPlayersFull ? 'text-red-600 font-medium' : ''}>
+                        {event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players
+                        {isPlayersFull && ' (Full)'}
+                      </span>
                     )}
                   </div>
                   {/* Remove description from card, only show in details toggle */}
