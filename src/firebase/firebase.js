@@ -15,8 +15,10 @@ import { getFirestore, initializeFirestore, persistentLocalCache, persistentMult
 
 // Firebase configuration
 const firebaseConfig = {
+  // Your web app's Firebase configuration
+  // Replace these values with your actual Firebase config
   apiKey: "AIzaSyCzkMaz4LGbWfR8QhEcNFIVAFjJ3ZDMkaA",
-  authDomain: "campusleauge.in",
+  authDomain: "sports-app-4d03e.firebaseapp.com",
   projectId: "sports-app-4d03e",
   storageBucket: "sports-app-4d03e.firebasestorage.app",
   messagingSenderId: "522436405774",
@@ -45,7 +47,7 @@ const db = initializeFirestore(app, {
 // Action Code Configuration for email link authentication
 const actionCodeSettings = {
   // URL you want to redirect back to after email sign in
-  url: 'https://campusleauge.in/login',
+  url: window.location.origin + '/login',
   // This must be true for email link sign-in
   handleCodeInApp: true
 };
