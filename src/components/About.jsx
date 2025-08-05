@@ -184,19 +184,32 @@ const About = () => {
               >
                 What is Campus League?
               </Typography>
-              <Typography
-                variant="body1"
-                paragraph
-                sx={{
-                  mb: 3,
-                  lineHeight: 1.8,
-                  fontSize: { xs: '0.9375rem', sm: '1rem' },
-                  color: theme.palette.text.secondary,
-                }}
-              >
-                Campus League is a modern web platform designed to simplify and energize college sports management. Our website enables students, organizers, and teams to easily create, join, and manage sports events and tournaments on campus.
-                <br /><br />
-                <Box component="ul" sx={{ ml: 3, mb: 2, fontSize: '1rem', color: theme.palette.secondary.main, fontWeight: 600 }}>
+              <Box sx={{ mb: 3 }}>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mb: 2,
+                    lineHeight: 1.8,
+                    fontSize: { xs: '0.9375rem', sm: '1rem' },
+                    color: theme.palette.text.secondary,
+                  }}
+                >
+                  Campus League is a modern web platform designed to simplify and energize college sports management. Our website enables students, organizers, and teams to easily create, join, and manage sports events and tournaments on campus.
+                </Typography>
+                
+                <Box component="ul" sx={{ 
+                  ml: 3, 
+                  mb: 2, 
+                  fontSize: '1rem', 
+                  color: theme.palette.secondary.main, 
+                  fontWeight: 600,
+                  '& li': {
+                    mb: 1,
+                    '&:last-child': {
+                      mb: 0
+                    }
+                  }
+                }}>
                   <li>Event creation and registration for multiple sports</li>
                   <li>Team building and participation management</li>
                   <li>Live match updates, scores, and notifications</li>
@@ -204,10 +217,20 @@ const About = () => {
                   <li>Real-time dashboards and activity feeds</li>
                   <li>Secure login and college-only access</li>
                 </Box>
-                <span style={{ color: theme.palette.primary.main, fontWeight: 600 }}>
+                
+                <Typography
+                  variant="body1"
+                  sx={{
+                    lineHeight: 1.8,
+                    fontSize: { xs: '0.9375rem', sm: '1rem' },
+                    color: theme.palette.primary.main,
+                    fontWeight: 600,
+                    mt: 2
+                  }}
+                >
                   Whether you're a student athlete, a team leader, or an event organizer, Campus League provides all the tools you need to make campus sports more organized, engaging, and fun.
-                </span>
-              </Typography>
+                </Typography>
+              </Box>
               <Box sx={{ mt: 4 }}>
                 <Box
                   sx={{
