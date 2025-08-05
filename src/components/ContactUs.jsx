@@ -27,6 +27,7 @@ const ContactUs = () => {
   
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -40,25 +41,20 @@ const ContactUs = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
     if (!formData.subject.trim()) {
       newErrors.subject = 'Subject is required';
     }
-    
     if (!formData.message.trim()) {
       newErrors.message = 'Message is required';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -71,23 +67,19 @@ const ContactUs = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (!validateForm()) {
       return;
     }
-    
     setIsSubmitting(true);
-    
+    setLoading(true);
     try {
       // Replace these with your EmailJS service ID and template ID
       const templateParams = {
-        from_name: formData.name,
         from_email: formData.email,
         to_email: 'sports@campusleague.in',
         subject: formData.subject,
         message: formData.message
       };
-
       // Send the email
       await emailjs.send(
         'service_zdk28rg',      // Your EmailJS service ID
@@ -95,10 +87,8 @@ const ContactUs = () => {
         templateParams,
         'KOupcCiDTxaSNOa2Q'    // Your EmailJS public key
       );
-      
       // Show success message
       toast.success('Your message has been sent successfully!');
-      
       // Reset form
       setFormData({
         name: '',
@@ -106,12 +96,12 @@ const ContactUs = () => {
         subject: '',
         message: ''
       });
-      
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('Failed to send message. Please try again later.');
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -362,7 +352,7 @@ const ContactUs = () => {
                           color="primary"
                           size={isMobile ? 'medium' : 'large'}
                           fullWidth
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || loading}
                           startIcon={!isSubmitting && <SendIcon />}
                           sx={{
                             py: isMobile ? 1 : 1.5,
@@ -379,7 +369,7 @@ const ContactUs = () => {
                             }
                           }}
                         >
-                          {isSubmitting ? (
+                          {(isSubmitting || loading) ? (
                             <>
                               <CircularProgress size={20} color="inherit" thickness={4} sx={{ mr: 1 }} />
                               Sending...
