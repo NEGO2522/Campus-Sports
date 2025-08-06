@@ -163,16 +163,22 @@ const Login = () => {
 
   // Check auth state on mount
   useEffect(() => {
-    const unsubscribe = checkAuthState((user) => {
+    const unsubscribe = checkAuthState(async (user) => {
       if (user) {
         const userRole = localStorage.getItem('userRole') || 'player';
         sessionStorage.setItem('userRole', userRole);
         localStorage.removeItem('userRole');
-        navigate('/dashboard');
+        // Check if profile is complete for player
+        const isProfileComplete = await checkProfileCompletion(user.uid);
+        if (!isProfileComplete) {
+          navigate('/complete-profile', { state: { from: location.state?.from || '/' } });
+        } else {
+          navigate('/dashboard');
+        }
       }
     });
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, location]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden bg-gray-900" ref={containerRef}>
