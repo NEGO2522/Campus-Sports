@@ -123,7 +123,7 @@ const EventDetail = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto bg-white rounded-xl shadow p-8 mt-8 flex flex-col lg:flex-row gap-8">
+    <div className="max-w-6xl mx-auto bg-white rounded-xl shadow p-8 mt-20 mb-8 flex flex-col lg:flex-row gap-8">
       <div className="flex-1 min-w-0">
         <h2 className="text-3xl font-bold mb-6 text-center">{event.eventName}</h2>
         {/* Create Matches Button */}

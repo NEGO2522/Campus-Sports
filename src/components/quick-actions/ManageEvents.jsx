@@ -232,23 +232,25 @@ const ManageEvents = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
-              <FaCog className="mr-3 text-blue-500" />
-              Manage Events
-            </h1>
+    <div className="min-h-screen bg-gray-50 py-16 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-8"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
+                <FaCog className="mr-3 text-blue-500" />
+                Manage Events
+              </h1>
+            </div>
           </div>
-        </div>
-        {renderUpcomingEvents()}
-      </motion.div>
+          {renderUpcomingEvents()}
+        </motion.div>
+      </div>
     </div>
   );
 }

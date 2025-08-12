@@ -286,7 +286,7 @@ const UpcomingEvents = ({ onEventClick }) => {
       })}
     {/* Confirmation Overlay for player participation */}
     {showConfirm.open && (
-      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+      <div className="fixed inset-0 flex items-center justify-center bg-burr bg-opacity-40 backdrop-blur -sm z-50">
         <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
           <h3 className="text-xl font-semibold mb-4">Are you sure you want to participate?</h3>
           <div className="flex space-x-4">

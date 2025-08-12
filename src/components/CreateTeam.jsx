@@ -201,7 +201,7 @@ const CreateTeam = () => {
           <div className="h-1 bg-blue-600 animate-pulse" style={{ width: '50%' }}></div>
         </div>
       )}
-      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow p-4 sm:p-6">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl shadow p-4 sm:p-6 mt-16">
         <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">Create Team - Select Students</h2>
         <div className="mb-5 sm:mb-6">
           <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2">Team Name</label>

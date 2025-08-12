@@ -3,72 +3,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaEnvelope, FaArrowRight, FaSpinner, FaGoogle } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GiSoccerBall } from 'react-icons/gi';
-import { signInWithEmailLinkAuth, completeEmailLinkSignIn, checkAuthState, signInWithGoogle } from '../firebase/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { signInWithEmailLinkAuth, signInWithGoogle, completeEmailLinkSignIn } from '../firebase/firebase';
 import { auth, db } from '../firebase/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { isProfileComplete } from '../utils/profileUtils';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showOrganizerLogin, setShowOrganizerLogin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const containerRef = useRef(null);
-  
-  // List of allowed organizer emails
-  const organizerEmails = [
-    '2024btechaimlkshitij18489@poornima.edu.in',
-    '2023csharsh13954@poornima.edu.in'
-  ];
-  
-  // Check if the current email is an organizer email
-  const isOrganizerEmail = (email) => {
-    return organizerEmails.includes(email.trim().toLowerCase());
-  };
-
-  // Check if user profile is complete
-  const checkProfileCompletion = async (userId) => {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      return userDoc.exists() && userDoc.data().profileCompleted;
-    } catch (error) {
-      console.error('Error checking profile completion:', error);
-      return false;
-    }
-  };
-
-  // Handle Google Sign In for Players
-  const handleGoogleSignIn = async (e) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-      setError('');
-      const { user, error: googleError } = await signInWithGoogle();
-      if (googleError) throw new Error(googleError);
-      
-      if (user) {
-        localStorage.setItem('userRole', 'player');
-        
-        // Check if profile is complete
-        const isProfileComplete = await checkProfileCompletion(user.uid);
-        
-        // If profile is not complete, redirect to complete-profile
-        if (!isProfileComplete) {
-          navigate('/complete-profile', { state: { from: location.state?.from || '/' } });
-        } else {
-          // If profile is complete, go to dashboard or intended destination
-          navigate(location.state?.from?.pathname || '/dashboard');
-        }
-      }
-    } catch (err) {
-      setError(err.message || 'Failed to sign in with Google');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // Background images
   const backgroundImages = [
@@ -87,98 +35,82 @@ const Login = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Handle email link sign-in
-  const handleEmailLinkSignIn = async () => {
+  // Check profile status and redirect
+  const checkAndRedirect = async (user) => {
+    try {
+      const profileComplete = await isProfileComplete(user.uid);
+      if (profileComplete) {
+        navigate(location.state?.from?.pathname || '/dashboard');
+      } else {
+        navigate('/form');
+      }
+    } catch (error) {
+      console.error('Error checking profile status:', error);
+      navigate('/form');
+    }
+  };
+
+  // Handle Google Sign In
+  const handleGoogleSignIn = async (e) => {
+    e.preventDefault();
     try {
       setIsLoading(true);
       setError('');
-      const { user, error: signInError } = await completeEmailLinkSignIn(email, window.location.href);
-      if (signInError) throw new Error(signInError);
+      const { user, error: googleError } = await signInWithGoogle();
+      if (googleError) throw new Error(googleError);
       if (user) {
-        navigate('/dashboard');
+        await checkAndRedirect(user);
       }
     } catch (err) {
-      setError(err.message || 'Failed to sign in with email link');
+      setError(err.message || 'Failed to sign in with Google');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle form submission
-  const handleSubmit = async (e, role = 'player') => {
+  // Check for email link in URL
+  useEffect(() => {
+    const verifyEmailLink = async () => {
+      if (window.location.href.includes('mode=signIn') || 
+          window.location.href.includes('__/auth/action')) {
+        try {
+          setIsLoading(true);
+          const { user, error } = await completeEmailLinkSignIn(email, window.location.href);
+          if (error) throw new Error(error);
+          if (user) {
+            await checkAndRedirect(user);
+          }
+        } catch (err) {
+          setError(err.message || 'Failed to complete sign in with email link');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    verifyEmailLink();
+  }, []);
+
+  // Handle email link sign in
+  const handleEmailLink = async (e) => {
     e.preventDefault();
-    
-    if (role === 'organizer') {
-      // For organizers, use email link authentication
-      if (!email) {
-        setError('Please enter your email address');
-        return;
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+      const { success, error: emailError } = await signInWithEmailLinkAuth(email);
+      if (emailError) throw new Error(emailError);
+      if (success) {
+        setEmailSent(true);
       }
-      
-      if (!isOrganizerEmail(email)) {
-        setError('This email is not authorized for organizer access');
-        return;
-      }
-      
-      try {
-        setIsLoading(true);
-        setError('');
-        localStorage.setItem('userRole', 'organizer');
-        const { success, error: emailError } = await signInWithEmailLinkAuth(email);
-        if (emailError) throw new Error(emailError);
-        if (success) {
-          setEmailSent(true);
-        }
-      } catch (err) {
-        setError(err.message || 'Failed to send sign-in link');
-        localStorage.removeItem('userRole');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // For players, use Google authentication
-      try {
-        setIsLoading(true);
-        setError('');
-        const { user, error: googleError } = await signInWithGoogle();
-        if (googleError) throw new Error(googleError);
-        if (user) {
-          localStorage.setItem('userRole', 'player');
-          navigate('/dashboard');
-        }
-      } catch (err) {
-        setError(err.message || 'Failed to sign in with Google');
-      } finally {
-        setIsLoading(false);
-      }
+    } catch (err) {
+      setError(err.message || 'Failed to send sign-in link');
+      setIsLoading(false);
     }
   };
-
-  // Check if we're handling an email link sign-in
-  useEffect(() => {
-    if (location.search.includes('oobCode=')) {
-      handleEmailLinkSignIn();
-    }
-  }, [location]);
-
-  // Check auth state on mount
-  useEffect(() => {
-    const unsubscribe = checkAuthState(async (user) => {
-      if (user) {
-        const userRole = localStorage.getItem('userRole') || 'player';
-        sessionStorage.setItem('userRole', userRole);
-        localStorage.removeItem('userRole');
-        // Check if profile is complete for player
-        const isProfileComplete = await checkProfileCompletion(user.uid);
-        if (!isProfileComplete) {
-          navigate('/complete-profile', { state: { from: location.state?.from || '/' } });
-        } else {
-          navigate('/dashboard');
-        }
-      }
-    });
-    return () => unsubscribe();
-  }, [navigate, location]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-2 sm:p-4 relative overflow-hidden bg-gray-900" ref={containerRef}>
@@ -218,107 +150,100 @@ const Login = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-gray-800/80 to-gray-900/90 rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-gray-700/50 overflow-hidden backdrop-blur-sm w-full mx-2 sm:mx-0"
+          className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10"
         >
-          {/* Logo and Title */}
           <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                <GiSoccerBall className="text-3xl text-white" />
-              </div>
+            <div className="flex items-center justify-center mb-4">
+              <GiSoccerBall className="text-4xl text-blue-400 mr-2" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                Campus Leauge
+              </h1>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-gray-300 text-sm">
-              Sign in to your Campus Sports account
+            <p className="text-gray-300 text-sm sm:text-base">
+              Join the ultimate sports community on campus
             </p>
           </div>
 
-          {emailSent ? (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-            >
-              <div className="text-2xl mb-2 text-green-400">✓</div>
-              <h3 className="text-xl font-medium text-white mb-2">Check your email</h3>
-              <p className="text-gray-300 mb-6">We've sent a login link to {email}</p>
-              <button 
-                onClick={() => setEmailSent(false)}
-                className="text-blue-400 hover:text-blue-300 text-sm font-medium"
+          {!emailSent ? (
+            <div className="space-y-4">
+              <button
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center py-3 px-4 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg text-white font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Back to login
+                <FaGoogle className="mr-3 text-red-400" />
+                Continue with Google
               </button>
-            </motion.div>
-          ) : (
-            <div className="space-y-6">
-              {/* Email Input */}
-              <div className="space-y-4">
-                {showOrganizerLogin && (
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <FaEnvelope className="text-gray-400 group-hover:text-blue-400 transition-colors" />
+
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 text-gray-400">Or</span>
+                </div>
+              </div>
+
+              <form onSubmit={handleEmailLink} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaEnvelope className="h-5 w-5 text-gray-400" />
                     </div>
                     <input
                       type="email"
+                      id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your organizer email"
-                      className="w-full pl-12 pr-4 py-3.5 bg-gray-700/30 border border-gray-600/50 hover:border-blue-500/50 focus:border-blue-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 text-white placeholder-gray-400 text-sm transition-all duration-300"
+                      className="block w-full pl-10 pr-3 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter your email"
                       required
                     />
                   </div>
-                )}
+                </div>
 
                 {error && (
-                  <div className="text-red-400 text-sm">
+                  <div className="text-red-400 text-sm p-3 bg-red-900/30 rounded-lg">
                     {error}
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  {/* Organizer Login */}
-                  <motion.button
-                    type="button"
-                    onClick={() => {
-                      if (!showOrganizerLogin) {
-                        setShowOrganizerLogin(true);
-                      } else if (email && isOrganizerEmail(email)) {
-                        handleSubmit({ preventDefault: () => {} }, 'organizer');
-                      }
-                    }}
-                    whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(124, 58, 237, 0.3)' }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={isLoading || (showOrganizerLogin && (!email || !isOrganizerEmail(email)))}
-                    className={`w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                      isLoading || (showOrganizerLogin && (!email || !isOrganizerEmail(email))) ? 'opacity-50 cursor-not-allowed' : 'opacity-100 hover:opacity-90'
-                    }`}
-                    title={showOrganizerLogin && !isOrganizerEmail(email) ? 'Only specific emails can log in as organizers' : ''}
-                  >
-                    <span>{showOrganizerLogin ? 'Submit Organizer Login' : 'Login as Organizer'}</span>
-                    {showOrganizerLogin && <FaArrowRight />}
-                  </motion.button>
-
-                  {/* Player Login */}
-                  <motion.button
-                    type="button"
-                    onClick={(e) => handleSubmit(e, 'player')}
-                    whileHover={{ y: -2, boxShadow: '0 10px 25px -5px rgba(37, 99, 235, 0.3)' }}
-                    whileTap={{ scale: 0.98 }}
-                    disabled={isLoading}
-                    className={`w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white py-3.5 px-6 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-3 ${
-                      isLoading ? 'opacity-75 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <FaGoogle className="text-lg" />
-                    <span>Login as Player</span>
-                  </motion.button>
-                </div>
-                {showOrganizerLogin && !isOrganizerEmail(email) && email && (
-                  <p className="text-xs text-yellow-400 text-center mt-1">
-                    Only authorized emails can log in as organizers
-                  </p>
-                )}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex items-center justify-center py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <FaSpinner className="animate-spin mr-2" />
+                  ) : (
+                    <FaEnvelope className="mr-2" />
+                  )}
+                  Send Email Link
+                </button>
+              </form>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-500/20 mb-4">
+                <FaEnvelope className="h-6 w-6 text-green-400" />
               </div>
+              <h3 className="text-lg font-medium text-white mb-2">Check your email</h3>
+              <p className="text-gray-300 text-sm mb-6">
+                We've sent a sign-in link to <span className="font-medium text-white">{email}</span>.
+                Click the link to access your account.
+              </p>
+              <button
+                onClick={() => {
+                  setEmailSent(false);
+                  setEmail('');
+                }}
+                className="text-sm text-blue-400 hover:text-blue-300 font-medium"
+              >
+                Back to login
+              </button>
             </div>
           )}
         </motion.div>

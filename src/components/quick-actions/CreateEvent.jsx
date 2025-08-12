@@ -247,20 +247,20 @@ const CreateEvent = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 sm:py-6 px-3 sm:px-6">
+    <div className="w-full max-w-7xl mx-auto pt-28 pb-8 sm:pb-12 px-4 sm:px-6">
       <div className="flex justify-center">
         <div className="w-full max-w-6xl">
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
             <div className="xl:col-span-3">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="bg-white rounded-lg sm:rounded-xl shadow-xs sm:shadow-sm p-4 sm:p-6 mb-6 sm:mb-8"
+                className="bg-white rounded-xl shadow-md p-6 sm:p-8 mb-8"
               >
-            <div className="flex justify-between items-center mb-4 sm:mb-6">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 flex items-center">
-                <FaCalendarPlus className="mr-2 sm:mr-3 text-blue-500" />
+            <div className="flex justify-between items-center mb-6 sm:mb-8">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 flex items-center">
+                <FaCalendarPlus className="mr-3 text-blue-500 text-3xl" />
                 Create New Event
               </h1>
               {isMobile && (
@@ -282,10 +282,10 @@ const CreateEvent = () => {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="space-y-5">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Event Name *</label>
+                  <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Event Name *</label>
                         <input 
                           type="text" 
                           name="eventName"
@@ -297,8 +297,8 @@ const CreateEvent = () => {
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Sport *</label>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Sport *</label>
                         <select 
                           name="sport"
                           value={formData.sport}
@@ -316,8 +316,8 @@ const CreateEvent = () => {
                         </select>
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Date & Time *</label>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Date & Time *</label>
                         <input 
                           type="datetime-local" 
                           name="dateTime"
@@ -328,8 +328,8 @@ const CreateEvent = () => {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Registration Deadline Date & Time *</label>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Registration Deadline *</label>
                         <input 
                           type="datetime-local" 
                           name="registrationDeadline"
@@ -340,8 +340,8 @@ const CreateEvent = () => {
                         />
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Location *</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <FaMapMarkerAlt className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
@@ -360,8 +360,8 @@ const CreateEvent = () => {
                     </div>
                     
                     <div className="space-y-5">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Description</label>
                         <textarea 
                           name="description"
                           value={formData.description}
@@ -372,9 +372,9 @@ const CreateEvent = () => {
                         ></textarea>
                       </div>
                       
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Participation Type</label>
-                        <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="space-y-3">
+                        <label className="block text-sm font-medium text-gray-700">Participation Type</label>
+                        <div className="grid grid-cols-2 gap-4">
                           <button
                             type="button"
                             onClick={() => setFormData(prev => ({ ...prev, participationType: 'player' }))}
@@ -403,7 +403,7 @@ const CreateEvent = () => {
                         
                         {formData.participationType === 'player' ? (
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Number of Players Needed</label>
+                            <label className="block text-sm font-medium text-gray-700">Number of Players Needed</label>
                             <div className="flex items-center space-x-2">
                               <FaUsers className="text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                               <input 
@@ -422,7 +422,7 @@ const CreateEvent = () => {
                         ) : (
                           <>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Number of Teams Needed</label>
+                            <label className="block text-sm font-medium text-gray-700">Number of Teams Needed</label>
                             <div className="flex items-center space-x-2">
                               <FaUsers className="text-gray-400 h-4 w-4 sm:h-5 sm:w-5" />
                               <input 
@@ -439,7 +439,7 @@ const CreateEvent = () => {
                             </div>
                           </div>
                           <div className="mt-3">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">How many students in a single team?</label>
+                            <label className="block text-sm font-medium text-gray-700">How many students in a single team?</label>
                             <div className="flex items-center space-x-2">
                               <input
                                 type="number"
@@ -470,18 +470,23 @@ const CreateEvent = () => {
                         </div>
                       </div>
                       
-                      <div className="pt-1 sm:pt-2">
+                      <div className="pt-2">
                         <button 
                           type="submit" 
                           disabled={isSubmitting}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm sm:text-base disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center text-base"
                         >
                           {isSubmitting ? (
                             <>
-                              <FaSpinner className="animate-spin mr-2" />
+                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
                               Creating...
                             </>
-                          ) : 'Create Event'}
+                          ) : (
+                            'Create Event'
+                          )}
                         </button>
                       </div>
                     </div>
@@ -498,7 +503,7 @@ const CreateEvent = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="bg-white rounded-lg sm:rounded-xl shadow-xs sm:shadow-sm p-4 sm:p-5 sticky top-6 h-fit w-full"
+                className="bg-white rounded-xl shadow-md p-6 sm:p-8 sticky top-6 h-fit w-full"
               >
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Upcoming Events</h2>
                 {renderUserEvents()}

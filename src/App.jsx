@@ -21,6 +21,7 @@ import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
 import About from './components/About';
 import ContactUs from './components/ContactUs';
+import Leaderboard from './components/Leaderboard';
 
 // Layout component to wrap protected routes with Navbar
 const MainLayout = ({ children }) => (
@@ -195,6 +196,14 @@ function App() {
             <ProtectedRoute>
               <MainLayout>
                 <UserProfileForm />
+              </MainLayout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/leaderboard" element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Leaderboard />
               </MainLayout>
             </ProtectedRoute>
           } />

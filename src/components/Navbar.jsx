@@ -1,603 +1,236 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { db, auth } from '../firebase/firebase';
-import { collection, getDocs, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
-import { updateDoc } from 'firebase/firestore';
-import { FaHome, FaUser, FaSignOutAlt, FaPlusCircle, FaUsers, FaBars, FaTimes, FaEdit, FaCalendarAlt, FaCog, FaSearch, FaBell, FaTrophy, FaPencilAlt, FaInfoCircle, FaEnvelope } from 'react-icons/fa';
-import { FaTrash } from 'react-icons/fa';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { auth } from '../firebase/firebase';
+import { FaBell, FaUser, FaSignOutAlt, FaPlus, FaCalendarAlt } from 'react-icons/fa';
+import { FiMenu, FiX } from 'react-icons/fi';
+import { GiSoccerBall } from 'react-icons/gi';
 
-const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [userRole, setUserRole] = useState('');
-  const [showParticipation, setShowParticipation] = useState(false);
-  const [participationData, setParticipationData] = useState([]);
-  const [loadingParticipation, setLoadingParticipation] = useState(false);
-  const [currentUid, setCurrentUid] = useState('');
-  const [unreadCount, setUnreadCount] = useState(0);
-  const location = useLocation();
+const Navbar = ({ className = '' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [hasUnreadNotifications] = useState(false);
+  const menuRef = useRef(null);
 
-  // Set up real-time listener for unread invitations in team subcollections
-  useEffect(() => {
-    if (!auth.currentUser) return;
-    
-    const userId = auth.currentUser.uid;
-    setCurrentUid(userId);
-    
-    // Keep track of all unsubscribe functions
-    const unsubscribeFunctions = [];
-    let pendingInvitesCount = 0;
-    const eventListeners = new Map();
-    
-    // Function to update the unread count
-    const updateUnreadCount = () => {
-      let totalCount = 0;
-      eventListeners.forEach(count => totalCount += count);
-      setUnreadCount(totalCount);
-    };
-    
-    // First, get all events and set up listeners for each
-    const eventsQuery = query(collection(db, 'events'));
-    
-    const unsubscribeEvents = onSnapshot(eventsQuery, (eventsSnapshot) => {
-      // Clean up existing team listeners for removed events
-      const currentEventIds = new Set(eventsSnapshot.docs.map(doc => doc.id));
-      
-      eventListeners.forEach((count, eventId) => {
-        if (!currentEventIds.has(eventId)) {
-          eventListeners.delete(eventId);
-        }
-      });
-      
-      // Set up listeners for each event's team subcollection
-      eventsSnapshot.docs.forEach(eventDoc => {
-        const eventId = eventDoc.id;
-        
-        // Skip if we already have a listener for this event
-        if (eventListeners.has(eventId)) return;
-        
-        // Initialize count for this event
-        eventListeners.set(eventId, 0);
-        
-        // Set up real-time listener for this event's team invitations
-        const teamQuery = query(
-          collection(db, 'events', eventId, 'team'),
-          where('invitee', '==', userId),
-          where('accepted', '==', false)
-        );
-        
-        const unsubscribeTeam = onSnapshot(teamQuery, (teamSnapshot) => {
-          // Update count for this specific event
-          eventListeners.set(eventId, teamSnapshot.size);
-          updateUnreadCount();
-        }, (error) => {
-          console.error(`Error listening to team invites for event ${eventId}:`, error);
-          // Set count to 0 for this event if there's an error
-          eventListeners.set(eventId, 0);
-          updateUnreadCount();
-        });
-        
-        unsubscribeFunctions.push(unsubscribeTeam);
-      });
-      
-      updateUnreadCount();
-    }, (error) => {
-      console.error('Error listening to events:', error);
-    });
-    
-    unsubscribeFunctions.push(unsubscribeEvents);
-
-    // Clean up all subscriptions on unmount
-    return () => {
-      unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
-    };
-  }, [auth.currentUser]);
-
-  // Get user role from sessionStorage on component mount
-  useEffect(() => {
-    const role = sessionStorage.getItem('userRole') || '';
-    setUserRole(role);
-  }, []);
-
-  const toggleMenu = () => {
-    const newIsMenuOpen = !isMenuOpen;
-    setIsMenuOpen(newIsMenuOpen);
-    if (newIsMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-  };
-
-  const toggleProfile = () => {
-    setIsProfileOpen(!isProfileOpen);
-  };
-
-  // Close profile dropdown when clicking outside (fix: allow clicks inside button and dropdown)
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const dropdown = document.querySelector('.profile-dropdown');
-      const button = document.querySelector('.profile-btn');
-      if (
-        isProfileOpen &&
-        dropdown &&
-        !dropdown.contains(event.target) &&
-        button &&
-        !button.contains(event.target)
-      ) {
-        setIsProfileOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target) && !event.target.closest('.menu-button')) {
+        setIsMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isProfileOpen]);
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close mobile menu on route change
   useEffect(() => {
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
+    setIsMenuOpen(false);
+  }, [location.pathname]);
+
+  // Auth state listener
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     try {
       await auth.signOut();
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
     }
   };
 
-  const isActive = (path) => {
-    return location.pathname === path ? 'bg-blue-100 text-blue-600' : 'text-gray-700 hover:bg-gray-100';
-  };
-
-  // Participation Modal Logic
-  const handleParticipationClick = async () => {
-    setShowParticipation(true);
-    setLoadingParticipation(true);
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        setParticipationData([]);
-        setLoadingParticipation(false);
-        return;
-      }
-      const eventsSnap = await getDocs(collection(db, 'events'));
-      const userEvents = [];
-      const userIdsSet = new Set();
-      eventsSnap.forEach(eventDoc => {
-        const eventData = eventDoc.data();
-        // Team events
-        if (eventData.team && typeof eventData.team === 'object') {
-          Object.entries(eventData.team).forEach(([teamName, teamObj]) => {
-            if (
-              (Array.isArray(teamObj.members) && teamObj.members.includes(user.uid)) ||
-              teamObj.leader === user.uid
-            ) {
-              userEvents.push({
-                type: 'team',
-                eventName: eventData.eventName || eventData.name || 'Unknown Event',
-                eventId: eventDoc.id,
-                teamName,
-                leader: teamObj.leader,
-                members: teamObj.members || [],
-              });
-              userIdsSet.add(teamObj.leader);
-              (teamObj.members || []).forEach(m => userIdsSet.add(m));
-            }
-          });
-        }
-        // Individual events
-        if (
-          eventData.participationType !== 'team' &&
-          Array.isArray(eventData.participants) &&
-          eventData.participants.includes(user.uid)
-        ) {
-          userEvents.push({
-            type: 'individual',
-            eventName: eventData.eventName || eventData.name || 'Unknown Event',
-            eventId: eventDoc.id,
-            participant: user.uid
-          });
-          userIdsSet.add(user.uid);
-        }
-      });
-      // Fetch user full names
-      const userIdToName = {};
-      if (userIdsSet.size > 0) {
-        const usersSnap = await getDocs(collection(db, 'users'));
-        usersSnap.forEach(userDoc => {
-          const d = userDoc.data();
-          userIdToName[userDoc.id] = d.fullName || userDoc.id;
-        });
-      }
-      // Map ids to names in participation data
-      const participationWithNames = userEvents.map(ev => {
-        if (ev.type === 'team') {
-          return {
-            ...ev,
-            leaderName: userIdToName[ev.leader] || ev.leader,
-            memberNames: ev.members.map(m => userIdToName[m] || m)
-          };
-        } else {
-          return {
-            ...ev,
-            participantName: userIdToName[ev.participant] || ev.participant
-          };
-        }
-      });
-      setParticipationData(participationWithNames);
-    } catch (err) {
-      setParticipationData([]);
-    } finally {
-      setLoadingParticipation(false);
-    }
-  };
-
-  // Handler for pencil click
-  const handleEditTeam = (eventId) => {
-    setShowParticipation(false);
-    navigate(`/events/${eventId}/create-team`);
-  };
-
   return (
-    <div>
-      {/* Mobile menu overlay */}
-      <div 
-        className={`fixed inset-0 bg-black/70 backdrop-blur-sm z-30 md:hidden transition-opacity duration-300 ${
-          isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={toggleMenu}
-      />
-      <nav className="w-full relative z-50 bg-white shadow-sm md:shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link to="/" className="text-xl font-bold text-blue-600 hover:text-blue-700">
-                Campus League
+    <header className={`bg-white shadow-sm fixed w-full z-50 ${className}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex items-center">
+            <Link 
+              to={isLoggedIn ? '/dashboard' : '/'} 
+              className="flex items-center space-x-2"
+            >
+              <GiSoccerBall className="text-2xl text-green-600" />
+              <span className="text-xl font-bold text-gray-900">Campus League</span>
+            </Link>
+          </div>
+          
+          {/* Desktop Sign In Button */}
+          {!isLoggedIn && (
+            <div className="hidden md:flex items-center space-x-4">
+              <Link 
+                to="/login" 
+                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
+              >
+                Sign In
               </Link>
             </div>
-            {/* Navigation Links - Desktop */}
-            <div className="hidden md:ml-6 md:flex md:items-center md:space-x-8">
-              <Link
-                to="/dashboard"
-                className={`${isActive('/dashboard')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
+          )}
+          
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            {!isLoggedIn ? (
+              <Link 
+                to="/login" 
+                className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
               >
-                <FaHome className="mr-2" />
-                Dashboard
+                Sign In
               </Link>
-              {userRole === 'organizer' && (
-                <>
-                  <Link
-                    to="/create-event"
-                    className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                  >
-                    <FaPlusCircle className="mr-2" />
-                    Create Event
-                  </Link>
-                  <Link
-                    to="/manage-events"
-                    className={`${isActive('/manage-events')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                  >
-                    <FaCog className="mr-2" />
-                    Manage Events
-                  </Link>
-                </>
-              )}
-              {/* Participation Button */}
-              <button
-                className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                onClick={handleParticipationClick}
+            ) : (
+              <button 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 text-gray-600 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
+                aria-expanded={isMenuOpen}
               >
-                <FaTrophy className="mr-2" />
-                Participation
+                {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
               </button>
-            </div>
-            {/* Profile Dropdown - Desktop */}
-            <div className="hidden md:ml-6 md:flex md:items-center relative">
-              {/* Notification Bell */}
-              <div className="relative mr-4">
-                <Link
-                  to="/notification"
-                  className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 relative inline-block transition-colors duration-200"
-                  aria-label="Notifications"
+            )}
+          </div>
+          
+          {/* Mobile Menu Overlay */}
+          {isLoggedIn && isMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={() => setIsMenuOpen(false)}
+            />
+          )}
+          
+          {/* Navigation - Only show when user is logged in */}
+          {isLoggedIn && (
+            <nav 
+              className={`fixed md:relative top-0 left-0 h-full w-64 bg-white shadow-lg md:shadow-none transform transition-transform duration-300 ease-in-out z-50 ${
+                isMenuOpen ? 'translate-x-0' : '-translate-x-full'
+              } md:translate-x-0 md:flex md:items-center md:space-x-6 md:w-auto md:h-auto md:bg-transparent`}
+              ref={menuRef}
+            >
+              {/* Mobile Menu Header */}
+              <div className="flex items-center justify-between p-4 border-b md:hidden">
+                <span className="text-lg font-semibold text-gray-900">Menu</span>
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                  aria-label="Close menu"
                 >
-                  <FaBell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white font-medium">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </Link>
+                  <FiX size={24} />
+                </button>
               </div>
               
-              {/* Profile Button */}
-              <div className="relative">
-                <button
-                  onClick={toggleProfile}
-                  className="profile-btn flex items-center space-x-2 p-1.5 pr-3 rounded-full border border-transparent hover:border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
-                  aria-expanded={isProfileOpen}
-                  aria-haspopup="true"
-                >
-                  <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium">
-                    <FaUser className="h-4 w-4" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">Profile</span>
-                  <svg 
-                    className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${isProfileOpen ? 'transform rotate-180' : ''}`} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor"
+              <div className="overflow-y-auto h-[calc(100vh-64px)] md:h-auto md:flex md:items-center">
+                <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6 p-4 md:p-0">
+                  <Link 
+                    to="/create-event" 
+                    className="flex items-center py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-green-600 transition-colors md:py-2 md:px-3 md:hover:bg-transparent"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                
-                {/* Dropdown menu */}
-                {isProfileOpen && (
-                  <div 
-                    className="profile-dropdown absolute right-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-[100] overflow-hidden transition-all duration-200 transform origin-top-right"
-                    style={{ transform: isProfileOpen ? 'scale(1) translateY(0)' : 'scale(0.95) translateY(-10px)', opacity: isProfileOpen ? 1 : 0, pointerEvents: 'auto' }}
+                    <FaPlus className="mr-2" />
+                    <span>Create Event</span>
+                  </Link>
+                  <Link 
+                    to="/manage-events" 
+                    className="flex items-center py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-green-600 transition-colors md:py-2 md:px-3 md:hover:bg-transparent"
                   >
-                    <div className="py-1" role="menu" aria-orientation="vertical">
+                    <FaCalendarAlt className="mr-2" />
+                    <span>Manage Events</span>
+                  </Link>
+                  
+                  {/* Notifications */}
+                  <Link 
+                    to="/notification"
+                    className="flex items-center py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-green-600 transition-colors md:py-2 md:px-2 md:hover:bg-transparent"
+                    aria-label="Notifications"
+                  >
+                    <span className="relative">
+                      <FaBell className="h-5 w-5" />
+                      {hasUnreadNotifications && (
+                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
+                      )}
+                    </span>
+                    <span className="ml-3 md:hidden">Notifications</span>
+                  </Link>
+
+                  {/* User Menu - Mobile Only */}
+                  <div className="relative md:ml-2 md:hidden">
+                    <div className="py-1">
                       <Link 
                         to="/form" 
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-150 flex items-center"
-                        onClick={() => setIsProfileOpen(false)}
-                        role="menuitem"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <FaEdit className="mr-3 text-gray-400 group-hover:text-blue-500" />
+                        <FaUser className="mr-3 h-4 w-4 text-gray-500" />
+                        Profile
+                      </Link>
+                      <Link 
+                        to="/settings" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <svg className="mr-3 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Settings
+                      </Link>
+                      <Link 
+                        to="/edit-profile" 
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <svg className="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
                         Edit Profile
                       </Link>
                       <Link 
                         to="/about" 
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-150 flex items-center"
-                        onClick={() => setIsProfileOpen(false)}
-                        role="menuitem"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <FaInfoCircle className="mr-3 text-gray-400 group-hover:text-blue-500" />
+                        <svg className="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         About
                       </Link>
                       <Link 
                         to="/contact" 
-                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-150 flex items-center"
-                        onClick={() => setIsProfileOpen(false)}
-                        role="menuitem"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <FaEnvelope className="mr-3 text-gray-400 group-hover:text-blue-500" />
+                        <svg className="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
                         Contact Us
                       </Link>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <button 
-                        className="block w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center"
-                        onClick={() => { handleLogout(); setIsProfileOpen(false); }}
-                        role="menuitem"
-                      >
-                        <FaSignOutAlt className="mr-3 text-red-400" />
-                        Logout
-                      </button>
                     </div>
+                    <div className="border-t border-gray-100"></div>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                    >
+                      <FaSignOutAlt className="mr-3 h-4 w-4" />
+                      Sign out
+                    </button>
                   </div>
-                )}
+                  
+                  {/* Desktop Profile Link */}
+                  <div className="hidden md:block">
+                    <Link 
+                      to="/form" 
+                      className="flex items-center space-x-3 text-gray-700 hover:text-green-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
+                    >
+                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                        <FaUser className="text-gray-500" />
+                      </div>
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
-            {/* Mobile menu button and notification */}
-            <div className="md:hidden flex items-center space-x-4">
-              <div className="relative">
-                <button
-                  onClick={() => navigate('/notification')}
-                  className="text-gray-700 hover:text-blue-600 focus:outline-none relative p-1"
-                >
-                  <FaBell size={20} />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center border-2 border-white">
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-              <button
-                onClick={toggleMenu}
-                className="text-gray-700 hover:text-blue-600 focus:outline-none"
-              >
-                {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-              </button>
-            </div>
-          </div>
+            </nav>
+          )}
         </div>
-        {/* Mobile Navigation Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden fixed top-16 left-0 w-full bg-white z-40 shadow-lg border-t border-gray-200 animate-slide-down">
-            <div className="flex flex-col py-4 px-6 space-y-2">
-              <Link
-                to="/dashboard"
-                className={`${isActive('/dashboard')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                onClick={toggleMenu}
-              >
-                <FaHome className="mr-2" />
-                Dashboard
-              </Link>
-              {userRole === 'organizer' && (
-                <>
-                  <Link
-                    to="/create-event"
-                    className={`${isActive('/create-event')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                    onClick={toggleMenu}
-                  >
-                    <FaPlusCircle className="mr-2" />
-                    Create Event
-                  </Link>
-                  <Link
-                    to="/manage-events"
-                    className={`${isActive('/manage-events')} text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center`}
-                    onClick={toggleMenu}
-                  >
-                    <FaCog className="mr-2" />
-                    Manage Events
-                  </Link>
-                </>
-              )}
-              <button
-                className="ml-2 px-3 py-2 rounded-md text-sm font-medium inline-flex items-center bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
-                onClick={() => { handleParticipationClick(); toggleMenu(); }}
-              >
-                <FaTrophy className="mr-2" />
-                Participation
-              </button>
-              <Link to="/form" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                <FaEdit className="mr-2" /> Edit Profile
-              </Link>
-              <Link to="/about" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                <FaInfoCircle className="mr-2" /> About
-              </Link>
-              <Link to="/contact" className="text-gray-700 hover:text-blue-600 py-2 flex items-center" onClick={toggleMenu}>
-                <FaEnvelope className="mr-2" /> Contact Us
-              </Link>
-              <button className="text-red-600 hover:bg-gray-100 py-2 rounded flex items-center" onClick={() => { handleLogout(); toggleMenu(); }}>
-                <FaSignOutAlt className="mr-2" /> Logout
-              </button>
-            </div>
-          </div>
-        )}
-        {/* Participation Modal */}
-        {showParticipation && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
-              {/* Header */}
-              <div className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
-                <h2 className="text-xl font-bold text-gray-900">Your Participation</h2>
-                <button
-                  className="text-gray-500 hover:text-gray-700 text-2xl p-2 -mr-2"
-                  onClick={() => setShowParticipation(false)}
-                  aria-label="Close"
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              
-              {/* Content */}
-              <div className="p-6 overflow-y-auto flex-1">
-              {loadingParticipation ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-              ) : participationData.length === 0 ? (
-                <div className="text-center text-gray-500 py-12">
-                  <FaTrophy className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                  <p className="text-lg font-medium">No participation found</p>
-                  <p className="text-sm mt-1">Join or create a team to see your participation here</p>
-                </div>
-              ) : (
-                <div className="max-w-2xl mx-auto w-full">
-                  <ul className="space-y-4">
-                    {participationData.map((item, idx) => (
-                      item.type === 'team' ? (
-                        <li key={item.eventId + item.teamName} className="bg-blue-50 rounded-lg p-4 shadow-sm border border-blue-100 relative">
-                          {/* Pencil Button - only for leader */}
-                          {item.leader === currentUid && (
-                            <div className="absolute top-3 right-3 flex gap-2">
-                              <button
-                                className="p-1.5 text-blue-600 hover:bg-blue-100 rounded-full transition-colors"
-                                title="Edit Team"
-                                onClick={() => handleEditTeam(item.eventId)}
-                                aria-label="Edit team"
-                              >
-                                <FaPencilAlt className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                className="p-1.5 text-red-600 hover:bg-red-100 rounded-full transition-colors"
-                                title="Delete Team"
-                                aria-label="Delete team"
-                                onClick={async () => {
-                                  if (window.confirm('Are you sure you want to delete your team?')) {
-                                    try {
-                                      const eventRef = doc(db, 'events', item.eventId);
-                                      const eventDoc = await getDoc(eventRef);
-                                      if (eventDoc.exists()) {
-                                        const teamObj = eventDoc.data().team || {};
-                                        // Find the correct key for the team
-                                        const teamKey = Object.keys(teamObj).find(key => key === item.teamName);
-                                        if (teamKey) {
-                                          delete teamObj[teamKey];
-                                          await updateDoc(eventRef, { team: teamObj });
-                                          setParticipationData(prev => prev.filter((p, i) => i !== idx));
-                                          alert('Team deleted successfully.');
-                                        } else {
-                                          alert('Team not found.');
-                                        }
-                                      } else {
-                                        alert('Event not found.');
-                                      }
-                                    } catch (err) {
-                                      alert('Failed to delete team.');
-                                      console.error('Delete team error:', err);
-                                    }
-                                  }
-                                }}
-                              >
-                                <FaTrash className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-                          <div className="font-semibold text-blue-900 text-base mb-1 pr-6">{item.eventName}</div>
-                          <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-                            <div className="text-gray-700">Team:</div>
-                            <div className="font-medium text-gray-900">{item.teamName}</div>
-                            
-                            <div className="text-gray-700">Role:</div>
-                            <div className="font-medium text-gray-900">
-                              {item.leader === currentUid ? 'Team Leader' : 'Team Member'}
-                            </div>
-                            
-                            <div className="text-gray-700">Members:</div>
-                            <div className="space-y-1">
-                              {[item.leaderName, ...item.memberNames.filter(name => name !== item.leaderName)].map((member, i) => (
-                                <div key={member + i} className="flex items-center">
-                                  <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 ${member === item.leaderName ? 'bg-blue-500' : 'bg-gray-400'}`}></span>
-                                  <span className={member === item.leaderName ? 'font-medium text-blue-700' : 'text-gray-700'}>
-                                    {member} {member === item.leaderName && '(Leader)'}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </li>
-                      ) : (
-                        <li key={item.eventId + 'individual'} className="bg-green-50 rounded-lg p-4 shadow-sm border border-green-100">
-                          <div className="font-semibold text-green-900 text-base mb-1">{item.eventName}</div>
-                          <div className="grid grid-cols-2 gap-2 text-sm mt-3">
-                            <div className="text-gray-700">Participation:</div>
-                            <div className="font-medium text-gray-900">Individual</div>
-                            
-                            <div className="text-gray-700">Status:</div>
-                            <div className="font-medium text-green-700">Registered</div>
-                          </div>
-                        </li>
-                      )
-                    ))}
-                  </ul>
-                </div>
-              )}
-              </div>
-              
-              {/* Footer */}
-              <div className="bg-white border-t border-gray-200 p-4 flex justify-end">
-                <button
-                  onClick={() => setShowParticipation(false)}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors text-base font-medium"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
-    </div>
+      </div>
+    </header>
   );
 };
 

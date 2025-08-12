@@ -117,11 +117,22 @@ const UserProfileForm = () => {
     loadUserData();
   }, [navigate]);
 
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      navigate('/');
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
+    }
+  };
+
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -223,13 +234,11 @@ const UserProfileForm = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-28 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-
-
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200">
-          <div className="p-6 sm:p-10">
-            <div className="flex items-start mb-10">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-2xl">
+          <div className="p-8 sm:p-12">
+            <div className="flex items-start mb-12">
               <motion.button
                 whileHover={{ x: -2 }}
                 whileTap={{ scale: 0.95 }}
@@ -262,8 +271,8 @@ const UserProfileForm = () => {
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit} className="space-y-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Email field (read-only) */}
                 <motion.div 
                   initial={{ opacity: 0, x: -10 }}
@@ -442,6 +451,24 @@ const UserProfileForm = () => {
                     </span>
                   ) : 'Save Profile'}
                 </motion.button>
+              </motion.div>
+
+              {/* Sign Out Button */}
+              <motion.div 
+                className="mt-6 text-center"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <button
+                  onClick={handleSignOut}
+                  className="text-red-500 hover:text-red-600 font-medium text-sm transition-colors duration-200 flex items-center justify-center w-full py-2 px-4 rounded-lg hover:bg-red-50"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Sign Out
+                </button>
               </motion.div>
             </form>
           </div>

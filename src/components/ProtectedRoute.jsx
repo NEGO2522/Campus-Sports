@@ -84,14 +84,14 @@ const ProtectedRoute = ({ children }) => {
   }
 
 
-  const isAdminRoute = (
-    location.pathname.startsWith('/create-event') ||
-    location.pathname.startsWith('/manage-events') ||
-    /^\/events\/[^/]+$/.test(location.pathname)
-  );
-  if (isAdminRoute && status.userRole !== 'admin') {
-    return <Navigate to="/dashboard" replace />;
+  // Check if user has completed their profile
+  if (!status.profileChecked) {
+    // Only redirect to complete profile if not already there
+    if (!location.pathname.startsWith('/complete-profile')) {
+      return <Navigate to="/complete-profile" state={{ from: location }} replace />;
+    }
   }
+  
   return children;
 };
 
