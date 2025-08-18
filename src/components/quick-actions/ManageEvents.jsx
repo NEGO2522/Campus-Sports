@@ -17,7 +17,13 @@ const ManageEvents = () => {
   const [pausingEventId, setPausingEventId] = useState(null);
   const navigate = useNavigate();
 
-  const handlePauseTournament = async (eventId) => {
+  const handlePauseTournament = async (eventId, createdBy) => {
+    const user = auth.currentUser;
+    if (!user || user.uid !== createdBy) {
+      toast.error('Only the event creator can pause this tournament');
+      return;
+    }
+    
     if (!window.confirm('Pause this tournament? This will set its status back to upcoming.')) {
       return;
     }
@@ -36,10 +42,15 @@ const ManageEvents = () => {
   };
 
   useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) return;
+
     const q = query(
       collection(db, 'events'),
+      where('createdBy', '==', user.uid),
       orderBy('dateTime')
     );
+    
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const events = [];
       querySnapshot.forEach((doc) => {
@@ -54,7 +65,13 @@ const ManageEvents = () => {
     return () => unsubscribe();
   }, []);
 
-  const handleStartTournament = async (eventId) => {
+  const handleStartTournament = async (eventId, createdBy) => {
+    const user = auth.currentUser;
+    if (!user || user.uid !== createdBy) {
+      toast.error('Only the event creator can start this tournament');
+      return;
+    }
+    
     if (!window.confirm('Are you sure you want to start this tournament? This will change its status to ongoing.')) {
       return;
     }
@@ -73,7 +90,13 @@ const ManageEvents = () => {
     }
   };
 
-  const handleDeleteEvent = async (eventId) => {
+  const handleDeleteEvent = async (eventId, createdBy) => {
+    const user = auth.currentUser;
+    if (!user || user.uid !== createdBy) {
+      toast.error('Only the event creator can delete this event');
+      return;
+    }
+    
     if (!window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
       return;
     }
@@ -171,7 +194,7 @@ const ManageEvents = () => {
                   <div className="flex space-x-2">
                     {event.status === 'upcoming' ? (
                       <button
-                        onClick={() => handleStartTournament(event.id)}
+                        onClick={() => handleStartTournament(event.id, event.createdBy)}
                         disabled={startingEventId === event.id}
                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         title="Start Tournament"
@@ -187,7 +210,7 @@ const ManageEvents = () => {
                       <span className="inline-flex items-center px-3 py-1.5 border border-green-200 text-xs font-medium rounded-md text-green-700 bg-green-50 cursor-default" title="Ongoing">
                         <FaPlay className="h-3 w-3 mr-1" /> Ongoing
                         <button
-                          onClick={() => handlePauseTournament(event.id)}
+                          onClick={() => handlePauseTournament(event.id, event.createdBy)}
                           disabled={pausingEventId === event.id}
                           className="ml-2 inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Pause Tournament"
@@ -210,7 +233,7 @@ const ManageEvents = () => {
                       <FaEdit className="h-3 w-3" />
                     </button>
                     <button
-                      onClick={() => handleDeleteEvent(event.id)}
+                      onClick={() => handleDeleteEvent(event.id, event.createdBy)}
                       disabled={deletingEventId === event.id}
                       className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Delete Event"
