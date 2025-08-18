@@ -154,6 +154,11 @@ const Dashboard = () => {
             <Leaderboard limit={5} />
           </div>
         </div>
+        
+        {/* Copyright */}
+        <div className="mt-12 text-center text-xs text-gray-500">
+          © {new Date().getFullYear()} Campus League. All rights reserved.
+        </div>
       </div>
     </div>
   );

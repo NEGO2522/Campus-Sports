@@ -286,7 +286,10 @@ const Home = () => {
         </div>
       </section>
 
-
+      {/* Copyright */}
+      <div className="py-6 text-center text-xs text-gray-500 border-t border-gray-100 mt-16">
+        {new Date().getFullYear()} Campus League. All rights reserved.
+      </div>
     </div>
   );
 };
