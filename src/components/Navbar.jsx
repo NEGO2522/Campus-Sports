@@ -98,7 +98,7 @@ const Navbar = ({ className = '' }) => {
           {/* Mobile Menu Overlay */}
           {isLoggedIn && isMenuOpen && (
             <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              className="fixed inset-0 bg-black/10 backdrop-blur-md z-40 md:hidden"
               onClick={() => setIsMenuOpen(false)}
             />
           )}
