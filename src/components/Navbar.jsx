@@ -54,7 +54,7 @@ const Navbar = ({ className = '' }) => {
           {/* Logo */}
           <div className="flex items-center">
             <Link 
-              to={isLoggedIn ? '/dashboard' : '/'} 
+              to="/"
               className="flex items-center space-x-2"
             >
               <GiSoccerBall className="text-2xl text-green-600" />

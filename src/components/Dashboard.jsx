@@ -15,8 +15,7 @@ const Dashboard = () => {
   // Stats state
   const [stats, setStats] = useState([
     { id: 1, name: 'Upcoming Events', value: '0', icon: FaCalendarAlt, change: '0', changeType: 'neutral' },
-    { id: 2, name: 'Active Players', value: '0', icon: FaUsers, change: '0%', changeType: 'positive' },
-    { id: 3, name: 'Your Points', value: '0', icon: FaTrophy, change: '0', changeType: 'positive' },
+    { id: 2, name: 'Your Points', value: '0', icon: FaTrophy, change: '0', changeType: 'positive' },
   ]);
 
   // Load dashboard data
@@ -51,8 +50,7 @@ const Dashboard = () => {
           // Update stats
           setStats(prevStats => [
             { ...prevStats[0], value: upcomingEvents.length.toString() },
-            { ...prevStats[1], value: totalParticipants.toString() },
-            prevStats[2] // Keep the points stat as is
+            prevStats[1] // Keep the points stat as is
           ]);
         });
 
@@ -93,7 +91,7 @@ const Dashboard = () => {
         </div>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8 max-w-2xl">
           {stats.map((stat) => (
             <motion.div
               key={stat.id}
