@@ -1,40 +1,29 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { auth } from '../firebase/firebase';
-import { FaBell, FaUser, FaSignOutAlt, FaPlus, FaCalendarAlt } from 'react-icons/fa';
-import { FiMenu, FiX } from 'react-icons/fi';
-import { GiSoccerBall } from 'react-icons/gi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Trophy, Bell, User, LogOut, PlusCircle, 
+  Calendar, Menu, X, Settings, Info, Mail 
+} from 'lucide-react';
 
-const Navbar = ({ className = '' }) => {
+const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasUnreadNotifications] = useState(false);
-  const menuRef = useRef(null);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Close dropdowns when clicking outside
+  // Handle scroll effect for glassmorphism
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target) && !event.target.closest('.menu-button')) {
-        setIsMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
 
   // Auth state listener
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setIsLoggedIn(!!user);
-    });
+    const unsubscribe = auth.onAuthStateChanged((user) => setIsLoggedIn(!!user));
     return () => unsubscribe();
   }, []);
 
@@ -43,194 +32,149 @@ const Navbar = ({ className = '' }) => {
       await auth.signOut();
       navigate('/');
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error('Logout error:', error);
     }
   };
 
+  const navLinks = [
+    { name: 'Create Event', path: '/create-event', icon: <PlusCircle size={18} /> },
+    { name: 'Manage', path: '/manage-events', icon: <Calendar size={18} /> },
+    { name: 'Notifications', path: '/notification', icon: <Bell size={18} /> },
+  ];
+
   return (
-    <header className={`bg-white shadow-sm fixed w-full z-50 ${className}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link 
-              to="/"
-              className="flex items-center space-x-2"
-            >
-              <GiSoccerBall className="text-2xl text-green-600" />
-              <span className="text-xl font-bold text-gray-900">Campus League</span>
-            </Link>
+    <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${
+      scrolled ? 'py-3 bg-black/80 backdrop-blur-xl border-b border-white/10' : 'py-5 bg-transparent'
+    }`}>
+      <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+        
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="bg-[#ccff00] p-1.5 rounded-lg group-hover:rotate-12 transition-transform">
+            <Trophy className="text-black" size={22} strokeWidth={3} />
           </div>
-          
-          {/* Desktop Sign In Button */}
-          {!isLoggedIn && (
-            <div className="hidden md:flex items-center space-x-4">
-              <Link 
-                to="/login" 
-                className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-              >
-                Sign In
-              </Link>
-            </div>
-          )}
-          
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            {!isLoggedIn ? (
-              <Link 
-                to="/login" 
-                className="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors"
-              >
-                Sign In
-              </Link>
-            ) : (
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 text-gray-600 hover:text-green-600 rounded-full hover:bg-gray-100 transition-colors"
-                aria-label="Toggle menu"
-                aria-expanded={isMenuOpen}
-              >
-                {isMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
-              </button>
-            )}
-          </div>
-          
-          {/* Mobile Menu Overlay */}
-          {isLoggedIn && isMenuOpen && (
-            <div 
-              className="fixed inset-0 bg-black/10 backdrop-blur-md z-40 md:hidden"
-              onClick={() => setIsMenuOpen(false)}
-            />
-          )}
-          
-          {/* Navigation - Only show when user is logged in */}
-          {isLoggedIn && (
-            <nav 
-              className={`fixed md:relative top-0 left-0 h-full w-64 bg-white shadow-lg md:shadow-none transform transition-transform duration-300 ease-in-out z-50 ${
-                isMenuOpen ? 'translate-x-0' : '-translate-x-full'
-              } md:translate-x-0 md:flex md:items-center md:space-x-6 md:w-auto md:h-auto md:bg-transparent`}
-              ref={menuRef}
-            >
-              {/* Mobile Menu Header */}
-              <div className="flex items-center justify-between p-4 border-b md:hidden">
-                <span className="text-lg font-semibold text-gray-900">Menu</span>
-                <button 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="p-1 rounded-full hover:bg-gray-100"
-                  aria-label="Close menu"
-                >
-                  <FiX size={24} />
-                </button>
+          <span className="text-xl font-black italic tracking-tighter text-white">
+            CAMPUS<span className="text-[#ccff00]">LEAGUE</span>
+          </span>
+        </Link>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-8">
+          {isLoggedIn ? (
+            <>
+              <div className="flex items-center gap-6">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-colors hover:text-[#ccff00] ${
+                      location.pathname === link.path ? 'text-[#ccff00]' : 'text-gray-400'
+                    }`}
+                  >
+                    {link.icon}
+                    {link.name}
+                  </Link>
+                ))}
               </div>
               
-              <div className="overflow-y-auto h-[calc(100vh-64px)] md:h-auto md:flex md:items-center">
-                <div className="flex flex-col md:flex-row md:items-center space-y-2 md:space-y-0 md:space-x-6 p-4 md:p-0">
-                  <Link 
-                    to="/create-event" 
-                    className="flex items-center py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-green-600 transition-colors md:py-2 md:px-3 md:hover:bg-transparent"
-                  >
-                    <FaPlus className="mr-2" />
-                    <span>Create Event</span>
-                  </Link>
-                  <Link 
-                    to="/manage-events" 
-                    className="flex items-center py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-green-600 transition-colors md:py-2 md:px-3 md:hover:bg-transparent"
-                  >
-                    <FaCalendarAlt className="mr-2" />
-                    <span>Manage Events</span>
-                  </Link>
-                  
-                  {/* Notifications */}
-                  <Link 
-                    to="/notification"
-                    className="flex items-center py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-green-600 transition-colors md:py-2 md:px-2 md:hover:bg-transparent"
-                    aria-label="Notifications"
-                  >
-                    <span className="relative">
-                      <FaBell className="h-5 w-5" />
-                      {hasUnreadNotifications && (
-                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500"></span>
-                      )}
-                    </span>
-                    <span className="ml-3 md:hidden">Notifications</span>
-                  </Link>
+              <div className="h-8 w-[1px] bg-white/10 mx-2" />
 
-                  {/* User Menu - Mobile Only */}
-                  <div className="relative md:ml-2 md:hidden">
-                    <div className="py-1">
-                      <Link 
-                        to="/form" 
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <FaUser className="mr-3 h-4 w-4 text-gray-500" />
-                        Profile
-                      </Link>
-                      <Link 
-                        to="/settings" 
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <svg className="mr-3 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Settings
-                      </Link>
-                      <Link 
-                        to="/edit-profile" 
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <svg className="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
-                        Edit Profile
-                      </Link>
-                      <Link 
-                        to="/about" 
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <svg className="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        About
-                      </Link>
-                      <Link 
-                        to="/contact" 
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        <svg className="mr-3 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Contact Us
-                      </Link>
-                    </div>
-                    <div className="border-t border-gray-100"></div>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
-                    >
-                      <FaSignOutAlt className="mr-3 h-4 w-4" />
-                      Sign out
-                    </button>
-                  </div>
-                  
-                  {/* Desktop Profile Link */}
-                  <div className="hidden md:block">
-                    <Link 
-                      to="/form" 
-                      className="flex items-center space-x-3 text-gray-700 hover:text-green-600 transition-colors p-2 rounded-lg hover:bg-gray-100"
-                    >
-                      <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <FaUser className="text-gray-500" />
-                      </div>
-                    </Link>
+              <Link to="/form" className="group flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full border-2 border-[#ccff00]/20 p-0.5 group-hover:border-[#ccff00] transition-colors">
+                  <div className="w-full h-full bg-gray-800 rounded-full flex items-center justify-center">
+                    <User size={18} className="text-gray-400 group-hover:text-white" />
                   </div>
                 </div>
-              </div>
-            </nav>
+              </Link>
+            </>
+          ) : (
+            <Link 
+              to="/login" 
+              className="bg-white text-black px-6 py-2.5 rounded-full font-black text-sm hover:bg-[#ccff00] transition-colors active:scale-95"
+            >
+              SIGN IN
+            </Link>
           )}
         </div>
+
+        {/* Mobile Toggle */}
+        <button 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="md:hidden p-2 text-white bg-white/5 rounded-xl border border-white/10"
+        >
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
-    </header>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[-1] md:hidden"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-screen w-[80%] bg-[#111] border-l border-white/10 p-8 z-[100] md:hidden"
+            >
+              <div className="flex flex-col h-full">
+                <div className="flex justify-between items-center mb-12">
+                  <span className="text-2xl font-black italic tracking-tighter">MENU</span>
+                  <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-white/5 rounded-full">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {isLoggedIn ? (
+                    <>
+                      {navLinks.map((link) => (
+                        <Link
+                          key={link.path}
+                          to={link.path}
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:border-[#ccff00]/50 text-lg font-bold italic"
+                        >
+                          <span className="text-[#ccff00]">{link.icon}</span>
+                          {link.name}
+                        </Link>
+                      ))}
+                      <div className="my-4 border-t border-white/5" />
+                      <Link to="/form" className="flex items-center gap-4 p-4 text-gray-400 font-bold italic">
+                        <User size={20} /> PROFILE
+                      </Link>
+                      <Link to="/settings" className="flex items-center gap-4 p-4 text-gray-400 font-bold italic">
+                        <Settings size={20} /> SETTINGS
+                      </Link>
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center gap-4 p-4 text-red-500 font-bold italic mt-auto"
+                      >
+                        <LogOut size={20} /> LOGOUT
+                      </button>
+                    </>
+                  ) : (
+                    <Link 
+                      to="/login"
+                      className="bg-[#ccff00] text-black p-5 rounded-2xl text-center font-black italic text-xl"
+                    >
+                      SIGN IN NOW
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </nav>
   );
 };
 

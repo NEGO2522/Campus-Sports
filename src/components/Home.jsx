@@ -1,295 +1,225 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCalendarAlt, FaChartBar, FaUsers, FaStar, FaUser, FaRunning, FaTrophy, FaBell } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Trophy, Users, Zap, Calendar, ArrowRight, 
+  Target, Activity, ChevronRight, Play 
+} from 'lucide-react';
 import Navbar from './Navbar';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [currentWord, setCurrentWord] = useState(0);
   
-  // Animated text phrases
-  const animatedPhrases = [
-    'Leagues',
-    'Create Events',
-    'Join Events', 
-    'Join Community',
-    'Find Teammates'
+  const words = ["VICTORY", "COMMUNITY", "GLORY", "LEAGUES"];
+  
+  const sportsImages = [
+    "https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1000&auto=format&fit=crop",
   ];
-  
-  const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
-  const [activePreview, setActivePreview] = useState(0); // 0: Dashboard, 1: Events, 2: Teams
 
-  // Animated text effect
+  // Global function to handle auth redirection
+  const handleAuthRedirect = () => navigate('/login');
+
   useEffect(() => {
-    const textInterval = setInterval(() => {
-      setIsVisible(false);
-      
-      setTimeout(() => {
-        setCurrentPhraseIndex((prevIndex) => 
-          (prevIndex + 1) % animatedPhrases.length
-        );
-        setIsVisible(true);
-      }, 300);
-      
-    }, 2000);
-
-    return () => clearInterval(textInterval);
-  }, [animatedPhrases.length]);
-
-  // Preview cycling effect
-  useEffect(() => {
-    const previewInterval = setInterval(() => {
-      setActivePreview((prev) => (prev + 1) % 3);
-    }, 3000); // Changed from 5000ms to 3000ms
-
-    return () => clearInterval(previewInterval);
+    const wordInterval = setInterval(() => {
+      setCurrentWord((prev) => (prev + 1) % words.length);
+    }, 2500);
+    return () => clearInterval(wordInterval);
   }, []);
 
-  const handleCreateGroup = () => {
-    navigate('/dashboard');
+  const containerVars = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1, 
+      transition: { staggerChildren: 0.2, delayChildren: 0.3 } 
+    }
   };
 
-  const handleRequestDemo = () => {
-    navigate('/contact');
+  const itemVars = {
+    hidden: { y: 30, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-[#ccff00] selection:text-black font-sans overflow-x-hidden">
       <Navbar />
 
-      {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 md:pt-32 pb-16">
-        <div className="grid lg:grid-cols-2 gap-8 md:gap-16 items-center">
-          {/* Left Column - Content */}
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                <span 
-                  className={`text-green-600 transition-opacity duration-300 ${
-                    isVisible ? 'opacity-100' : 'opacity-0'
-                  }`}
-                  style={{ minHeight: '1.2em', display: 'inline-block' }}
-                >
-                  {animatedPhrases[currentPhraseIndex]}
-                </span>
-                <br />
-                Campus League
-              </h1>
-              <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed">
-                The ultimate platform for managing all your campus sports activities in one place
-              </p>
-              
-              {/* Feature Highlights */}
-              <div className="mt-8 space-y-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-6 w-6 text-green-600 flex items-center justify-center">
-                    ✓
-                  </div>
-                  <p className="ml-3 text-lg text-gray-700">
-                    <span className="font-semibold">Create & Manage Events</span> - Easily organize and schedule sports events
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-6 w-6 text-green-600 flex items-center justify-center">
-                    ✓
-                  </div>
-                  <p className="ml-3 text-lg text-gray-700">
-                    <span className="font-semibold">Track Participation</span> - See who's attending and manage rosters
-                  </p>
-                </div>
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 h-6 w-6 text-green-600 flex items-center justify-center">
-                    ✓
-                  </div>
-                  <p className="ml-3 text-lg text-gray-700">
-                    <span className="font-semibold">Real-time Updates</span> - Stay informed with instant notifications
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button 
-                onClick={handleCreateGroup}
-                className="bg-green-600 text-white px-8 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors cursor-pointer"
-              >
-                Play More, Stress Less.
-              </button>
-              <button 
-                onClick={handleRequestDemo}
-                className="border border-gray-300 text-gray-700 px-8 py-3 rounded-md font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Contact Us
-              </button>
-            </div>
-          </div>
-
-          {/* Right Column - App Previews */}
-          <div className="relative h-[300px] sm:h-[350px] w-full max-w-[320px] mx-auto mt-12 md:mt-8 lg:mt-0">
-            {/* Dashboard Preview Card */}
-            <div 
-              className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 absolute inset-0 transition-all duration-500 ease-in-out transform scale-90 hover:scale-95 ${
-                activePreview === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
-            >
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                <div className="flex items-center">
-                  <div className="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
-                  <div className="h-3 w-3 rounded-full bg-yellow-500 mr-2"></div>
-                  <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                  <span className="text-xs font-medium text-gray-500 ml-2">Dashboard</span>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-500">Active Events</p>
-                    <p className="text-xl font-bold">12</p>
-                  </div>
-                  <div className="bg-green-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-500">Total Teams</p>
-                    <p className="text-xl font-bold">24</p>
-                  </div>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500" style={{width: '65%'}}></div>
-                </div>
-                <p className="text-xs text-center mt-2 text-gray-500">Upcoming: Basketball Tournament (3 days)</p>
-              </div>
-            </div>
-
-            {/* Events Preview */}
-            <div 
-              className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 absolute inset-0 transition-all duration-500 ease-in-out transform scale-90 hover:scale-95 ${
-                activePreview === 1 ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
-            >
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-3 w-3 rounded-full bg-red-500 mr-2"></div>
-                    <span className="text-xs font-medium text-gray-500">Events</span>
-                  </div>
-                  <span className="text-xs text-blue-500 font-medium">View All</span>
-                </div>
-              </div>
-              <div className="p-4">
-                {['Basketball Tournament', 'Cricket League', 'Badminton Open'].map((event, index) => (
-                  <div key={index} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                    <div className="flex items-center">
-                      <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-blue-600 text-xs font-medium">{event[0]}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{event}</p>
-                        <p className="text-xs text-gray-500">{index + 1} day{index !== 0 ? 's' : ''} from now</p>
-                      </div>
-                    </div>
-                    <button className="text-xs bg-green-50 text-green-600 px-2 py-1 rounded">
-                      {index % 2 === 0 ? 'Join' : 'View'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Teams Preview */}
-            <div 
-              className={`bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 absolute inset-0 transition-all duration-500 ease-in-out transform scale-90 hover:scale-95 ${
-                activePreview === 2 ? 'opacity-100 z-10' : 'opacity-0 z-0'
-              }`}
-            >
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-3 w-3 rounded-full bg-purple-500 mr-2"></div>
-                    <span className="text-xs font-medium text-gray-500">Teams</span>
-                  </div>
-                  <span className="text-xs text-blue-500 font-medium">View All</span>
-                </div>
-              </div>
-              <div className="p-4">
-                <div className="space-y-4">
-                  {['Basketball Team', 'Soccer Club', 'Tennis Group'].map((team, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 font-bold mr-3">
-                          {team[0]}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{team}</p>
-                          <p className="text-xs text-gray-500">{5 + index * 2} members</p>
-                        </div>
-                      </div>
-                      <button className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                        {index === 0 ? 'Manage' : 'View'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            {/* Preview Navigation Dots */}
-            <div className="absolute -bottom-8 left-0 right-0 flex justify-center space-x-2 z-20">
-              {[0, 1, 2].map((index) => (
-                <button
-                  key={index}
-                  onClick={() => setActivePreview(index)}
-                  className={`h-2 w-2 rounded-full transition-all duration-300 ${
-                    activePreview === index ? 'bg-green-600 w-6' : 'bg-gray-300'
-                  }`}
-                  aria-label={`Show preview ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
+      {/* --- HERO SECTION --- */}
+      <section className="relative pt-32 pb-20 px-6">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#ccff00] opacity-[0.08] blur-[120px] rounded-full" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600 opacity-[0.08] blur-[120px] rounded-full" />
         </div>
-      </main>
 
-      {/* Features Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Campus League?</h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">Join thousands of students who are already managing their sports activities with ease</p>
-          </div>
-          
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <FaUsers className="text-3xl text-green-600" />,
-                title: 'Connect with Peers',
-                description: 'Find and connect with fellow sports enthusiasts in your campus.'
-              },
-              {
-                icon: <FaCalendarAlt className="text-3xl text-green-600" />,
-                title: 'Easy Scheduling',
-                description: 'Schedule and manage games and tournaments with just a few clicks.'
-              },
-              {
-                icon: <FaChartBar className="text-3xl text-green-600" />,
-                title: 'Track Progress',
-                description: 'Monitor your team\'s performance and track your personal progress.'
-              }
-            ].map((feature, index) => (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="h-12 w-12 bg-green-50 rounded-full flex items-center justify-center mb-4">
-                  {feature.icon}
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <motion.div variants={containerVars} initial="hidden" animate="visible">
+            <motion.div variants={itemVars} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5 mb-8">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#ccff00] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#ccff00]"></span>
+              </span>
+              <span className="text-xs font-bold tracking-widest uppercase text-gray-400">Live Campus Updates</span>
+            </motion.div>
+
+            <motion.h1 variants={itemVars} className="text-6xl md:text-8xl font-black italic tracking-tighter mb-8 leading-[0.9] text-left">
+              YOUR PATH TO <br />
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={currentWord}
+                  initial={{ opacity: 0, y: 20, rotateX: -90 }}
+                  animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                  exit={{ opacity: 0, y: -20, rotateX: 90 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-[#ccff00] inline-block"
+                >
+                  {words[currentWord]}
+                </motion.span>
+              </AnimatePresence>
+            </motion.h1>
+
+            <motion.p variants={itemVars} className="text-lg md:text-xl text-gray-400 mb-10 leading-relaxed text-left max-w-xl">
+              The elite OS for campus sports. Organize tournaments, track stats, and 
+              build your legacy in one powerhouse platform.
+            </motion.p>
+
+            <motion.div variants={itemVars} className="flex flex-col sm:flex-row items-center gap-6">
+              <button 
+                onClick={handleAuthRedirect}
+                className="group relative bg-[#ccff00] text-black px-10 py-5 rounded-full font-black text-lg overflow-hidden transition-transform hover:scale-105 w-full sm:w-auto"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  JOIN THE LEAGUE <ArrowRight size={20} />
+                </span>
+              </button>
+              <button 
+                onClick={handleAuthRedirect}
+                className="flex items-center gap-3 font-bold text-white hover:text-[#ccff00] transition-colors group"
+              >
+                <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:border-[#ccff00]">
+                  <Play size={18} fill="currentColor" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                WATCH SHOWREEL
+              </button>
+            </motion.div>
+          </motion.div>
+
+          {/* Right: Static Image Frame */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="relative h-[400px] md:h-[550px] w-full"
+          >
+            <div className="absolute inset-0 bg-[#111] rounded-[3rem] border border-white/10 rotate-3 scale-95 overflow-hidden">
+               <div className="absolute inset-0 bg-[#ccff00]/5 z-10 pointer-events-none" />
+            </div>
+
+            <div className="absolute inset-0 rounded-[3rem] overflow-hidden -rotate-2 border-2 border-[#ccff00]/30 shadow-[0_0_50px_rgba(204,255,0,0.1)]">
+              <img
+                src={sportsImages[0]}
+                className="w-full h-full object-cover grayscale-[20%]"
+                alt="Basketball"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80" />
+              <div className="absolute bottom-8 left-8 bg-[#ccff00] text-black p-4 rounded-2xl flex items-center gap-3">
+                <Trophy size={24} strokeWidth={3} />
+                <span className="font-black italic text-sm uppercase">Active Season 2024</span>
               </div>
-            ))}
-          </div>
+            </div>
+
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 4, repeat: Infinity }}
+              className="absolute -top-6 -right-6 w-24 h-24 bg-[#ccff00] rounded-full flex items-center justify-center text-black -rotate-12 shadow-xl shadow-[#ccff00]/20"
+            >
+              <Zap size={40} fill="currentColor" />
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Copyright */}
-      <div className="py-6 text-center text-xs text-gray-500 border-t border-gray-100 mt-16">
-        {new Date().getFullYear()} Campus League. All rights reserved.
-      </div>
+      {/* --- FEATURE BENTO GRID --- */}
+      <section className="py-32 px-6 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={handleAuthRedirect}
+            className="md:col-span-8 bg-[#111] border border-white/10 rounded-[2rem] p-10 relative overflow-hidden group min-h-[400px]"
+          >
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <Trophy size={200} />
+            </div>
+            <div className="relative z-10 h-full flex flex-col justify-end">
+              <div className="w-14 h-14 bg-[#ccff00] rounded-2xl flex items-center justify-center text-black mb-6">
+                <Target size={28} />
+              </div>
+              <h3 className="text-4xl font-black mb-4 italic leading-tight uppercase">Championship <br /> Management</h3>
+              <p className="text-gray-400 max-w-md">Real-time brackets, automated scoring, and referee coordination for every major campus sport.</p>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            whileHover={{ y: -5 }}
+            onClick={handleAuthRedirect}
+            className="md:col-span-4 bg-[#ccff00] rounded-[2rem] p-10 text-black flex flex-col justify-between min-h-[400px]"
+          >
+            <Users size={40} strokeWidth={3} />
+            <div>
+              <h3 className="text-3xl font-black italic mb-2 uppercase">Pro Rosters</h3>
+              <p className="font-medium opacity-80 text-sm">Build your team, trade players, and manage substitutions with ease.</p>
+            </div>
+          </motion.div>
+
+          <div 
+            onClick={handleAuthRedirect}
+            className="md:col-span-4 bg-[#111] border border-white/10 rounded-[2rem] p-8 hover:bg-[#161616] transition-colors min-h-[250px] flex flex-col justify-center group"
+          >
+            <Activity className="text-[#ccff00] mb-6" size={32} />
+            <h4 className="text-xl font-bold mb-2 italic uppercase">Live Analytics</h4>
+            <p className="text-gray-500 text-sm">Deep dive into player stats, heatmaps, and performance trends after every match.</p>
+          </div>
+
+          <div 
+            onClick={handleAuthRedirect}
+            className="md:col-span-4 bg-blue-600 rounded-[2rem] p-8 flex flex-col justify-between group min-h-[250px]"
+          >
+            <Calendar size={32} className="text-white" />
+            <div className="flex justify-between items-end">
+              <h4 className="text-xl font-bold italic leading-tight uppercase">Smart <br /> Scheduling</h4>
+              <ChevronRight className="group-hover:translate-x-2 transition-transform" />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* --- FOOTER CTA --- */}
+      <section className="py-20 px-6">
+        <div className="max-w-7xl mx-auto bg-[#ccff00] rounded-[3rem] p-12 md:p-20 text-center text-black relative overflow-hidden shadow-[0_20px_50px_rgba(204,255,0,0.15)]">
+          <motion.div 
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-20 -right-20 opacity-10"
+          >
+            <Zap size={300} fill="currentColor" />
+          </motion.div>
+          
+          <h2 className="text-4xl md:text-6xl font-black italic mb-8 relative z-10 uppercase tracking-tighter">Ready to Dominate?</h2>
+          <button 
+            onClick={handleAuthRedirect}
+            className="bg-black text-white px-12 py-5 rounded-full font-black text-xl hover:scale-105 transition-transform shadow-2xl relative z-10 uppercase italic"
+          >
+            Create an Event Now
+          </button>
+        </div>
+      </section>
+
+      <footer className="py-10 text-center border-t border-white/5">
+        <p className="text-gray-600 text-xs font-bold tracking-[0.2em] uppercase">
+          &copy; {new Date().getFullYear()} CAMPUS LEAGUE — BORN TO WIN.
+        </p>
+      </footer>
     </div>
   );
 };
