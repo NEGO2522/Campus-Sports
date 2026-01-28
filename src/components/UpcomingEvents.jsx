@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaClock } from 'react-icons/fa';
-import { motion } from 'framer-motion';
+import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaClock, FaChevronDown, FaChevronUp, FaLock } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,22 +15,19 @@ const UpcomingEvents = ({ onEventClick }) => {
   const [saving, setSaving] = useState(false);
   const [participatingEvents, setParticipatingEvents] = useState({});
 
-  const toggleEventDetails = (eventId) => {
+  const toggleEventDetails = (e, eventId) => {
+    e.stopPropagation();
     setShowDetails(showDetails === eventId ? null : eventId);
   };
 
   useEffect(() => {
-    // Create a query against the collection
     const q = query(
       collection(db, 'events'),
       where('status', '==', 'upcoming'),
       orderBy('dateTime')
     );
 
-    // Subscribe to query updates with error handling
-    const unsubscribe = onSnapshot(
-      q, 
-      (querySnapshot) => {
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const now = new Date();
       const eventsData = [];
       
@@ -38,36 +35,28 @@ const UpcomingEvents = ({ onEventClick }) => {
         const eventData = { id: doc.id, ...doc.data() };
         const eventDate = eventData.dateTime?.toDate ? eventData.dateTime.toDate() : new Date(eventData.dateTime);
         
-        // Only include events that are in the future
         if (eventDate >= now) {
           eventsData.push({
             ...eventData,
-            dateTime: eventDate // Ensure date is a Date object
+            dateTime: eventDate
           });
         }
       });
       
-      // Sort by date (nearest first)
       eventsData.sort((a, b) => a.dateTime - b.dateTime);
-      
       setEvents(eventsData);
-      // Set participating status for each event for the current user
+
       const user = auth.currentUser;
       if (user) {
         const participationMap = {};
         eventsData.forEach(event => {
           let participated = false;
-          // Check for individual participation
           if (Array.isArray(event.participants) && event.participants.includes(user.uid)) {
             participated = true;
           }
-          // Check for team participation
           if (event.team && typeof event.team === 'object') {
             Object.values(event.team).forEach(team => {
-              if (
-                (Array.isArray(team.members) && team.members.includes(user.uid)) ||
-                team.leader === user.uid
-              ) {
+              if ((Array.isArray(team.members) && team.members.includes(user.uid)) || team.leader === user.uid) {
                 participated = true;
               }
             });
@@ -75,261 +64,212 @@ const UpcomingEvents = ({ onEventClick }) => {
           participationMap[event.id] = participated;
         });
         setParticipatingEvents(participationMap);
-      } else {
-        setParticipatingEvents({});
       }
       setLoading(false);
-    }, 
-    (error) => {
-      console.error('Error getting events:', error);
-      setEvents([]);
-      setLoading(false);
-      // You might want to show an error message to the user here
-    },
-    // Include metadata changes to ensure we get the most up-to-date data
-    { includeMetadataChanges: true }
-    );
+    });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
-  
-  const handleViewSchedule = (event) => {
-    if (showDetails === event.id) {
-      setShowDetails(null);
-      return;
-    }
-    setShowDetails(event.id);
-  };
-
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="flex justify-center items-center p-12">
+        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-        <p className="text-gray-500">Loading upcoming events...</p>
+      <div className="text-center p-10 bg-[#0a0a0a] border border-white/5">
+        <FaCalendarAlt className="mx-auto text-gray-800 text-3xl mb-4" />
+        <p className="text-gray-500 uppercase tracking-widest text-[10px] font-bold">No upcoming fixtures found</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div className="space-y-4">
       {events.map((event, index) => {
-        const isPlayersFull = event.participants?.length >= event.playersNeeded;
+        const isPlayersFull = (event.participants?.length || 0) >= (event.playersNeeded || 0);
         const isTeamsFull = event.participationType === 'team' && 
-                         Object.keys(event.team || {}).length >= event.teamsNeeded;
+                           Object.keys(event.team || {}).length >= (event.teamsNeeded || 0);
         const isFull = event.participationType === 'team' ? isTeamsFull : isPlayersFull;
+        const isParticipating = participatingEvents[event.id];
+
         return (
           <motion.div
             key={event.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100 hover:shadow-md transition-all cursor-pointer hover:ring-2 hover:ring-blue-100 active:ring-blue-200"
-            onClick={() => onEventClick && onEventClick(event)}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className={`group bg-[#0a0a0a] border-l-4 ${isFull ? 'border-l-red-600' : 'border-l-green-500'} border-y border-r border-white/5 hover:border-white/20 transition-all`}
           >
-            <div className="p-3 xs:p-4 sm:p-5">
-              <div className="flex flex-col xs:flex-row justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base xs:text-lg font-semibold text-gray-900 truncate">{event.eventName}</h3>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] xs:text-xs font-medium ${
-                      event.sport?.toLowerCase() === 'football'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`} style={{ minWidth: '60px', justifyContent: 'center' }}>
+            <div className="p-4 sm:p-6" onClick={() => onEventClick && onEventClick(event)}>
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                
+                {/* Left Side: Date and Time */}
+                <div className="flex items-center gap-6 min-w-[180px]">
+                  <div className="text-center">
+                    <p className="text-[10px] font-black uppercase text-green-500 tracking-tighter">
+                      {format(event.dateTime, 'MMM')}
+                    </p>
+                    <p className="text-3xl font-black italic leading-none">
+                      {format(event.dateTime, 'dd')}
+                    </p>
+                  </div>
+                  <div className="h-10 w-[1px] bg-white/10 hidden sm:block"></div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-tight">
+                      {format(event.dateTime, 'EEEE')}
+                    </p>
+                    <p className="text-sm font-black text-white italic">
+                      {format(event.dateTime, 'HH:mm')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Middle: Event Title and Sport */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="text-[9px] font-black px-2 py-0.5 bg-white/5 text-gray-400 uppercase border border-white/10">
                       {event.sport}
-                      {event.location?.toLowerCase().includes('poornima') && (
-                        <span className="ml-1 text-[8px] xs:text-[10px] bg-yellow-100 text-yellow-800 rounded-full px-1">Featured</span>
-                      )}
                     </span>
-                  </div>
-                  <div className="mt-1.5 flex flex-col xs:flex-row xs:items-center text-xs xs:text-sm text-gray-500 gap-1.5">
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex flex-col xs:flex-row xs:items-center">
-                        <div className="flex items-center">
-                          <FaCalendarAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
-                          <span className="font-medium block xs:hidden">Starts:</span>
-                        </div>
-                        <div className="mt-1 xs:mt-0">
-                          <span className="font-medium hidden xs:inline mr-1">Starts:</span>
-                          <span>
-                            <span className="hidden xs:inline">{format(new Date(event.dateTime), 'EEEE, MMMM d')}</span>
-                            <span className="xs:hidden">{format(new Date(event.dateTime), 'MMM d,')}</span>
-                            <span className="mx-1.5">•</span>
-                            {format(new Date(event.dateTime), 'h:mm a')}
-                          </span>
-                        </div>
-                      </div>
-                      {event.registrationDeadline && (
-                        <div className="flex flex-col xs:flex-row xs:items-center text-gray-600 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <FaClock className="mr-1.5 h-3.5 w-3.5 xs:h-3.5 xs:w-3.5 flex-shrink-0" />
-                            <span className="font-medium block xs:hidden">Register by:</span>
-                          </div>
-                          <div className="mt-1 xs:mt-0">
-                            <span className="font-medium hidden xs:inline mr-1">Register by:</span>
-                            <span>
-                              {format(new Date(event.registrationDeadline), 'MMM d')}
-                              <span className="mx-1.5">•</span>
-                              {format(new Date(event.registrationDeadline), 'h:mm a')}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-2 flex items-center text-xs xs:text-sm text-gray-500">
-                    <FaMapMarkerAlt className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
-                    <span className="truncate">{event.location}</span>
-                  </div>
-                  <div className="mt-2 flex items-center text-xs xs:text-sm text-gray-500">
-                    <FaUsers className="mr-1.5 h-3.5 w-3.5 xs:h-4 xs:w-4 flex-shrink-0" />
-                    {event.participationType === 'team' ? (
-                      <span className={isTeamsFull ? 'text-red-600 font-medium' : ''}>
-                        {Object.keys(event.team || {}).length} / {event.teamsNeeded || event.TeamsNeeded || 0} teams
-                        {isTeamsFull && ' (Full)'}
-                      </span>
-                    ) : (
-                      <span className={isPlayersFull ? 'text-red-600 font-medium' : ''}>
-                        {event.participants?.length || 0} / {event.playersNeeded || event.PlayerNeeded || 0} players
-                        {isPlayersFull && ' (Full)'}
-                      </span>
+                    {event.location?.toLowerCase().includes('poornima') && (
+                      <span className="text-[9px] font-black px-2 py-0.5 bg-green-500/10 text-green-500 uppercase">Featured</span>
                     )}
                   </div>
-                  {/* Remove description from card, only show in details toggle */}
-                </div>
-                <div className="flex-shrink-0 flex flex-col items-end mt-2 xs:mt-0">
-                  <div className="flex flex-col items-end">
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter group-hover:text-green-500 transition-colors">
+                    {event.eventName}
+                  </h3>
+                  <div className="flex items-center gap-4 mt-2 text-[10px] font-bold uppercase text-gray-500">
+                    <span className="flex items-center gap-1"><FaMapMarkerAlt className="text-green-500"/> {event.location}</span>
+                    <span className="flex items-center gap-1">
+                      <FaUsers className={isFull ? 'text-red-500' : 'text-green-500'}/> 
+                      {event.participationType === 'team' 
+                        ? `${Object.keys(event.team || {}).length}/${event.teamsNeeded} Teams`
+                        : `${event.participants?.length || 0}/${event.playersNeeded} Players`
+                      }
+                    </span>
                   </div>
                 </div>
-              </div>
-              <div className="mt-3 xs:mt-4 flex justify-end space-x-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewSchedule(event);
-                  }}
-                  className={`inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${showDetails === event.id ? 'bg-blue-100 text-blue-700' : ''}`}
-                >
-                  <FaClock className="mr-1.5 h-3 w-3" />
-                  {showDetails === event.id ? 'Hide Details' : 'View Details'}
-                </button>
 
-                {event.participationType === 'player' ? (
+                {/* Right Side: Action Buttons */}
+                <div className="flex flex-row sm:flex-col lg:flex-row items-center gap-2">
                   <button
-                    type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setShowConfirm({ open: true, eventId: event.id });
-                    }}
-                    disabled={isFull || participatingEvents[event.id]}
-                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                      isFull
-                        ? 'bg-red-600 hover:bg-red-700'
-                        : participatingEvents[event.id]
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    onClick={(e) => toggleEventDetails(e, event.id)}
+                    className="p-3 bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
                   >
-                    {isFull
-                      ? 'Event Full'
-                      : participatingEvents[event.id]
-                        ? 'Participated'
-                        : 'Participate'}
+                    {showDetails === event.id ? <FaChevronUp size={12}/> : <FaChevronDown size={12}/>}
                   </button>
-                ) : (
+
                   <button
-                    type="button"
-                    onClick={e => {
+                    disabled={isFull || isParticipating || saving}
+                    onClick={(e) => {
                       e.stopPropagation();
-                      if (!participatingEvents[event.id]) {
+                      if (event.participationType === 'player') {
+                        setShowConfirm({ open: true, eventId: event.id });
+                      } else {
                         navigate(`/events/${event.id}/participate`);
                       }
                     }}
-                    disabled={isFull || participatingEvents[event.id]}
-                    className={`inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
-                      isFull
-                        ? 'bg-red-600 hover:bg-red-700'
-                        : participatingEvents[event.id]
-                          ? 'bg-gray-400 cursor-not-allowed'
-                          : 'bg-blue-600 hover:bg-blue-700'
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+                    className={`flex-1 sm:w-32 py-3 px-4 font-black uppercase italic text-xs tracking-widest transition-all
+                      ${isParticipating 
+                        ? 'bg-white/10 text-gray-500 cursor-not-allowed' 
+                        : isFull 
+                          ? 'bg-red-600/20 text-red-500 border border-red-600/50 cursor-not-allowed' 
+                          : 'bg-green-500 text-black hover:bg-green-400 active:scale-95'}`}
                   >
-                    {isFull
-                      ? 'Event Full'
-                      : participatingEvents[event.id]
-                        ? 'Participated'
-                        : 'Participate'}
+                    {isParticipating ? 'Joined' : isFull ? 'Closed' : 'Join'}
                   </button>
-                )}
+                </div>
               </div>
 
-              {/* Details Section: Only show description in details toggle */}
-              {showDetails === event.id && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <h4 className="text-sm font-medium text-gray-900 mb-3">Event Description</h4>
-                  <p className="text-sm text-gray-700">{event.description || 'No description provided.'}</p>
-                </div>
-              )}
+              {/* Collapsible Details */}
+              <AnimatePresence>
+                {showDetails === event.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-6 pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="text-[10px] font-black uppercase text-gray-500 mb-2">Description</h4>
+                        <p className="text-sm text-gray-400 leading-relaxed">{event.description || 'No additional details available for this fixture.'}</p>
+                      </div>
+                      <div className="bg-white/5 p-4 border border-white/5">
+                        <h4 className="text-[10px] font-black uppercase text-green-500 mb-3 flex items-center gap-2">
+                          <FaClock /> Registration Info
+                        </h4>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Deadline:</span>
+                            <span className="font-bold text-white uppercase">
+                              {event.registrationDeadline ? format(new Date(event.registrationDeadline), 'MMM dd, HH:mm') : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-gray-500">Mode:</span>
+                            <span className="font-bold text-white uppercase">{event.participationType} Entry</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         );
       })}
-    {/* Confirmation Overlay for player participation */}
-    {showConfirm.open && (
-      <div className="fixed inset-0 flex items-center justify-center bg-burr bg-opacity-40 backdrop-blur -sm z-50">
-        <div className="bg-white p-8 rounded-lg shadow-lg flex flex-col items-center">
-          <h3 className="text-xl font-semibold mb-4">Are you sure you want to participate?</h3>
-          <div className="flex space-x-4">
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={async () => {
-                setSaving(true);
-                try {
-                  const user = auth.currentUser;
-                  if (!user) {
-                    alert('You must be logged in to participate.');
-                    setSaving(false);
-                    return;
-                  }
-                  const eventRef = doc(db, 'events', showConfirm.eventId);
-                  await updateDoc(eventRef, {
-                    participants: arrayUnion(user.uid)
-                  });
-                  setShowConfirm({ open: false, eventId: null });
-                  setParticipatingEvents(prev => ({ ...prev, [showConfirm.eventId]: true }));
-                } catch (error) {
-                  alert('Failed to participate.');
-                  console.error(error);
-                } finally {
-                  setSaving(false);
-                }
-              }}
-              disabled={saving}
-            >
-              Yes
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-              onClick={() => setShowConfirm({ open: false, eventId: null })}
-              disabled={saving}
-            >
-              No
-            </button>
-          </div>
+
+      {/* Sporty Confirmation Modal */}
+      {showConfirm.open && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-md z-[100] p-4">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-[#0a0a0a] border border-green-500 p-8 max-w-sm w-full text-center"
+          >
+            <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+              <FaUsers className="text-green-500 text-2xl" />
+            </div>
+            <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-2">Confirm Entry?</h3>
+            <p className="text-gray-400 text-sm mb-8 font-medium">Are you ready to join this fixture? You will be registered as a player immediately.</p>
+            <div className="flex gap-3">
+              <button
+                disabled={saving}
+                className="flex-1 py-3 bg-green-500 text-black font-black uppercase italic tracking-widest hover:bg-green-400"
+                onClick={async () => {
+                  setSaving(true);
+                  try {
+                    const user = auth.currentUser;
+                    if (!user) return alert('Login required');
+                    const eventRef = doc(db, 'events', showConfirm.eventId);
+                    await updateDoc(eventRef, { participants: arrayUnion(user.uid) });
+                    setShowConfirm({ open: false, eventId: null });
+                    setParticipatingEvents(prev => ({ ...prev, [showConfirm.eventId]: true }));
+                  } catch (error) {
+                    console.error(error);
+                  } finally { setSaving(false); }
+                }}
+              >
+                {saving ? 'Processing...' : 'Confirm'}
+              </button>
+              <button
+                disabled={saving}
+                className="flex-1 py-3 bg-white/5 border border-white/10 text-white font-black uppercase italic tracking-widest hover:bg-white/10"
+                onClick={() => setShowConfirm({ open: false, eventId: null })}
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </div>
-    )}
-  </div>
+      )}
+    </div>
   );
 };
 

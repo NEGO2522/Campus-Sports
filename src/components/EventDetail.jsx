@@ -4,7 +4,11 @@ import EventMatches from './quick-actions/EventMatches';
 import { useParams } from 'react-router-dom';
 import { doc, getDoc, collection, getDocs, updateDoc, arrayRemove, addDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
-import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaInfoCircle, FaEdit, FaTrash } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaInfoCircle, 
+  FaEdit, FaTrash, FaPlus, FaTrophy, FaChevronRight, FaTimes 
+} from 'react-icons/fa';
 
 const EventDetail = () => {
   const [showTeamOverlay, setShowTeamOverlay] = useState(false);
@@ -19,16 +23,9 @@ const EventDetail = () => {
   const [savingField, setSavingField] = useState(false);
   const [removingId, setRemovingId] = useState(null);
 
-  // Create Match Modal State
+  // Match Modal State
   const [showMatchModal, setShowMatchModal] = useState(false);
-  const [matchForm, setMatchForm] = useState({
-    round: '',
-    team1: '',
-    team2: '',
-    location: '',
-    date: '',
-    time: ''
-  });
+  const [matchForm, setMatchForm] = useState({ round: '', team1: '', team2: '', location: '', date: '', time: '' });
   const [savingMatch, setSavingMatch] = useState(false);
 
   const fetchEventAndParticipants = async () => {
@@ -39,7 +36,6 @@ const EventDetail = () => {
         const eventData = eventDoc.data();
         setEvent(eventData);
         if (Array.isArray(eventData.participants) && eventData.participants.length > 0) {
-          // Fetch all users and filter by participant IDs
           const usersSnapshot = await getDocs(collection(db, 'users'));
           const users = [];
           usersSnapshot.forEach(userDoc => {
@@ -53,24 +49,20 @@ const EventDetail = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching event or participants:', error);
+      console.error('Error fetching event:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchEventAndParticipants();
-  }, [id]);
+  useEffect(() => { fetchEventAndParticipants(); }, [id]);
 
   const handleEdit = (field) => {
     setEditField(field);
     if (field === 'dateTime') {
-      // Convert to yyyy-MM-ddTHH:mm for datetime-local input
       let dt = event.dateTime?.toDate ? event.dateTime.toDate() : new Date(event.dateTime);
       const pad = n => n.toString().padStart(2, '0');
-      const formatted = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-      setEditValue(formatted);
+      setEditValue(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`);
     } else {
       setEditValue(event[field] || '');
     }
@@ -79,419 +71,237 @@ const EventDetail = () => {
   const handleSave = async (field) => {
     setSavingField(true);
     try {
-      let value = editValue;
-      if (field === 'dateTime') {
-        // Convert from yyyy-MM-ddTHH:mm to JS Date
-        value = new Date(editValue);
-      }
+      let value = field === 'dateTime' ? new Date(editValue) : editValue;
       await updateDoc(doc(db, 'events', id), { [field]: value });
       setEvent(prev => ({ ...prev, [field]: value }));
       setEditField(null);
-    } catch (error) {
-      alert('Failed to update.');
-      console.error(error);
-    } finally {
-      setSavingField(false);
-    }
+    } catch (err) { alert('UPDATE FAILED'); } 
+    finally { setSavingField(false); }
   };
 
   const handleRemoveParticipant = async (userId) => {
+    if (!window.confirm("ELIMINATE PARTICIPANT FROM EVENT?")) return;
     setRemovingId(userId);
     try {
-      await updateDoc(doc(db, 'events', id), {
-        participants: arrayRemove(userId)
-      });
+      await updateDoc(doc(db, 'events', id), { participants: arrayRemove(userId) });
       setParticipants(prev => prev.filter(p => p.id !== userId));
-    } catch (error) {
-      alert('Failed to remove participant.');
-      console.error(error);
-    } finally {
-      setRemovingId(null);
-    }
+    } catch (err) { alert('REMOVAL FAILED'); } 
+    finally { setRemovingId(null); }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
-  if (!event) {
-    return <div className="text-center text-gray-500 py-8">Event not found.</div>;
-  }
+  if (!event) return <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">EVENT_NOT_FOUND</div>;
 
   return (
-    <div className="max-w-6xl mx-auto bg-white rounded-xl shadow p-8 mt-20 mb-8 flex flex-col lg:flex-row gap-8">
-      <div className="flex-1 min-w-0">
-        <h2 className="text-3xl font-bold mb-6 text-center">{event.eventName}</h2>
-        {/* Create Matches Button */}
-        <div className="flex justify-end mb-4">
-          <button
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-            onClick={() => setShowMatchModal(true)}
-            disabled={!event.team || Object.keys(event.team).length < 2}
-          >
-            Create Matches
-          </button>
-        </div>
-        {/* Create Match Modal */}
-        {showMatchModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
-              <button
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
-                onClick={() => setShowMatchModal(false)}
-              >
-                &times;
-              </button>
-              {(!event.team || Object.keys(event.team).length < 2) ? (
-                <div className="text-center text-red-600 font-semibold">At least 2 teams are required to create a match.</div>
-              ) : (
-                <>
-                  <h3 className="text-xl font-bold mb-4 text-center">Create Match</h3>
-                  <form
-                    onSubmit={async e => {
-                    e.preventDefault();
-                    setSavingMatch(true);
-                    try {
-                      const dateTime = new Date(`${matchForm.date}T${matchForm.time}`);
-                      await addDoc(collection(db, 'events', id, 'matches'), {
-                        round: matchForm.round,
-                        team1: matchForm.team1,
-                        team2: matchForm.team2,
-                        location: matchForm.location,
-                        dateTime,
-                        matchStarted: false
-                      });
-                      setShowMatchModal(false);
-                      setMatchForm({ round: '', team1: '', team2: '', location: '', date: '', time: '' });
-                      alert('Match created!');
-                    } catch (err) {
-                      alert('Failed to create match.');
-                    } finally {
-                      setSavingMatch(false);
-                    }
-                  }}
-                >
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">Round Name</label>
-                    <input
-                      className="w-full border px-3 py-2 rounded"
-                      value={matchForm.round}
-                      onChange={e => setMatchForm(f => ({ ...f, round: e.target.value }))}
-                      required
-                    />
+    <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-12 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
+        
+        {/* Main Content Area */}
+        <div className="flex-1 bg-[#111] border border-white/10 rounded-sm p-6 md:p-10">
+          
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 border-b border-white/5 pb-8">
+            <div>
+              <span className="text-[#ccff00] text-xs font-black tracking-widest uppercase mb-2 block">Event Operations</span>
+              <h1 className="text-4xl md:text-5xl font-black italic uppercase italic tracking-tighter leading-none">
+                {event.eventName}
+              </h1>
+            </div>
+            <button
+              onClick={() => setShowMatchModal(true)}
+              disabled={!event.team || Object.keys(event.team).length < 2}
+              className="flex items-center gap-2 px-6 py-3 bg-[#ccff00] text-black font-black uppercase italic text-sm hover:bg-[#e6ff80] transition-all disabled:opacity-20"
+            >
+              <FaPlus /> Create Match
+            </button>
+          </div>
+
+          {/* Info Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10 mb-12">
+            {[
+              { id: 'dateTime', icon: <FaCalendarAlt className="text-[#ccff00]" />, label: 'TIMESTAMP', value: event.dateTime?.toDate ? event.dateTime.toDate().toLocaleString() : new Date(event.dateTime).toLocaleString(), type: 'datetime-local' },
+              { id: 'location', icon: <FaMapMarkerAlt className="text-[#ccff00]" />, label: 'COORDINATES', value: event.location },
+              { id: 'description', icon: <FaInfoCircle className="text-[#ccff00]" />, label: 'MISSION BRIEF', value: event.description || 'N/A' },
+              { id: 'sport', icon: <FaTrophy className="text-[#ccff00]" />, label: 'DISCIPLINE', value: event.sport },
+              { id: 'participationType', icon: <FaUsers className="text-[#ccff00]" />, label: 'ENGAGEMENT', value: event.participationType, readonly: true },
+              { id: 'teamSize', icon: <span className="text-[#ccff00] font-bold">#</span>, label: 'SQUAD SIZE', value: event.teamSize || '1', hidden: event.participationType !== 'team' }
+            ].map((item) => !item.hidden && (
+              <div key={item.id} className="bg-[#111] p-5 flex items-start justify-between group">
+                <div className="flex gap-4">
+                  <div className="mt-1">{item.icon}</div>
+                  <div className="w-full">
+                    <p className="text-[10px] text-white/40 font-black tracking-widest">{item.label}</p>
+                    {editField === item.id ? (
+                      <div className="mt-2 flex gap-2">
+                        {item.id === 'description' ? (
+                          <textarea className="bg-black border border-[#ccff00] text-white p-2 text-sm w-full outline-none" value={editValue} onChange={e => setEditValue(e.target.value)} />
+                        ) : (
+                          <input type={item.type || 'text'} className="bg-black border border-[#ccff00] text-white p-2 text-sm w-full outline-none" value={editValue} onChange={e => setEditValue(e.target.value)} />
+                        )}
+                        <button onClick={() => handleSave(item.id)} className="text-[#ccff00] font-bold text-xs uppercase underline">Save</button>
+                      </div>
+                    ) : (
+                      <p className="text-lg font-bold uppercase tracking-tight break-all">{item.value}</p>
+                    )}
                   </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">Team 1 Name</label>
-                    <select
-                      className="w-full border px-3 py-2 rounded"
-                      value={matchForm.team1}
-                      onChange={e => setMatchForm(f => ({ ...f, team1: e.target.value }))}
-                      required
-                    >
-                      <option value="" disabled>Select Team 1</option>
-                      {event.team && Object.keys(event.team).map(teamName => (
-                        <option key={teamName} value={teamName}>{teamName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">Team 2 Name</label>
-                    <select
-                      className="w-full border px-3 py-2 rounded"
-                      value={matchForm.team2}
-                      onChange={e => setMatchForm(f => ({ ...f, team2: e.target.value }))}
-                      required
-                    >
-                      <option value="" disabled>Select Team 2</option>
-                      {event.team && Object.keys(event.team).map(teamName => (
-                        <option key={teamName} value={teamName}>{teamName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium mb-1">Location</label>
-                    <input
-                      className="w-full border px-3 py-2 rounded"
-                      value={matchForm.location}
-                      onChange={e => setMatchForm(f => ({ ...f, location: e.target.value }))}
-                      required
-                    />
-                  </div>
-                  <div className="mb-3 flex gap-2">
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium mb-1">Date</label>
-                      <input
-                        type="date"
-                        className="w-full border px-3 py-2 rounded"
-                        value={matchForm.date}
-                        onChange={e => setMatchForm(f => ({ ...f, date: e.target.value }))}
-                        required
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-sm font-medium mb-1">Time</label>
-                      <input
-                        type="time"
-                        className="w-full border px-3 py-2 rounded"
-                        value={matchForm.time}
-                        onChange={e => setMatchForm(f => ({ ...f, time: e.target.value }))}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full mt-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-                    disabled={savingMatch}
-                  >
-                    {savingMatch ? 'Saving...' : 'Save Match'}
+                </div>
+                {!item.readonly && editField !== item.id && (
+                  <button onClick={() => handleEdit(item.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-[#ccff00]">
+                    <FaEdit />
                   </button>
-                </form>
-              </>
-            )}
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Participant / Team Section */}
+          <div className="space-y-6">
+             <div className="flex items-center gap-4 mb-4">
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Manifest</h3>
+                <div className="h-px flex-1 bg-white/10"></div>
+                <span className="text-[#ccff00] font-mono text-sm">[{participants.length} ASSETS]</span>
+             </div>
+
+             {event.participationType === 'team' && event.team ? (
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 {Object.keys(event.team).map(teamName => (
+                   <div key={teamName} className="border border-white/10 p-4 flex justify-between items-center hover:border-[#ccff00]/50 transition-colors">
+                     <div 
+                        className="cursor-pointer group flex items-center gap-3"
+                        onClick={async () => {
+                          const teamObj = event.team[teamName];
+                          let leader = null; let members = [];
+                          const leaderSnap = await getDoc(doc(db, 'users', teamObj.leader));
+                          if (leaderSnap.exists()) leader = { id: teamObj.leader, ...leaderSnap.data() };
+                          const membersSnap = await getDocs(collection(db, 'users'));
+                          membersSnap.forEach(d => { if(teamObj.members.includes(d.id)) members.push({id: d.id, ...d.data()}); });
+                          setTeamDetail({ teamName, leader, members });
+                          setShowTeamOverlay(true);
+                        }}
+                      >
+                       <div className="w-2 h-2 bg-[#ccff00]"></div>
+                       <span className="font-bold uppercase tracking-wider group-hover:text-[#ccff00]">{teamName}</span>
+                       <FaChevronRight className="text-[10px] text-white/20 group-hover:translate-x-1 transition-transform" />
+                     </div>
+                     <button 
+                        onClick={async () => {
+                          if(!window.confirm("ERASE SQUAD?")) return;
+                          setDeletingTeam(teamName);
+                          let teams = { ...event.team }; delete teams[teamName];
+                          await updateDoc(doc(db, 'events', id), { team: teams });
+                          setEvent(prev => ({...prev, team: teams}));
+                          setDeletingTeam(null);
+                        }}
+                        className="text-white/20 hover:text-red-500 transition-colors"
+                     >
+                       {deletingTeam === teamName ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : <FaTrash />}
+                     </button>
+                   </div>
+                 ))}
+               </div>
+             ) : (
+               <div className="overflow-x-auto">
+                 <table className="w-full text-left border-collapse">
+                   <thead>
+                     <tr className="border-b border-white/10 text-[10px] text-white/40 tracking-[0.3em] uppercase">
+                       <th className="pb-4 font-black px-2">Operator</th>
+                       <th className="pb-4 font-black">ID_TAG</th>
+                       <th className="pb-4 font-black text-right">Action</th>
+                     </tr>
+                   </thead>
+                   <tbody className="text-sm font-bold uppercase tracking-widest">
+                     {participants.map(student => (
+                       <tr key={student.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+                         <td className="py-4 px-2">{student.fullName}</td>
+                         <td className="py-4 text-white/60">{student.registrationNumber}</td>
+                         <td className="py-4 text-right">
+                           <button onClick={() => handleRemoveParticipant(student.id)} className="text-white/20 hover:text-red-500">
+                             {removingId === student.id ? '...' : <FaTrash />}
+                           </button>
+                         </td>
+                       </tr>
+                     ))}
+                   </tbody>
+                 </table>
+               </div>
+             )}
           </div>
         </div>
-      )}
-        <table className="w-full mb-8 border rounded-lg overflow-hidden">
-        <tbody>
-          <tr className="border-b">
-            <td className="py-3 px-4 font-semibold flex items-center"><FaCalendarAlt className="mr-2 text-blue-500" /> Date</td>
-            <td className="py-3 px-4">
-              {editField === 'dateTime' ? (
-                <input
-                  type="datetime-local"
-                  className="border px-2 py-1 rounded w-full"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  disabled={savingField}
-                />
-              ) : (
-                event.dateTime?.toDate ? event.dateTime.toDate().toLocaleString() : new Date(event.dateTime).toLocaleString()
-              )}
-            </td>
-            <td className="py-3 px-4 w-12">
-              {editField === 'dateTime' ? (
-                <button className="text-blue-600 font-bold mr-2" onClick={() => handleSave('dateTime')} disabled={savingField}>Save</button>
-              ) : (
-                <button className="text-gray-500 hover:text-blue-600" onClick={() => handleEdit('dateTime')}><FaEdit /></button>
-              )}
-            </td>
-          </tr>
-          <tr className="border-b">
-            <td className="py-3 px-4 font-semibold flex items-center"><FaMapMarkerAlt className="mr-2 text-green-500" /> Location</td>
-            <td className="py-3 px-4">
-              {editField === 'location' ? (
-                <input
-                  className="border px-2 py-1 rounded w-full"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  disabled={savingField}
-                />
-              ) : (
-                event.location
-              )}
-            </td>
-            <td className="py-3 px-4 w-12">
-              {editField === 'location' ? (
-                <button className="text-blue-600 font-bold mr-2" onClick={() => handleSave('location')} disabled={savingField}>Save</button>
-              ) : (
-                <button className="text-gray-500 hover:text-blue-600" onClick={() => handleEdit('location')}><FaEdit /></button>
-              )}
-            </td>
-          </tr>
-          <tr className="border-b">
-            <td className="py-3 px-4 font-semibold flex items-center"><FaInfoCircle className="mr-2 text-yellow-500" /> Description</td>
-            <td className="py-3 px-4">
-              {editField === 'description' ? (
-                <textarea
-                  className="border px-2 py-1 rounded w-full"
-                  value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
-                  disabled={savingField}
-                />
-              ) : (
-                event.description || 'No description provided.'
-              )}
-            </td>
-            <td className="py-3 px-4 w-12">
-              {editField === 'description' ? (
-                <button className="text-blue-600 font-bold mr-2" onClick={() => handleSave('description')} disabled={savingField}>Save</button>
-              ) : (
-                <button className="text-gray-500 hover:text-blue-600" onClick={() => handleEdit('description')}><FaEdit /></button>
-              )}
-            </td>
-          </tr>
-          <tr className="border-b">
-            <td className="py-3 px-4 font-semibold flex items-center"><FaUsers className="mr-2 text-purple-500" /> Type</td>
-            <td className="py-3 px-4 capitalize">{event.participationType}</td>
-            <td></td>
-          </tr>
-          {event.participationType === 'team' && (
-            <tr className="border-b">
-              <td className="py-3 px-4 font-semibold flex items-center">👥 Team Size</td>
-              <td className="py-3 px-4">
-                {editField === 'teamSize' ? (
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    className="border px-2 py-1 rounded w-full"
-                    value={editValue}
-                    onChange={e => setEditValue(e.target.value)}
-                    disabled={savingField}
-                  />
-                ) : (
-                  event.teamSize || 'Not set'
-                )}
-              </td>
-              <td className="py-3 px-4 w-12">
-                {editField === 'teamSize' ? (
-                  <button className="text-blue-600 font-bold mr-2" onClick={() => handleSave('teamSize')} disabled={savingField}>Save</button>
-                ) : (
-                  <button className="text-gray-500 hover:text-blue-600" onClick={() => handleEdit('teamSize')}><FaEdit /></button>
-                )}
-              </td>
-            </tr>
-          )}
-          <tr>
-            <td className="py-3 px-4 font-semibold flex items-center"><FaInfoCircle className="mr-2 text-yellow-500" /> Sport</td>
-            <td className="py-3 px-4">{event.sport}</td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-    {/* Team List for Team Events */}
-      {event.participationType === 'team' && event.team && (
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold mb-2">
-            Teams ({Object.keys(event.team).length}/{event.teamsNeeded || 0})
-          </h3>
-          <ul className="list-disc ml-6 text-blue-800">
-            {Object.keys(event.team).map(teamName => (
-              <li key={teamName} className="mb-1 font-medium flex items-center justify-between">
-                <span
-                  className="cursor-pointer hover:underline text-blue-700"
-                  onClick={async () => {
-                    // Fetch team leader and members details
-                    const teamObj = event.team[teamName];
-                    let leader = null;
-                    let members = [];
-                    if (teamObj && teamObj.leader) {
-                      const leaderSnap = await getDoc(doc(db, 'users', teamObj.leader));
-                      if (leaderSnap.exists()) leader = { id: teamObj.leader, ...leaderSnap.data() };
-                    }
-                    if (Array.isArray(teamObj.members) && teamObj.members.length > 0) {
-                      const membersSnap = await getDocs(collection(db, 'users'));
-                      membersSnap.forEach(userDoc => {
-                        if (teamObj.members.includes(userDoc.id)) {
-                          members.push({ id: userDoc.id, ...userDoc.data() });
-                        }
-                      });
-                    }
-                    setTeamDetail({ teamName, leader, members });
-                    setShowTeamOverlay(true);
-                  }}
-                >
-                  {teamName}
-                </span>
-                <button
-                  className="ml-2 p-1 rounded-full bg-red-100 hover:bg-red-200 text-red-600 hover:text-red-800 transition"
-                  title="Delete Team"
-                  disabled={deletingTeam === teamName}
-                  onClick={async () => {
-                    setDeletingTeam(teamName);
-                    try {
-                      const eventRef = doc(db, 'events', id);
-                      const eventSnap = await getDoc(eventRef);
-                      if (eventSnap.exists() && eventSnap.data().team) {
-                        let teams = { ...eventSnap.data().team };
-                        delete teams[teamName];
-                        await updateDoc(eventRef, { team: teams });
-                        // Refresh event data
-                        const updatedSnap = await getDoc(eventRef);
-                        if (updatedSnap.exists()) setEvent(updatedSnap.data());
-                      }
-                    } catch (err) {
-                      alert('Failed to delete team.');
-                    } finally {
-                      setDeletingTeam(null);
-                    }
-                  }}
-                >
-                  {deletingTeam === teamName ? (
-                    <svg className="animate-spin h-5 w-5 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m5 0H6" /></svg>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      <div>
-        {event.participationType !== 'team' ? (
-          <>
-            <h3 className="text-xl font-semibold mb-2">
-              Participants ({participants.length}/{event.teamsNeeded || event.playersNeeded || 0})
+
+        {/* Match Control Panel (Sidebar) */}
+        <div className="lg:w-96 w-full flex flex-col gap-6">
+          <div className="bg-[#111] border border-white/10 p-6 rounded-sm">
+            <h3 className="text-xl font-black italic uppercase italic tracking-tighter mb-6 flex items-center gap-3">
+              <span className="w-2 h-6 bg-[#ccff00]"></span> Live Matches
             </h3>
-            {participants.length === 0 ? (
-              <div className="text-gray-500">No students have participated yet.</div>
-            ) : (
-              <ul className="mb-4 ml-4 list-disc text-blue-800">
-                {participants.map(student => (
-                  <li key={student.id} className="mb-1 font-medium">{student.fullName}</li>
+            <EventMatches eventId={id} />
+          </div>
+        </div>
+
+      </div>
+
+      {/* Brutalist Match Modal */}
+      <AnimatePresence>
+        {showMatchModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }} 
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-[#111] border-2 border-[#ccff00] w-full max-w-md p-8 relative overflow-hidden"
+            >
+              <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 text-white/40 hover:text-[#ccff00] text-xl">
+                <FaTimes />
+              </button>
+              
+              <h3 className="text-3xl font-black italic uppercase tracking-tighter mb-8">INIT_MATCH</h3>
+              
+              <form onSubmit={async e => {
+                e.preventDefault(); setSavingMatch(true);
+                try {
+                  const dateTime = new Date(`${matchForm.date}T${matchForm.time}`);
+                  await addDoc(collection(db, 'events', id, 'matches'), { ...matchForm, dateTime, matchStarted: false });
+                  setShowMatchModal(false);
+                } catch (err) { alert('SYS_ERROR'); } finally { setSavingMatch(false); }
+              }} className="space-y-5">
+                {[
+                  { label: 'ROUND NAME', field: 'round', type: 'text', placeholder: 'e.g. SEMI_FINALS' },
+                  { label: 'TEAM 01', field: 'team1', type: 'select', options: Object.keys(event.team || {}) },
+                  { label: 'TEAM 02', field: 'team2', type: 'select', options: Object.keys(event.team || {}) },
+                  { label: 'ARENA', field: 'location', type: 'text' },
+                  { label: 'DATE', field: 'date', type: 'date' },
+                  { label: 'TIME', field: 'time', type: 'time' }
+                ].map((input) => (
+                  <div key={input.field}>
+                    <label className="text-[10px] font-black tracking-widest text-white/40 block mb-2">{input.label}</label>
+                    {input.type === 'select' ? (
+                      <select className="w-full bg-black border border-white/10 p-3 text-white font-bold outline-none focus:border-[#ccff00]" value={matchForm[input.field]} onChange={e => setMatchForm(f => ({ ...f, [input.field]: e.target.value }))} required>
+                        <option value="">SELECT_TEAM</option>
+                        {input.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    ) : (
+                      <input type={input.type} className="w-full bg-black border border-white/10 p-3 text-white font-bold outline-none focus:border-[#ccff00]" value={matchForm[input.field]} onChange={e => setMatchForm(f => ({ ...f, [input.field]: e.target.value }))} placeholder={input.placeholder} required />
+                    )}
+                  </div>
                 ))}
-              </ul>
-            )}
-          </>
-        ) : (
-          <>
-            <h3 className="text-xl font-semibold mb-2">Participants ({participants.length})</h3>
-            {participants.length === 0 ? (
-              <div className="text-gray-500">No students have participated yet.</div>
-            ) : (
-              <table className="w-full border rounded-lg overflow-hidden">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="py-2 px-4 text-left">Name</th>
-                    <th className="py-2 px-4 text-left">Reg. No</th>
-                    <th className="py-2 px-4 text-left">Course</th>
-                    <th className="py-2 px-4 text-left">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {participants.map(student => (
-                    <tr key={student.id} className="border-b">
-                      <td className="py-2 px-4">{student.fullName}</td>
-                      <td className="py-2 px-4">{student.registrationNumber}</td>
-                      <td className="py-2 px-4">{student.courseName}</td>
-                      <td className="py-2 px-4">
-                        <button
-                          className="text-red-500 hover:text-red-700"
-                          onClick={() => handleRemoveParticipant(student.id)}
-                          disabled={removingId === student.id}
-                        >
-                          <FaTrash />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </>
+                
+                <button type="submit" disabled={savingMatch} className="w-full bg-[#ccff00] text-black font-black py-4 uppercase italic tracking-tighter mt-4 hover:bg-[#e6ff80] disabled:opacity-50">
+                  {savingMatch ? 'UPLOADING...' : 'CONFIRM MATCH'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
         )}
-      </div>
-      </div>
-      {/* Match Card at right side */}
+      </AnimatePresence>
+
       {/* Team Detail Overlay */}
       {showTeamOverlay && (
-        <React.Suspense fallback={<div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"><div className="bg-white p-8 rounded-lg shadow-lg">Loading...</div></div>}>
+        <React.Suspense fallback={<div className="fixed inset-0 bg-black/80 flex items-center justify-center text-[#ccff00] font-black italic">LOADING_SQUAD...</div>}>
           <TeamDetailOverlayLazy
             open={showTeamOverlay}
             onClose={() => setShowTeamOverlay(false)}
@@ -501,9 +311,6 @@ const EventDetail = () => {
           />
         </React.Suspense>
       )}
-      <div className="lg:w-96 w-full border-l border-gray-200 bg-gray-50 mt-8 lg:mt-0">
-        <EventMatches eventId={id} />
-      </div>
     </div>
   );
 };

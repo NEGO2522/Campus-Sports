@@ -1,144 +1,144 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FaTrophy, FaMedal, FaUsers } from 'react-icons/fa';
+import { FaUsers, FaStar } from 'react-icons/fa';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const Leaderboard = ({ limit }) => {
+const Leaderboard = ({ initialLimit = 5 }) => {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    try {
-      // Query to get teams ordered by points in descending order
-      const q = query(
-        collection(db, 'teams'),
-        orderBy('points', 'desc')
-      );
-
-      // Set up real-time listener
-      const unsubscribe = onSnapshot(q, (querySnapshot) => {
-        const teamsData = [];
-        querySnapshot.forEach((doc) => {
-          teamsData.push({ id: doc.id, ...doc.data() });
-        });
-        
-        // Add position based on sorted order
-        const teamsWithPosition = teamsData.map((team, index) => ({
-          ...team,
-          position: index + 1
-        }));
-        
-        setTeams(teamsWithPosition);
-        setLoading(false);
-      }, (error) => {
-        console.error('Error getting teams:', error);
-        setError('Failed to load leaderboard. Please try again later.');
-        setLoading(false);
-      });
-
-      // Clean up the listener on unmount
-      return () => unsubscribe();
-    } catch (err) {
-      console.error('Error in useEffect:', err);
-      setError('An unexpected error occurred.');
+    const q = query(collection(db, 'teams'), orderBy('points', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const teamsData = snapshot.docs.map((doc, index) => ({
+        id: doc.id,
+        ...doc.data(),
+        position: index + 1
+      }));
+      setTeams(teamsData);
       setLoading(false);
-    }
+    }, (err) => {
+      console.error(err);
+      setError('System Error: Could not sync standings.');
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Apply limit if provided, otherwise show all
-  const leaderboardData = limit ? teams.slice(0, limit) : teams;
+  const displayData = teams.slice(0, initialLimit);
 
-  const getMedalColor = (position) => {
-    switch (position) {
-      case 1: return 'text-yellow-400';
-      case 2: return 'text-gray-400';
-      case 3: return 'text-yellow-600';
-      default: return 'text-gray-400';
-    }
-  };
-
-  const getMedalIcon = (position) => {
-    if (position <= 3) {
-      return <FaTrophy className={`w-5 h-5 ${getMedalColor(position)}`} />;
-    }
-    return <span className="text-sm font-medium text-gray-500">{position}</span>;
-  };
+  if (loading) return (
+    <div className="flex justify-center py-20 bg-black min-h-[300px]">
+      <div className="w-10 h-10 border-2 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden w-full max-w-7xl mx-auto mt-20 mb-10">
-      <div className="px-6 py-4 border-b border-gray-100">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <FaTrophy className="text-yellow-400 mr-2" />
-          Leaderboard
-        </h3>
-        <p className="text-sm text-gray-500 mt-1">Top teams this season</p>
-      </div>
-      
-      <div className="divide-y divide-gray-100">
-        <div className="hidden sm:grid grid-cols-12 px-4 sm:px-6 py-3 bg-gray-50 text-[10px] sm:text-xs font-medium text-gray-500 uppercase tracking-wider">
-          <div className="col-span-1">#</div>
-          <div className="col-span-7">Team</div>
-          <div className="col-span-2 text-right">Matches</div>
-          <div className="col-span-2 text-right">Points</div>
-        </div>
+    <div className="w-full bg-black py-4">
+      <div className="max-w-7xl mx-auto space-y-6">
         
-        {(() => {
-          if (loading) {
-            return <div className="p-6 text-center text-gray-500">Loading leaderboard...</div>;
-          }
-          
-          if (error) {
-            return <div className="p-6 text-center text-red-500">{error}</div>;
-          }
-          
-          if (teams.length === 0) {
-            return <div className="p-6 text-center text-gray-500">No teams found. Check back later!</div>;
-          }
-          
-          return leaderboardData.map((team) => (
-            <div key={team.id} className="px-3 sm:px-6 py-3 sm:py-4 hover:bg-gray-50 transition-colors">
-              <div className="grid grid-cols-12 items-center">
-                <div className="col-span-2 sm:col-span-1 flex items-center">
-                  <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${team.position <= 3 ? 'bg-opacity-20' : 'bg-gray-50'}`}>
-                    {getMedalIcon(team.position)}
-                  </div>
-                </div>
-                <div className="col-span-6 sm:col-span-7 flex items-center">
-                  <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-100 flex items-center justify-center mr-2 sm:mr-4">
-                    <FaUsers className="text-gray-400 w-3 h-3 sm:w-4 sm:h-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm font-medium text-gray-900">{team.name}</p>
-                    {team.members && (
-                      <p className="text-[10px] text-gray-500">{team.members} members</p>
-                    )}
-                  </div>
-                </div>
-                <div className="col-span-2 text-right text-xs sm:text-sm text-gray-500">
-                  {team.matchesPlayed || 0}
-                </div>
-                <div className="col-span-2 text-right">
-                  <span className="text-xs sm:text-sm font-semibold text-gray-900">{team.points || 0}</span>
-                  <span className="ml-0.5 sm:ml-1 text-[10px] sm:text-xs text-gray-500">pts</span>
-                </div>
-              </div>
-            </div>
-          ));
-        })()}
-      </div>
-      
-      {limit && (
-        <div className="px-4 sm:px-6 py-3 bg-gray-50 text-center">
-          <Link 
-            to="/leaderboard" 
-            className="text-xs sm:text-sm font-medium text-green-600 hover:text-green-700 active:text-green-800 transition-colors"
-          >
-            View full leaderboard <span className="hidden sm:inline">→</span><span className="sm:hidden">›</span>
-          </Link>
+        {/* Header Section */}
+        <div className="flex items-end justify-between gap-4 px-2">
+          <div>
+            <h2 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter text-white leading-none">
+              Hall <span className="text-[#ccff00] [text-shadow:0_0_15px_rgba(204,255,0,0.3)]">Of Fame</span>
+            </h2>
+            <p className="text-[9px] md:text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mt-2">
+              Live Rankings • Top {initialLimit} Squads
+            </p>
+          </div>
         </div>
-      )}
+
+        {/* Main Board Container */}
+        <div className="bg-[#050505] border border-white/10 overflow-hidden shadow-2xl">
+          {/* Table Header */}
+          <div className="hidden md:grid grid-cols-12 px-8 py-5 bg-white/[0.03] border-b border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+            <div className="col-span-1">Rank</div>
+            <div className="col-span-6">Squad Name</div>
+            <div className="col-span-2 text-center">Played</div>
+            <div className="col-span-3 text-right">Points</div>
+          </div>
+
+          <div className="divide-y divide-white/5">
+            <AnimatePresence mode="popLayout">
+              {displayData.map((team, index) => {
+                const isTopThree = team.position <= 3;
+                
+                return (
+                  <motion.div
+                    key={team.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: index * 0.03 }}
+                    className={`group grid grid-cols-12 items-center px-4 sm:px-8 py-5 transition-all hover:bg-white/[0.04] ${
+                      isTopThree ? 'bg-gradient-to-r from-[#ccff00]/[0.05] to-transparent' : ''
+                    }`}
+                  >
+                    {/* Rank */}
+                    <div className="col-span-2 md:col-span-1">
+                      <span className={`text-xl font-black italic tracking-tighter 
+                        ${team.position === 1 ? 'text-yellow-400 [text-shadow:0_0_10px_rgba(250,204,21,0.5)]' : 
+                          team.position === 2 ? 'text-gray-300' : 
+                          team.position === 3 ? 'text-orange-500' : 'text-gray-700'}`}>
+                        #{team.position.toString().padStart(2, '0')}
+                      </span>
+                    </div>
+
+                    {/* Team Info */}
+                    <div className="col-span-7 md:col-span-6 flex items-center gap-4">
+                      <div className={`relative flex-shrink-0 w-10 h-10 border transition-all duration-300 group-hover:border-[#ccff00] flex items-center justify-center
+                        ${isTopThree ? 'border-[#ccff00]/40 bg-[#ccff00]/10' : 'border-white/10 bg-white/5'}`}>
+                        <FaUsers className={`${isTopThree ? 'text-[#ccff00]' : 'text-gray-600'}`} size={14} />
+                        {team.position === 1 && (
+                          <div className="absolute -top-1.5 -right-1.5 text-yellow-400">
+                            <FaStar size={10} className="animate-pulse" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="text-sm md:text-base font-black uppercase italic text-white group-hover:text-[#ccff00] transition-colors tracking-tight">
+                          {team.name}
+                        </h4>
+                        <p className="text-[8px] font-bold text-gray-500 uppercase">
+                          {team.members || 0} Registered
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="hidden md:block col-span-2 text-center text-xs font-black text-gray-500 uppercase tracking-widest">
+                      {team.matchesPlayed || 0} MP
+                    </div>
+
+                    {/* Points */}
+                    <div className="col-span-3 text-right">
+                      <div className="flex flex-col items-end">
+                        <span className={`text-xl font-black italic tracking-tighter leading-none ${
+                          isTopThree ? 'text-[#ccff00]' : 'text-white'
+                        }`}>
+                          {team.points || 0}
+                        </span>
+                        <span className="text-[8px] font-black uppercase text-gray-600 tracking-[0.2em]">PTS</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Simple Footer Hint */}
+        {teams.length > initialLimit && (
+          <div className="px-2">
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-gray-700">
+              Showing top {initialLimit} of {teams.length} total squads
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
