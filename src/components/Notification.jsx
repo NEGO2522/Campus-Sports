@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase/firebase';
-// import { Link } from 'react-router-dom';
+import { UserPlus, X, Check, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 
 const Notification = () => {
   const [dismissingId, setDismissingId] = useState(null);
-  const [showConfirm, setShowConfirm] = useState({ open: false, inviteId: null });
+  const [showConfirm, setShowConfirm] = useState({ open: false, inviteId: null, eventId: null });
   const [invites, setInvites] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [acceptingId, setAcceptingId] = useState(null);
 
   useEffect(() => {
     const fetchInvites = async () => {
@@ -19,20 +20,17 @@ const Notification = () => {
           setLoading(false);
           return;
         }
-        // Search all events for invites to this user
         const eventsSnap = await getDocs(collection(db, 'events'));
         let allInvites = [];
         for (const eventDoc of eventsSnap.docs) {
           const eventId = eventDoc.id;
           const eventData = eventDoc.data();
-          // Support both 'name' and 'eventName' fields
           const eventName = eventData.name || eventData.eventName || 'Unknown Event';
           const teamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
           for (const inviteDoc of teamSnap.docs) {
             const data = inviteDoc.data();
             if (data.invitee === user.uid && data.accepted === false) {
-              // Fetch inviter's user info
-              let inviterName = '';
+              let inviterName = 'Unknown User';
               let inviterEmail = '';
               try {
                 const inviterDoc = await getDoc(doc(db, 'users', data.inviter));
@@ -40,12 +38,9 @@ const Notification = () => {
                   const inviterData = inviterDoc.data();
                   inviterName = inviterData.fullName || 'Unknown User';
                   inviterEmail = inviterData.email || '';
-                } else {
-                  inviterName = 'Unknown User';
                 }
-              } catch (e) {
-                inviterName = 'Unknown User';
-              }
+              } catch (e) { console.error(e); }
+              
               allInvites.push({
                 eventId,
                 eventName,
@@ -69,126 +64,137 @@ const Notification = () => {
     fetchInvites();
   }, []);
 
-  const [acceptingId, setAcceptingId] = useState(null);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen sm:min-h-0">
-        <div className="w-full h-1 bg-blue-100">
-          <div className="h-1 bg-blue-600 animate-pulse w-1/2"></div>
-        </div>
-        <div className="p-4 sm:p-8 text-center">Loading...</div>
-      </div>
-    );
-  }
-
-  if (invites.length === 0) {
-    return <div className="p-4 sm:p-8 text-center text-gray-500">No invitations found.</div>;
-  }
-
-  // Accept invite handler
   const handleAccept = async (eventId, inviteId) => {
     setAcceptingId(inviteId);
     try {
       await updateDoc(doc(db, 'events', eventId, 'team', inviteId), { accepted: true });
-      // Remove the invite from the UI
       setInvites(prev => prev.filter(invite => invite.inviteId !== inviteId));
     } catch (err) {
-      alert('Failed to accept invite. Please try again.');
+      alert('Failed to accept invite.');
     } finally {
       setAcceptingId(null);
     }
   };
 
+  const handleDismiss = async () => {
+    setDismissingId(showConfirm.inviteId);
+    try {
+      await deleteDoc(doc(db, 'events', showConfirm.eventId, 'team', showConfirm.inviteId));
+      setInvites(prev => prev.filter(i => i.inviteId !== showConfirm.inviteId));
+    } catch (err) {
+      alert('Failed to dismiss invitation.');
+    } finally {
+      setShowConfirm({ open: false, inviteId: null, eventId: null });
+      setDismissingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-6">
+        <Loader2 className="w-10 h-10 text-[#ccff00] animate-spin mb-4" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Syncing Invitations...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto p-4 sm:p-6 md:p-8 w-full">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Invitations</h2>
-      <ul className="space-y-3 sm:space-y-4">
-        {invites.map(invite => (
-          <li key={invite.inviteId} className="bg-white rounded-lg shadow p-3 sm:p-4 flex flex-col relative">
-            {/* Cross button at top right, flush with border */}
-            <button
-              className="absolute top-0 right-0 mt-1 mr-1 text-gray-400 hover:text-red-600 text-xl sm:text-2xl p-0 bg-transparent border-none"
-              style={{ lineHeight: 1 }}
-              title="Dismiss"
-              onClick={() => setShowConfirm({ open: true, inviteId: invite.inviteId, eventId: invite.eventId })}
-              disabled={dismissingId === invite.inviteId}
-            >
-              &times;
-            </button>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium sm:font-semibold text-sm sm:text-base text-blue-800">
-                You have been invited to join a team in event: <span className="font-bold break-words">{invite.eventName}</span>
-              </div>
-              <div className="text-xs text-gray-500 mt-1 truncate">
-                Invited by: <span className="font-medium sm:font-semibold">{invite.inviterName}</span>
-                {invite.inviterEmail && (
-                  <span className="ml-1 sm:ml-2 text-gray-400 hidden sm:inline">({invite.inviterEmail})</span>
-                )}
-              </div>
-            </div>
-            <button
-              className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition flex items-center justify-center text-sm sm:text-base"
-              onClick={() => handleAccept(invite.eventId, invite.inviteId)}
-              disabled={acceptingId === invite.inviteId}
-            >
-              {acceptingId === invite.inviteId ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin h-4 w-4 sm:h-5 sm:w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                  <span className="text-sm sm:text-base">Accepting...</span>
-                </span>
-              ) : (
-                'Accept'
-              )}
-            </button>
-            {/* Confirmation Modal */}
-            {showConfirm.open && showConfirm.inviteId === invite.inviteId && (
-              <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative">
-                  <div className="text-lg font-semibold mb-4 text-center">Are you sure you want to dismiss this invitation?</div>
-                  <div className="flex gap-4 justify-center">
-                    <button
-                      className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-                      onClick={() => setShowConfirm({ open: false, inviteId: null })}
-                      disabled={dismissingId === invite.inviteId}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 flex items-center justify-center"
-                      onClick={async () => {
-                        setDismissingId(invite.inviteId);
-                        try {
-                          // Delete the invite document from Firestore
-                          await import('firebase/firestore').then(firestore =>
-                            firestore.deleteDoc(doc(db, 'events', showConfirm.eventId, 'team', invite.inviteId))
-                          );
-                          setInvites(prev => prev.filter(i => i.inviteId !== invite.inviteId));
-                        } catch (err) {
-                          alert('Failed to dismiss invitation.');
-                        } finally {
-                          setShowConfirm({ open: false, inviteId: null });
-                          setDismissingId(null);
-                        }
-                      }}
-                      disabled={dismissingId === invite.inviteId}
-                    >
-                      {dismissingId === invite.inviteId ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
-                          Dismissing...
-                        </span>
-                      ) : (
-                        'Dismiss'
+    <div className="min-h-screen bg-[#0a0a0a] text-white pt-20 pb-10 px-4 sm:pt-28 sm:px-8 font-sans">
+      <div className="max-w-2xl mx-auto">
+        {/* Header - Icon Removed */}
+        <header className="mb-10">
+          <h2 className="text-4xl font-black italic uppercase tracking-tighter">
+            Inbox<span className="text-[#ccff00]">.</span>
+          </h2>
+          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">
+            {invites.length} Pending Recruitment Requests
+          </p>
+        </header>
+
+        {invites.length === 0 ? (
+          <div className="border border-dashed border-white/10 rounded-[2rem] p-16 text-center">
+            <p className="text-gray-600 font-bold uppercase text-[10px] tracking-[0.4em]">No Active Invites Found</p>
+          </div>
+        ) : (
+          <ul className="space-y-4">
+            {invites.map(invite => (
+              <li key={invite.inviteId} className="group relative bg-[#111] border border-white/5 rounded-[1.5rem] p-6 hover:border-[#ccff00]/40 transition-all duration-300 overflow-hidden">
+                <button
+                  className="absolute top-5 right-5 text-gray-600 hover:text-red-500 transition-colors"
+                  onClick={() => setShowConfirm({ open: true, inviteId: invite.inviteId, eventId: invite.eventId })}
+                >
+                  <X size={20} />
+                </button>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-[#ccff00]/10 rounded-xl flex items-center justify-center text-[#ccff00] flex-shrink-0">
+                    <UserPlus size={24} />
+                  </div>
+                  
+                  <div className="flex-1 pr-6">
+                    <p className="text-[10px] font-black text-[#ccff00] uppercase tracking-widest mb-1">Incoming Invite</p>
+                    <h3 className="text-lg font-bold leading-tight">
+                      Join squad for <span className="italic underline underline-offset-4 decoration-white/20">{invite.eventName}</span>
+                    </h3>
+                    
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
+                        <span className="text-[11px] font-bold text-gray-300 uppercase leading-none">{invite.inviterName}</span>
+                      </div>
+                      {invite.inviterEmail && (
+                        <span className="text-[10px] text-gray-600 font-medium lowercase italic">{invite.inviterEmail}</span>
                       )}
-                    </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </li>
-        ))}
-      </ul>
+
+                <button
+                  className="w-full mt-6 py-4 bg-white text-black font-black italic uppercase text-xs tracking-[0.2em] rounded-xl hover:bg-[#ccff00] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+                  onClick={() => handleAccept(invite.eventId, invite.inviteId)}
+                  disabled={acceptingId === invite.inviteId}
+                >
+                  {acceptingId === invite.inviteId ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    <><Check size={16} strokeWidth={3} /> Accept Recruitment</>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {showConfirm.open && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+          <div className="bg-[#111] border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl text-center">
+            <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className="text-xl font-black italic uppercase tracking-tighter mb-2">Reject Request?</h3>
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-8 leading-relaxed">
+              This will permanently remove the invitation.
+            </p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                className="w-full py-4 bg-red-600 text-white font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl hover:bg-red-500 transition-all flex items-center justify-center gap-2"
+                onClick={handleDismiss}
+                disabled={dismissingId !== null}
+              >
+                {dismissingId ? <Loader2 className="animate-spin" size={14} /> : <><Trash2 size={14} /> Dismiss</>}
+              </button>
+              <button
+                className="w-full py-4 bg-white/5 text-gray-400 font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl hover:bg-white/10 transition-all"
+                onClick={() => setShowConfirm({ open: false, inviteId: null, eventId: null })}
+              >
+                Keep Invite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
