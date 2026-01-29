@@ -277,10 +277,10 @@ const Home = () => {
                   <span className="text-2xl font-black italic tracking-tighter uppercase">Campus League</span>
                </div>
                <div className="flex gap-4">
-                  <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all group">
+                  <a href="/" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all group">
                     <Instagram size={20} />
                   </a>
-                  <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all group">
+                  <a href="https://www.linkedin.com/company/campusleauge" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all group">
                     <Linkedin size={20} />
                   </a>
                </div>
