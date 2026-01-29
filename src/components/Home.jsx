@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { auth } from '../firebase/firebase'; // Ensure this path is correct
 import { 
   Trophy, Users, Zap, Calendar, ArrowRight, 
   Target, Activity, ChevronRight, Play 
@@ -10,6 +11,7 @@ import Navbar from './Navbar';
 const Home = () => {
   const navigate = useNavigate();
   const [currentWord, setCurrentWord] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
   const words = ["VICTORY", "COMMUNITY", "GLORY", "LEAGUES"];
   
@@ -18,7 +20,21 @@ const Home = () => {
   ];
 
   // Global function to handle auth redirection
-  const handleAuthRedirect = () => navigate('/login');
+  const handleAuthRedirect = () => {
+    if (isLoggedIn) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  // Check authentication status
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const wordInterval = setInterval(() => {
@@ -88,7 +104,7 @@ const Home = () => {
                 className="group relative bg-[#ccff00] text-black px-10 py-5 rounded-full font-black text-lg overflow-hidden transition-transform hover:scale-105 w-full sm:w-auto"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  JOIN THE LEAGUE <ArrowRight size={20} />
+                  {isLoggedIn ? 'ENTER DASHBOARD' : 'JOIN THE LEAGUE'} <ArrowRight size={20} />
                 </span>
               </button>
               <button 
@@ -114,7 +130,7 @@ const Home = () => {
                <div className="absolute inset-0 bg-[#ccff00]/5 z-10 pointer-events-none" />
             </div>
 
-            <div className="absolute inset-0 rounded-[3rem] overflow-hidden -rotate-2 border-2 border-[#ccff00]/30 shadow-[0_0_50px_rgba(204,255,0,0.1)]">
+            <div className="absolute inset-0 rounded-[3rem] overflow-hidden -rotate-2 border-2 border-[#ccff00]/30 shadow-[0_0_50px_rgba(204,255,0,0.15)]">
               <img
                 src={sportsImages[0]}
                 className="w-full h-full object-cover grayscale-[20%]"
@@ -145,7 +161,7 @@ const Home = () => {
           <motion.div 
             whileHover={{ y: -5 }}
             onClick={handleAuthRedirect}
-            className="md:col-span-8 bg-[#111] border border-white/10 rounded-[2rem] p-10 relative overflow-hidden group min-h-[400px]"
+            className="md:col-span-8 bg-[#111] border border-white/10 rounded-[2rem] p-10 relative overflow-hidden group min-h-[400px] cursor-pointer"
           >
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
               <Trophy size={200} />
@@ -162,7 +178,7 @@ const Home = () => {
           <motion.div 
             whileHover={{ y: -5 }}
             onClick={handleAuthRedirect}
-            className="md:col-span-4 bg-[#ccff00] rounded-[2rem] p-10 text-black flex flex-col justify-between min-h-[400px]"
+            className="md:col-span-4 bg-[#ccff00] rounded-[2rem] p-10 text-black flex flex-col justify-between min-h-[400px] cursor-pointer"
           >
             <Users size={40} strokeWidth={3} />
             <div>
@@ -173,7 +189,7 @@ const Home = () => {
 
           <div 
             onClick={handleAuthRedirect}
-            className="md:col-span-4 bg-[#111] border border-white/10 rounded-[2rem] p-8 hover:bg-[#161616] transition-colors min-h-[250px] flex flex-col justify-center group"
+            className="md:col-span-4 bg-[#111] border border-white/10 rounded-[2rem] p-8 hover:bg-[#161616] transition-colors min-h-[250px] flex flex-col justify-center group cursor-pointer"
           >
             <Activity className="text-[#ccff00] mb-6" size={32} />
             <h4 className="text-xl font-bold mb-2 italic uppercase">Live Analytics</h4>
@@ -182,7 +198,7 @@ const Home = () => {
 
           <div 
             onClick={handleAuthRedirect}
-            className="md:col-span-4 bg-blue-600 rounded-[2rem] p-8 flex flex-col justify-between group min-h-[250px]"
+            className="md:col-span-4 bg-blue-600 rounded-[2rem] p-8 flex flex-col justify-between group min-h-[250px] cursor-pointer"
           >
             <Calendar size={32} className="text-white" />
             <div className="flex justify-between items-end">
@@ -210,7 +226,7 @@ const Home = () => {
             onClick={handleAuthRedirect}
             className="bg-black text-white px-12 py-5 rounded-full font-black text-xl hover:scale-105 transition-transform shadow-2xl relative z-10 uppercase italic"
           >
-            Create an Event Now
+            {isLoggedIn ? 'Go to Dashboard' : 'Create an Event Now'}
           </button>
         </div>
       </section>

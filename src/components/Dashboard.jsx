@@ -197,6 +197,7 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
+
         </footer>
       </div>
     </div>

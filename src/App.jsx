@@ -10,7 +10,6 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { auth, db } from './firebase/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-// Import quick action components
 import CreateEvent from './components/quick-actions/CreateEvent';
 import ManageEvents from './components/quick-actions/ManageEvents';
 import TournamentBracket from './components/TournamentBracket';
@@ -23,10 +22,10 @@ import About from './components/About';
 import ContactUs from './components/ContactUs';
 import Leaderboard from './components/Leaderboard';
 
-// Layout component to wrap protected routes with Navbar
+// Layout component
 const MainLayout = ({ children }) => (
   <div className="min-h-screen flex flex-col">
-    <header className="bg-white shadow-md w-full">
+    <header className="w-full">
       <Navbar />
     </header>
     <main className="flex-1 bg-gradient-to-b from-blue-50 to-gray-50 w-full">
@@ -35,22 +34,17 @@ const MainLayout = ({ children }) => (
   </div>
 );
 
-// Component to handle redirection based on profile completion
+// Profile completion check
 const AuthCheck = () => {
   const [isProfileComplete, setIsProfileComplete] = useState(null);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
 
   useEffect(() => {
     const checkProfile = async () => {
       if (auth.currentUser) {
         try {
           const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-          if (userDoc.exists() && userDoc.data().profileCompleted) {
-            setIsProfileComplete(true);
-          } else {
-            setIsProfileComplete(false);
-          }
+          setIsProfileComplete(!!(userDoc.exists() && userDoc.data().profileCompleted));
         } catch (error) {
           console.error('Error checking profile:', error);
           setIsProfileComplete(false);
@@ -61,269 +55,71 @@ const AuthCheck = () => {
         setLoading(false);
       }
     };
-
     checkProfile();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (isProfileComplete === false) {
-    return <Navigate to="/complete-profile" replace />;
-  }
-
-  return <Navigate to="/dashboard" replace />;
+  if (loading) return <LoadingSpinner />;
+  return isProfileComplete === false ? <Navigate to="/complete-profile" replace /> : <Navigate to="/dashboard" replace />;
 };
 
-// Component to handle redirection after login
-const LoginRedirect = () => {
-  return <Navigate to="/check-profile" replace />;
-};
-
-// Component to handle root route based on authentication status
-const RootRoute = () => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [profileCheck, setProfileCheck] = useState(null);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      setUser(currentUser);
-      
-      if (currentUser) {
-        try {
-          // Check if user profile is complete
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists() && userDoc.data().profileCompleted) {
-            setProfileCheck('complete');
-          } else {
-            setProfileCheck('incomplete');
-          }
-        } catch (error) {
-          console.error('Error checking profile:', error);
-          setProfileCheck('incomplete');
-        }
-      }
-      
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  // If user is logged in
-  if (user) {
-    // If profile is incomplete, redirect to complete profile
-    if (profileCheck === 'incomplete') {
-      return <Navigate to="/complete-profile" replace />;
-    }
-    // If profile is complete, redirect to dashboard
-    if (profileCheck === 'complete') {
-      return <Navigate to="/dashboard" replace />;
-    }
-  }
-
-  // If user is not logged in, show the landing page
-  return <Home />;
-};
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  </div>
+);
 
 function App() {
-  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
+    const unsubscribe = auth.onAuthStateChanged(() => setLoading(false));
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingSpinner />;
 
   return (
     <Router>
       <div className="App">
-        <ToastContainer 
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
+        <ToastContainer position="top-right" autoClose={5000} />
         <Routes>
-          {/* Root route */}
-          <Route path="/" element={<RootRoute />} />
+          {/* Default Route: Home is now the landing page for everyone */}
+          <Route path="/" element={
+            <MainLayout>
+              <Home />
+            </MainLayout>
+          } />
           
-          {/* Auth routes */}
-          {/* Public routes */}
+          {/* Public Routes */}
           <Route path="/login" element={<Login />} />
-          <Route path="/about" element={
-            <MainLayout>
-              <About />
-            </MainLayout>
-          } />
-          <Route path="/contact" element={
-            <MainLayout>
-              <ContactUs />
-            </MainLayout>
-          } />
+          <Route path="/about" element={<MainLayout><About /></MainLayout>} />
+          <Route path="/contact" element={<MainLayout><ContactUs /></MainLayout>} />
+          
+          {/* Auth/Redirection Logic */}
+          <Route path="/check-profile" element={<AuthCheck />} />
           <Route path="/complete-profile" element={
             <ProtectedRoute>
-              <MainLayout>
-                <UserProfileForm />
-              </MainLayout>
+              <MainLayout><UserProfileForm /></MainLayout>
             </ProtectedRoute>
           } />
+
+          {/* Protected Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
+          <Route path="/leaderboard" element={<ProtectedRoute><MainLayout><Leaderboard /></MainLayout></ProtectedRoute>} />
+          <Route path="/create-event" element={<ProtectedRoute><MainLayout><CreateEvent /></MainLayout></ProtectedRoute>} />
+          <Route path="/manage-events" element={<ProtectedRoute><MainLayout><ManageEvents /></MainLayout></ProtectedRoute>} />
+          <Route path="/form" element={<ProtectedRoute><MainLayout><UserProfileForm /></MainLayout></ProtectedRoute>} />
+          <Route path="/notification" element={<ProtectedRoute><MainLayout><Notification /></MainLayout></ProtectedRoute>} />
           
-          <Route path="/leaderboard" element={
-            <ProtectedRoute>
-              <MainLayout>
-                <Leaderboard />
-              </MainLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/check-profile" element={<AuthCheck />} />
-          
-          {/* Protected routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Dashboard />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Quick Action Routes (admin only, enforced in ProtectedRoute) */}
-          <Route 
-            path="/create-event" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <CreateEvent />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route 
-            path="/manage-events" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <ManageEvents />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route 
-            path="/form" 
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <UserProfileForm />
-                </MainLayout>
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Event routes */}
-          <Route
-            path="/events/:id/participate"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Participate />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/events/:id/create-team/"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <CreateTeam />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/events/:id"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <EventDetail />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/events/:eventId/matches/:matchId/edit"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <EditMatch />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Additional routes */}
-          <Route
-            path="/tournament-bracket"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <TournamentBracket />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          <Route
-            path="/notification"
-            element={
-              <ProtectedRoute>
-                <MainLayout>
-                  <Notification />
-                </MainLayout>
-              </ProtectedRoute>
-            }
-          />
-          
-          {/* Fallback routes */}
-          <Route path="/home" element={<Home />} />
+          {/* Event & Tournament Routes */}
+          <Route path="/events/:id" element={<ProtectedRoute><MainLayout><EventDetail /></MainLayout></ProtectedRoute>} />
+          <Route path="/events/:id/participate" element={<ProtectedRoute><MainLayout><Participate /></MainLayout></ProtectedRoute>} />
+          <Route path="/events/:id/create-team/" element={<ProtectedRoute><MainLayout><CreateTeam /></MainLayout></ProtectedRoute>} />
+          <Route path="/events/:eventId/matches/:matchId/edit" element={<ProtectedRoute><MainLayout><EditMatch /></MainLayout></ProtectedRoute>} />
+          <Route path="/tournament-bracket" element={<ProtectedRoute><MainLayout><TournamentBracket /></MainLayout></ProtectedRoute>} />
+
+          {/* Catch-all redirect to Home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
     </Router>
