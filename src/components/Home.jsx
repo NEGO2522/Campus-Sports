@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { auth } from '../firebase/firebase'; // Ensure this path is correct
+import { auth } from '../firebase/firebase'; 
 import { 
   Trophy, Users, Zap, Calendar, ArrowRight, 
-  Target, Activity, ChevronRight, Play 
+  Target, Activity, ChevronRight
 } from 'lucide-react';
 import Navbar from './Navbar';
 
@@ -19,7 +19,6 @@ const Home = () => {
     "https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&w=1000&auto=format&fit=crop",
   ];
 
-  // Global function to handle auth redirection
   const handleAuthRedirect = () => {
     if (isLoggedIn) {
       navigate('/dashboard');
@@ -28,7 +27,6 @@ const Home = () => {
     }
   };
 
-  // Check authentication status
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setIsLoggedIn(!!user);
@@ -107,15 +105,6 @@ const Home = () => {
                   {isLoggedIn ? 'ENTER DASHBOARD' : 'JOIN THE LEAGUE'} <ArrowRight size={20} />
                 </span>
               </button>
-              <button 
-                onClick={handleAuthRedirect}
-                className="flex items-center gap-3 font-bold text-white hover:text-[#ccff00] transition-colors group"
-              >
-                <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:border-[#ccff00]">
-                  <Play size={18} fill="currentColor" />
-                </div>
-                WATCH SHOWREEL
-              </button>
             </motion.div>
           </motion.div>
 
@@ -157,7 +146,6 @@ const Home = () => {
       {/* --- FEATURE BENTO GRID --- */}
       <section className="py-32 px-6 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          
           <motion.div 
             whileHover={{ y: -5 }}
             onClick={handleAuthRedirect}
@@ -206,7 +194,33 @@ const Home = () => {
               <ChevronRight className="group-hover:translate-x-2 transition-transform" />
             </div>
           </div>
+        </div>
+      </section>
 
+      {/* --- NEW: CAMPUS LEAGUE VIDEO SHOWCASE --- */}
+      <section className="px-6 mb-20 max-w-7xl mx-auto">
+        <div className="relative w-full h-[500px] rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(204,255,0,0.1)]">
+          <video 
+            src="/Campus Leauge Video.mp4" 
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover brightness-50"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/80 flex flex-col items-center justify-center">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="text-[#ccff00] text-6xl md:text-9xl font-black italic tracking-tighter uppercase"
+            >
+              CAMPUS LEAGUE
+            </motion.h2>
+            <div className="flex items-center gap-2 mt-4 text-white/60 font-bold tracking-[0.3em] uppercase text-sm">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              Direct Action Broadcast
+            </div>
+          </div>
         </div>
       </section>
 
