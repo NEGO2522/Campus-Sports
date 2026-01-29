@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { auth } from '../firebase/firebase'; 
 import { 
   Trophy, Users, Zap, Calendar, ArrowRight, 
-  Target, Activity, ChevronRight
+  Target, Activity, ChevronRight, Instagram, Linkedin
 } from 'lucide-react';
 import Navbar from './Navbar';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [currentWord, setCurrentWord] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
+  // Force scroll to top on mount/route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   // Ref and Scroll logic for Parallax
   const videoRef = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -135,7 +141,7 @@ const Home = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80" />
               <div className="absolute bottom-8 left-8 bg-[#ccff00] text-black p-4 rounded-2xl flex items-center gap-3">
                 <Trophy size={24} strokeWidth={3} />
-                <span className="font-black italic text-sm uppercase">Active Season 2024</span>
+                <span className="font-black italic text-sm uppercase">Active Season 2025</span>
               </div>
             </div>
 
@@ -214,7 +220,7 @@ const Home = () => {
               loop 
               muted 
               playsInline
-              className="w-full h-full object-cover brightness-[0.4]"
+              className="w-full h-full object-cover scale-110 brightness-[0.4]"
             />
           </motion.div>
           
@@ -260,10 +266,35 @@ const Home = () => {
         </div>
       </section>
 
-      <footer className="py-10 text-center border-t border-white/5">
-        <p className="text-gray-600 text-xs font-bold tracking-[0.2em] uppercase">
-          &copy; {new Date().getFullYear()} CAMPUS LEAGUE — BORN TO WIN.
-        </p>
+      {/* --- UPDATED FOOTER WITH SOCIALS AND LINKS --- */}
+      <footer className="pt-20 pb-10 px-6 border-t border-white/5">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-12">
+            {/* Branding & Socials */}
+            <div className="flex flex-col items-center md:items-start">
+               <div className="flex items-center gap-2 mb-6">
+                  <Zap className="text-[#ccff00]" size={28} fill="currentColor" />
+                  <span className="text-2xl font-black italic tracking-tighter uppercase">Campus League</span>
+               </div>
+               <div className="flex gap-4">
+                  <a href="https://instagram.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all group">
+                    <Instagram size={20} />
+                  </a>
+                  <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all group">
+                    <Linkedin size={20} />
+                  </a>
+               </div>
+            </div>
+
+            {/* Quick Links */}
+            <div className="flex flex-wrap justify-center md:justify-end gap-x-10 gap-y-4">
+               <Link to="/about" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase transition-colors">About Us</Link>
+               <Link to="/contact" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase transition-colors">Contact Us</Link>
+               <Link to="/privacy-policy" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase transition-colors">Privacy Policy</Link>
+               <Link to="/terms-of-service" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase transition-colors">Terms of Service</Link>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );

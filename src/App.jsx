@@ -21,6 +21,19 @@ import EditMatch from './components/EditMatch';
 import About from './components/About';
 import ContactUs from './components/ContactUs';
 import Leaderboard from './components/Leaderboard';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
+
+// --- Global Scroll Reset Component ---
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
 
 // Layout component
 const MainLayout = ({ children }) => (
@@ -28,7 +41,7 @@ const MainLayout = ({ children }) => (
     <header className="w-full">
       <Navbar />
     </header>
-    <main className="flex-1 bg-gradient-to-b from-blue-50 to-gray-50 w-full">
+    <main className="flex-1 w-full">
       {children}
     </main>
   </div>
@@ -63,8 +76,8 @@ const AuthCheck = () => {
 };
 
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+  <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#ccff00]"></div>
   </div>
 );
 
@@ -80,10 +93,12 @@ function App() {
 
   return (
     <Router>
+      {/* ScrollToTop must be inside Router but outside Routes */}
+      <ScrollToTop />
       <div className="App">
         <ToastContainer position="top-right" autoClose={5000} />
         <Routes>
-          {/* Default Route: Home is now the landing page for everyone */}
+          {/* Default Route: Home */}
           <Route path="/" element={
             <MainLayout>
               <Home />
@@ -94,6 +109,10 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/about" element={<MainLayout><About /></MainLayout>} />
           <Route path="/contact" element={<MainLayout><ContactUs /></MainLayout>} />
+          
+          {/* Legal Routes */}
+          <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
+          <Route path="/terms-of-service" element={<MainLayout><TermsOfService /></MainLayout>} />
           
           {/* Auth/Redirection Logic */}
           <Route path="/check-profile" element={<AuthCheck />} />
