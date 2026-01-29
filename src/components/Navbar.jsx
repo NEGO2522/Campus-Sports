@@ -4,7 +4,7 @@ import { auth } from '../firebase/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Trophy, Bell, User, LogOut, PlusCircle, 
-  Calendar, Menu, X, Settings, Info, Mail 
+  Calendar, Menu, X, Settings 
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -14,7 +14,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // Handle scroll effect for glassmorphism
+  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
@@ -44,7 +44,8 @@ const Navbar = () => {
 
   return (
     <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${
-      scrolled ? 'py-3 bg-black/80 backdrop-blur-xl border-b border-white/10' : 'py-5 bg-transparent'
+      /* REMOVED: border-b border-white/10 */
+      scrolled ? 'py-3 bg-black/80 backdrop-blur-xl' : 'py-5 bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         
@@ -147,10 +148,10 @@ const Navbar = () => {
                         </Link>
                       ))}
                       <div className="my-4 border-t border-white/5" />
-                      <Link to="/form" className="flex items-center gap-4 p-4 text-gray-400 font-bold italic">
+                      <Link to="/form" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 text-gray-400 font-bold italic">
                         <User size={20} /> PROFILE
                       </Link>
-                      <Link to="/settings" className="flex items-center gap-4 p-4 text-gray-400 font-bold italic">
+                      <Link to="/settings" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-4 p-4 text-gray-400 font-bold italic">
                         <Settings size={20} /> SETTINGS
                       </Link>
                       <button 
@@ -163,6 +164,7 @@ const Navbar = () => {
                   ) : (
                     <Link 
                       to="/login"
+                      onClick={() => setIsMenuOpen(false)}
                       className="bg-[#ccff00] text-black p-5 rounded-2xl text-center font-black italic text-xl"
                     >
                       SIGN IN NOW
