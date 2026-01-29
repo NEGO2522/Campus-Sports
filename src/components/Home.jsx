@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { auth } from '../firebase/firebase'; 
 import { 
   Trophy, Users, Zap, Calendar, ArrowRight, 
@@ -13,6 +13,14 @@ const Home = () => {
   const [currentWord, setCurrentWord] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
+  // Ref and Scroll logic for Parallax
+  const videoRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: videoRef,
+    offset: ["start end", "end start"]
+  });
+  const y = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
+
   const words = ["VICTORY", "COMMUNITY", "GLORY", "LEAGUES"];
   
   const sportsImages = [
@@ -108,7 +116,6 @@ const Home = () => {
             </motion.div>
           </motion.div>
 
-          {/* Right: Static Image Frame */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -197,29 +204,37 @@ const Home = () => {
         </div>
       </section>
 
-      {/* --- NEW: CAMPUS LEAGUE VIDEO SHOWCASE --- */}
-      <section className="px-6 mb-20 max-w-7xl mx-auto">
-        <div className="relative w-full h-[500px] rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(204,255,0,0.1)]">
-          <video 
-            src="/Campus Leauge Video.mp4" 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-full object-cover brightness-50"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/80 flex flex-col items-center justify-center">
+      {/* --- PARALLAX VIDEO SECTION --- */}
+      <section ref={videoRef} className="px-6 mb-20 max-w-7xl mx-auto overflow-hidden">
+        <div className="relative w-full h-[600px] rounded-[3rem] overflow-hidden border border-white/10 shadow-[0_0_80px_rgba(204,255,0,0.1)]">
+          <motion.div style={{ y }} className="absolute inset-0 w-full h-[120%]">
+            <video 
+              src="/Campus Leauge Video.mp4" 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="w-full h-full object-cover brightness-[0.4]"
+            />
+          </motion.div>
+          
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 flex flex-col items-center justify-center pointer-events-none">
             <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              className="text-[#ccff00] text-6xl md:text-9xl font-black italic tracking-tighter uppercase"
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              className="text-[#ccff00] text-5xl md:text-9xl font-black italic tracking-tighter uppercase text-center"
             >
               CAMPUS LEAGUE
             </motion.h2>
-            <div className="flex items-center gap-2 mt-4 text-white/60 font-bold tracking-[0.3em] uppercase text-sm">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              Direct Action Broadcast
-            </div>
+            <motion.div 
+               initial={{ opacity: 0 }}
+               whileInView={{ opacity: 1 }}
+               className="flex items-center gap-3 mt-6 px-6 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10"
+            >
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_red]" />
+              <span className="text-white/80 font-black tracking-[0.4em] uppercase text-xs">Showreel Experience</span>
+            </motion.div>
           </div>
         </div>
       </section>
