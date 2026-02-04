@@ -16,3 +16,5 @@ A modern web application designed to connect sports enthusiasts within the campu
 - Node.js (v14 or later)
 - npm or yarn
 - Firebase account
+
+-  By Harsh Agarwal & Kshitij Jain
