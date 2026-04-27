@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
-import { db, auth } from '../firebase/firebase';
+// No Firebase. TODO: connect to backend API
+// import api from '../utils/api';
 import { motion } from 'framer-motion';
 import { format, formatDistanceToNow, isAfter } from 'date-fns';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers } from 'react-icons/fa';
@@ -10,64 +10,24 @@ const ActivityFeed = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const user = auth.currentUser;
-    const now = new Date();
-    
-    // Query for upcoming events
-    const eventsQuery = query(
-      collection(db, 'events'),
-      where('status', '==', 'upcoming'),
-      orderBy('dateTime')
-    );
-
-    // Subscribe to real-time updates for events
-    const unsubscribe = onSnapshot(
-      eventsQuery,
-      (snapshot) => {
-        try {
-          const upcomingEvents = [];
-          const now = new Date();
-          
-          // Process each event
-          snapshot.forEach((doc) => {
-            const eventData = doc.data();
-            const eventDate = eventData.dateTime?.toDate ? eventData.dateTime.toDate() : new Date(eventData.dateTime);
-            
-            // Only include future events
-            if (isAfter(eventDate, now)) {
-              upcomingEvents.push({
-                id: doc.id,
-                ...eventData,
-                type: 'upcoming_event',
-                timestamp: eventDate,
-                isPublic: true
-              });
-            }
-          });
-          
-          // Sort by date (nearest first)
-          const sortedEvents = upcomingEvents
-            .sort((a, b) => a.timestamp - b.timestamp)
-            .slice(0, 10); // Limit to 10 upcoming events
-            
-          setActivities(sortedEvents);
-          setLoading(false);
-          
-        } catch (error) {
-          console.error('Error processing upcoming events:', error);
-          setActivities([]);
-          setLoading(false);
-        }
-      },
-      (error) => {
+    const fetchActivities = async () => {
+      try {
+        // TODO: const data = await api.get('/events?status=upcoming&limit=10');
+        // const now = new Date();
+        // const upcoming = data
+        //   .filter(e => isAfter(new Date(e.dateTime), now))
+        //   .map(e => ({ ...e, type: 'upcoming_event', timestamp: new Date(e.dateTime) }))
+        //   .sort((a, b) => a.timestamp - b.timestamp);
+        // setActivities(upcoming);
+        setActivities([]); // empty until backend connected
+      } catch (error) {
         console.error('Error fetching upcoming events:', error);
         setActivities([]);
+      } finally {
         setLoading(false);
       }
-    );
-
-    // Clean up the subscription on unmount
-    return () => unsubscribe();
+    };
+    fetchActivities();
   }, []);
 
   // Function to render activity icon based on event type
