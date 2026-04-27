@@ -1,20 +1,71 @@
-# Campus Sports Management System 🏆
+# CampusLeague 🏆
 
-A modern web application designed to connect sports enthusiasts within the campus, making it easier to find players, organize games, and manage sports activities.
+> India ka pehla location-based college sports platform — "Meetup.com for college sports"
 
-## ✨ Features
+Students apne college ke aas paas sports events create kar sakte hain, join kar sakte hain, aur tournament khel sakte hain.
 
-- **Player Discovery** - Find and connect with other players based on sport, skill level, and location
-- **User Profiles** - Detailed profiles with academic information, sports preferences, and playing history
-- **Real-time Updates** - Instant updates on player availability and game status
-- **Event Management** - Create and manage sports events and tournaments
-- **Responsive Design** - Works seamlessly on desktop and mobile devices
+---
 
+## Project Structure
 
-### Prerequisites
+```
+CampusLeague/
+├── Frontend/          # React + Vite + Tailwind
+└── Backend/           # Node.js + Express + PostgreSQL
+```
 
-- Node.js (v14 or later)
-- npm or yarn
-- Firebase account
+---
 
--  By Harsh Agarwal & Kshitij Jain
+## Frontend Setup
+
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+
+Runs on: `http://localhost:5173`
+
+---
+
+## Backend Setup
+
+```bash
+cd Backend
+npm install
+cp .env.example .env      # fill in your values
+npm run db:migrate        # create all tables
+npm run db:seed           # seed Jaipur colleges
+npm run dev
+```
+
+Runs on: `http://localhost:5000`
+
+---
+
+## Tech Stack
+
+| Layer | Tech |
+|-------|------|
+| Frontend | React 19, Vite, Tailwind CSS, Framer Motion |
+| Backend | Node.js, Express |
+| Database | PostgreSQL (raw `pg` driver) |
+| Auth | JWT + Google OAuth |
+| Real-time | Socket.io |
+
+---
+
+## Core Features
+
+- 📍 Location-based event discovery (college-wise)
+- 🏏 Create & join sports events
+- 👥 Team creation & management
+- 🏆 Tournament brackets & live scores
+- 📊 College leaderboard
+- 🔔 Real-time notifications
+
+---
+
+## Founder
+
+Built by **Aryan** — Poornima University, Jaipur

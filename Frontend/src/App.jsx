@@ -2,14 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
 import Home from './components/Home';
 import Login from './auth/Login';
 import Dashboard from './components/Dashboard';
 import UserProfileForm from './components/Form';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
-import { auth, db } from './firebase/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import CreateEvent from './components/quick-actions/CreateEvent';
 import ManageEvents from './components/quick-actions/ManageEvents';
 import TournamentBracket from './components/TournamentBracket';
@@ -24,56 +23,19 @@ import Leaderboard from './components/Leaderboard';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 
-// --- Global Scroll Reset Component ---
+// Scroll reset on route change
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
 };
 
-// Layout component
 const MainLayout = ({ children }) => (
   <div className="min-h-screen flex flex-col">
-    <header className="w-full">
-      <Navbar />
-    </header>
-    <main className="flex-1 w-full">
-      {children}
-    </main>
+    <header className="w-full"><Navbar /></header>
+    <main className="flex-1 w-full">{children}</main>
   </div>
 );
-
-// Profile completion check
-const AuthCheck = () => {
-  const [isProfileComplete, setIsProfileComplete] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const checkProfile = async () => {
-      if (auth.currentUser) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-          setIsProfileComplete(!!(userDoc.exists() && userDoc.data().profileCompleted));
-        } catch (error) {
-          console.error('Error checking profile:', error);
-          setIsProfileComplete(false);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
-    checkProfile();
-  }, []);
-
-  if (loading) return <LoadingSpinner />;
-  return isProfileComplete === false ? <Navigate to="/complete-profile" replace /> : <Navigate to="/dashboard" replace />;
-};
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-[#0a0a0a]">
@@ -82,62 +44,45 @@ const LoadingSpinner = () => (
 );
 
 function App() {
+  // Auth state will come from our own backend JWT stored in localStorage
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(() => setLoading(false));
-    return () => unsubscribe();
+    // TODO: Verify JWT token with backend on app load
+    // const token = localStorage.getItem('cl_token');
+    // if (token) { api.get('/auth/me').then(...).catch(() => localStorage.removeItem('cl_token')); }
+    setLoading(false);
   }, []);
 
   if (loading) return <LoadingSpinner />;
 
   return (
     <Router>
-      {/* ScrollToTop must be inside Router but outside Routes */}
       <ScrollToTop />
       <div className="App">
         <ToastContainer position="top-right" autoClose={5000} />
         <Routes>
-          {/* Default Route: Home */}
-          <Route path="/" element={
-            <MainLayout>
-              <Home />
-            </MainLayout>
-          } />
-          
-          {/* Public Routes */}
+          <Route path="/" element={<MainLayout><Home /></MainLayout>} />
           <Route path="/login" element={<Login />} />
           <Route path="/about" element={<MainLayout><About /></MainLayout>} />
           <Route path="/contact" element={<MainLayout><ContactUs /></MainLayout>} />
-          
-          {/* Legal Routes */}
           <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
           <Route path="/terms-of-service" element={<MainLayout><TermsOfService /></MainLayout>} />
-          
-          {/* Auth/Redirection Logic */}
-          <Route path="/check-profile" element={<AuthCheck />} />
-          <Route path="/complete-profile" element={
-            <ProtectedRoute>
-              <MainLayout><UserProfileForm /></MainLayout>
-            </ProtectedRoute>
-          } />
 
-          {/* Protected Routes */}
+          <Route path="/complete-profile" element={
+            <ProtectedRoute><MainLayout><UserProfileForm /></MainLayout></ProtectedRoute>
+          } />
           <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><MainLayout><Leaderboard /></MainLayout></ProtectedRoute>} />
           <Route path="/create-event" element={<ProtectedRoute><MainLayout><CreateEvent /></MainLayout></ProtectedRoute>} />
           <Route path="/manage-events" element={<ProtectedRoute><MainLayout><ManageEvents /></MainLayout></ProtectedRoute>} />
           <Route path="/form" element={<ProtectedRoute><MainLayout><UserProfileForm /></MainLayout></ProtectedRoute>} />
           <Route path="/notification" element={<ProtectedRoute><MainLayout><Notification /></MainLayout></ProtectedRoute>} />
-          
-          {/* Event & Tournament Routes */}
           <Route path="/events/:id" element={<ProtectedRoute><MainLayout><EventDetail /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:id/participate" element={<ProtectedRoute><MainLayout><Participate /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:id/create-team/" element={<ProtectedRoute><MainLayout><CreateTeam /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:eventId/matches/:matchId/edit" element={<ProtectedRoute><MainLayout><EditMatch /></MainLayout></ProtectedRoute>} />
           <Route path="/tournament-bracket" element={<ProtectedRoute><MainLayout><TournamentBracket /></MainLayout></ProtectedRoute>} />
-
-          {/* Catch-all redirect to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
