@@ -1,4 +1,4 @@
-# CampusLeague 🏆
+# CampusLeague
 
 > India ka pehla location-based college sports platform — "Meetup.com for college sports"
 
@@ -57,15 +57,15 @@ Runs on: `http://localhost:5000`
 
 ## Core Features
 
-- 📍 Location-based event discovery (college-wise)
-- 🏏 Create & join sports events
-- 👥 Team creation & management
-- 🏆 Tournament brackets & live scores
-- 📊 College leaderboard
-- 🔔 Real-time notifications
+- Location-based event discovery (college-wise)
+- Create and join sports events
+- Team creation and management
+- Tournament brackets and live scores
+- College leaderboard
+- Real-time notifications
 
 ---
 
 ## Founder
 
-Built by **Aryan** — Poornima University, Jaipur
+Built by **Kshitij Jain** — Poornima University, Jaipur
