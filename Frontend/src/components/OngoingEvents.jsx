@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
 import { FaMapMarkerAlt, FaBolt, FaChevronRight, FaTrophy } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { Flame, Radio } from 'lucide-react';
+// import api from '../utils/api';
+
+const SPORT_META = {
+  Cricket:        { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', emoji: '🏏' },
+  Football:       { color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/25',    emoji: '⚽' },
+  Basketball:     { color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/25',  emoji: '🏀' },
+  Badminton:      { color: 'text-yellow-400',  bg: 'bg-yellow-500/10',  border: 'border-yellow-500/25',  emoji: '🏸' },
+  Volleyball:     { color: 'text-purple-400',  bg: 'bg-purple-500/10',  border: 'border-purple-500/25',  emoji: '🏐' },
+  Tennis:         { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/25',     emoji: '🎾' },
+  'Table Tennis': { color: 'text-pink-400',    bg: 'bg-pink-500/10',    border: 'border-pink-500/25',    emoji: '🏓' },
+};
+
+const DEFAULT_META = { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10', emoji: '🏆' };
 
 const OngoingEvents = ({ onEventClick }) => {
   const [events, setEvents] = useState([]);
@@ -14,25 +26,15 @@ const OngoingEvents = ({ onEventClick }) => {
     const fetchOngoingEventsAndMatches = async () => {
       setLoading(true);
       try {
-        const eventsSnap = await getDocs(query(collection(db, 'events'), where('status', '==', 'ongoing')));
-        const eventsArr = eventsSnap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-        setEvents(eventsArr);
-
-        const matchesObj = {};
-        for (const event of eventsArr) {
-          const matchesSnap = await getDocs(collection(db, 'events', event.id, 'matches'));
-          matchesObj[event.id] = matchesSnap.docs.map(matchDoc => {
-            const match = matchDoc.data();
-            let dateTime = match.dateTime?.toDate ? match.dateTime.toDate() : new Date(match.dateTime);
-            return {
-              ...match,
-              id: matchDoc.id,
-              matchName: match.round || match.matchName || match.title || 'Match',
-              dateTime,
-            };
-          });
-        }
-        setMatchesByEvent(matchesObj);
+        // TODO: Uncomment when backend ready
+        // const eventsArr = await api.get('/events?status=ongoing');
+        // setEvents(eventsArr);
+        // const matchesObj = {};
+        // for (const event of eventsArr) {
+        //   const matches = await api.get(`/events/${event.id}/matches`);
+        //   matchesObj[event.id] = matches;
+        // }
+        // setMatchesByEvent(matchesObj);
       } catch (err) {
         console.error(err);
       } finally {
@@ -45,119 +47,167 @@ const OngoingEvents = ({ onEventClick }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center p-12">
-        {/* Spinner updated to #ccff00 */}
-        <div className="w-8 h-8 border-2 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
+        <div className="relative">
+          <div className="w-10 h-10 border-2 border-[#ccff00]/20 rounded-full" />
+          <div className="w-10 h-10 border-2 border-t-[#ccff00] rounded-full animate-spin absolute inset-0" />
+        </div>
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="text-center p-10 bg-[#0a0a0a] border border-white/5 rounded-none">
-        <FaTrophy className="mx-auto text-gray-700 text-3xl mb-4" />
-        <p className="text-gray-500 uppercase tracking-widest text-xs font-bold">No Live Action Currently</p>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative text-center p-14 bg-[#111] border border-dashed border-white/10 rounded-3xl overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500/3 to-transparent pointer-events-none" />
+
+        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Radio size={26} className="text-gray-700" />
+        </div>
+
+        <p className="text-gray-600 uppercase tracking-widest text-xs font-black mb-1">
+          No Live Action Right Now
+        </p>
+        <p className="text-[10px] text-gray-700 font-bold uppercase tracking-widest">
+          Ongoing events will appear here
+        </p>
+
+        <div className="flex items-center justify-center gap-1.5 mt-5">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+          ))}
+        </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
       {events.map((event, index) => {
         const matches = matchesByEvent[event.id] || [];
         const matchesToShow = matches.slice(0, 2);
+        const meta = SPORT_META[event.sport] || DEFAULT_META;
 
         return (
           <motion.div
             key={event.id}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            className="group relative bg-[#0a0a0a] border border-white/10 overflow-hidden hover:border-[#ccff00]/50 transition-all cursor-pointer"
+            transition={{ delay: index * 0.1, type: 'spring', stiffness: 200, damping: 22 }}
+            className="group relative bg-[#111] border border-white/10 rounded-2xl overflow-hidden hover:border-[#ccff00]/30 transition-all duration-300 cursor-pointer hover:-translate-y-0.5"
             onClick={() => onEventClick && onEventClick(event)}
           >
-            {/* Live Indicator Top Bar updated to #ccff00 */}
-            <div className="h-1 w-full bg-white/5 group-hover:bg-[#ccff00]/30 transition-colors" />
+            {/* Live pulse bar at top */}
+            <div className="h-[3px] bg-gradient-to-r from-red-500 via-red-400 to-red-500/50 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+            </div>
 
             <div className="p-5">
-              {/* Event Header */}
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-xl font-black italic uppercase tracking-tighter text-white group-hover:text-[#ccff00] transition-colors">
-                    {event.eventName || event.title}
+              <div className="flex items-start justify-between mb-5">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase ${meta.color} ${meta.bg} ${meta.border}`}>
+                      {meta.emoji} {event.sport || 'Sport'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[9px] font-black text-red-400 uppercase">
+                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                      Live
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg font-black italic uppercase tracking-tighter text-white group-hover:text-[#ccff00] transition-colors leading-tight truncate">
+                    {event.eventName || event.title || event.event_name}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{event.sport || 'Tournament'}</span>
-                    <span className="w-1 h-1 bg-gray-700 rounded-full"></span>
-                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{event.location}</span>
+
+                  <div className="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-gray-600 uppercase">
+                    <FaMapMarkerAlt size={8} className="text-[#ccff00]/50" />
+                    {event.location}
                   </div>
                 </div>
-                {/* Bolt icon updated to #ccff00 */}
-                <div className="bg-white/5 p-2 text-white/20 group-hover:text-[#ccff00] transition-colors">
-                  <FaBolt size={14} />
+
+                <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-[#ccff00]/10 transition-all flex-shrink-0 ml-3">
+                  <Flame size={16} className="text-gray-600 group-hover:text-[#ccff00] transition-colors" />
                 </div>
               </div>
 
-              {/* Matches List */}
-              <div className="space-y-3">
+              {/* Matches */}
+              <div className="space-y-2.5">
                 {matchesToShow.length > 0 ? (
-                  matchesToShow.map((match) => (
-                    <div key={match.id} className="relative bg-black border border-white/5 p-4 group/match hover:border-white/20 transition-all">
-                      {/* Match Header */}
-                      <div className="flex justify-between items-center mb-3">
-                        {/* Match Round Badge updated to #ccff00 */}
-                        <span className="text-[9px] font-black text-black uppercase tracking-widest bg-[#ccff00] px-2 py-0.5">
+                  matchesToShow.map((match, mi) => (
+                    <motion.div
+                      key={match.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: mi * 0.08 }}
+                      className="bg-black/50 border border-white/5 rounded-xl p-4 hover:border-white/10 transition-all"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[8px] font-black bg-[#ccff00] text-black uppercase tracking-widest px-2 py-0.5 rounded-md">
                           {match.matchName}
                         </span>
                         {match.matchStarted ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span>
-                            <span className="text-[10px] font-black text-red-500 italic uppercase">Live</span>
+                            <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
+                            <span className="text-[9px] font-black text-red-400 uppercase italic">Live</span>
                           </div>
                         ) : (
-                          <span className="text-[10px] font-bold text-gray-600 uppercase">
-                            {match.dateTime ? format(match.dateTime, 'HH:mm') : '--:--'}
+                          <span className="text-[9px] text-gray-600 font-bold uppercase">
+                            {match.dateTime ? format(match.dateTime, 'HH:mm') : 'Soon'}
                           </span>
                         )}
                       </div>
 
-                      {/* Scoreboard Display */}
                       <div className="space-y-2">
                         {[
                           { team: match.team1?.name || match.team1, score: match[`score_${(match.team1?.name || match.team1 || '').replace(/[~*\/\[\]]/g, '_')}`] },
-                          { team: match.team2?.name || match.team2, score: match[`score_${(match.team2?.name || match.team2 || '').replace(/[~*\/\[\]]/g, '_')}`] }
+                          { team: match.team2?.name || match.team2, score: match[`score_${(match.team2?.name || match.team2 || '').replace(/[~*\/\[\]]/g, '_')}`] },
                         ].map((t, i) => (
-                          <div key={i} className="flex justify-between items-center">
-                            <span className="text-sm font-bold uppercase tracking-tight text-gray-300">
-                              {t.team || `Team ${i + 1}`}
-                            </span>
-                            <span className={`text-lg font-black italic ${t.score !== undefined && t.score !== '' ? 'text-white' : 'text-gray-800'}`}>
-                              {t.score !== undefined && t.score !== '' ? t.score : '0'}
+                          <div key={i} className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-[9px] font-black text-gray-500">
+                                {(t.team || `T${i + 1}`).charAt(0).toUpperCase()}
+                              </div>
+                              <span className="text-xs font-bold uppercase tracking-tight text-gray-300 truncate max-w-[120px]">
+                                {t.team || `Team ${i + 1}`}
+                              </span>
+                            </div>
+                            <span className={`text-xl font-black italic tabular-nums ${t.score !== undefined && t.score !== '' ? 'text-white' : 'text-gray-800'}`}>
+                              {t.score !== undefined && t.score !== '' ? t.score : '—'}
                             </span>
                           </div>
                         ))}
                       </div>
 
-                      {/* Location Overlay updated to #ccff00 */}
+                      <div className="flex items-center gap-2 -mt-8 mb-1 pointer-events-none">
+                        <div className="flex-1 h-px bg-white/5" />
+                        <span className="text-[8px] font-black text-gray-800 uppercase tracking-widest">vs</span>
+                        <div className="flex-1 h-px bg-white/5" />
+                      </div>
+
                       {match.location && (
-                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center text-[9px] text-gray-500 uppercase font-bold">
-                          <FaMapMarkerAlt className="mr-1 text-[#ccff00]/50" />
+                        <div className="mt-3 pt-2 border-t border-white/5 flex items-center gap-1.5 text-[9px] text-gray-600 uppercase font-bold">
+                          <FaMapMarkerAlt size={8} className="text-[#ccff00]/40" />
                           {match.location}
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))
                 ) : (
-                  <div className="py-8 text-center border border-dashed border-white/10">
-                    <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Awaiting Matchup</span>
+                  <div className="py-8 text-center border border-dashed border-white/5 rounded-xl">
+                    <span className="text-[9px] font-bold text-gray-700 uppercase tracking-widest">
+                      Awaiting Matchup
+                    </span>
                   </div>
                 )}
               </div>
 
-              {/* View More Button - Text switches to Black on Volt background hover */}
               {matches.length > 2 && (
-                <button className="w-full mt-4 py-2 flex items-center justify-center gap-2 border border-white/5 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-[#ccff00] hover:text-black hover:border-[#ccff00] transition-all">
-                  See All Matches <FaChevronRight size={8} />
+                <button className="w-full mt-3 py-2.5 flex items-center justify-center gap-2 bg-white/3 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-gray-500 hover:bg-[#ccff00] hover:text-black hover:border-[#ccff00] transition-all">
+                  +{matches.length - 2} More Matches <FaChevronRight size={8} />
                 </button>
               )}
             </div>

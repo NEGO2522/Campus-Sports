@@ -2,30 +2,33 @@ import pool from '../db/pool.js';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (user) =>
   jwt.sign(
     { id: user.id, email: user.email, college_id: user.college_id },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 
 // POST /api/auth/google
-// Frontend sends Google ID token, we verify and return our own JWT
 export const googleLogin = async (req, res, next) => {
   try {
     const { idToken } = req.body;
     if (!idToken) return res.status(400).json({ error: 'ID token required' });
 
-    const ticket = await googleClient.verifyIdToken({
+    const ticket = await client.verifyIdToken({
       idToken,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
-    const { sub: googleId, email, name } = ticket.getPayload();
+
+    const { sub: googleId, email, name, picture } = ticket.getPayload();
 
     // Find or create user
-    let result = await pool.query('SELECT * FROM users WHERE google_id = $1 OR email = $2', [googleId, email]);
+    let result = await pool.query(
+      'SELECT * FROM users WHERE google_id = $1 OR email = $2',
+      [googleId, email]
+    );
     let user = result.rows[0];
 
     if (!user) {
@@ -36,11 +39,11 @@ export const googleLogin = async (req, res, next) => {
       );
       user = insert.rows[0];
     } else if (!user.google_id) {
-      // Link Google ID to existing email account
       await pool.query('UPDATE users SET google_id = $1 WHERE id = $2', [googleId, user.id]);
     }
 
     const token = generateToken(user);
+
     res.json({
       token,
       user: {
@@ -49,6 +52,7 @@ export const googleLogin = async (req, res, next) => {
         fullName: user.full_name,
         profileCompleted: user.profile_completed,
         collegeId: user.college_id,
+        picture,
       }
     });
   } catch (err) {
@@ -60,13 +64,15 @@ export const googleLogin = async (req, res, next) => {
 export const getMe = async (req, res, next) => {
   try {
     const result = await pool.query(
-      `SELECT u.*, c.name as college_name, c.city as college_city
-       FROM users u LEFT JOIN colleges c ON u.college_id = c.id
+      `SELECT u.*, c.name as college_name, c.city
+       FROM users u
+       LEFT JOIN colleges c ON u.college_id = c.id
        WHERE u.id = $1`,
       [req.user.id]
     );
     if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
-    res.json(result.rows[0]);
+    const { google_id, ...safeUser } = result.rows[0];
+    res.json(safeUser);
   } catch (err) {
     next(err);
   }

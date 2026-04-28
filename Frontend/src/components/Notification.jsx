@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db, auth } from '../firebase/firebase';
+// TODO: import api from '../utils/api';
 import { UserPlus, X, Check, Loader2, AlertTriangle, Trash2 } from 'lucide-react';
 
 const Notification = () => {
@@ -14,47 +13,9 @@ const Notification = () => {
     const fetchInvites = async () => {
       setLoading(true);
       try {
-        const user = auth.currentUser;
-        if (!user) {
-          setInvites([]);
-          setLoading(false);
-          return;
-        }
-        const eventsSnap = await getDocs(collection(db, 'events'));
-        let allInvites = [];
-        for (const eventDoc of eventsSnap.docs) {
-          const eventId = eventDoc.id;
-          const eventData = eventDoc.data();
-          const eventName = eventData.name || eventData.eventName || 'Unknown Event';
-          const teamSnap = await getDocs(collection(db, 'events', eventId, 'team'));
-          for (const inviteDoc of teamSnap.docs) {
-            const data = inviteDoc.data();
-            if (data.invitee === user.uid && data.accepted === false) {
-              let inviterName = 'Unknown User';
-              let inviterEmail = '';
-              try {
-                const inviterDoc = await getDoc(doc(db, 'users', data.inviter));
-                if (inviterDoc.exists()) {
-                  const inviterData = inviterDoc.data();
-                  inviterName = inviterData.fullName || 'Unknown User';
-                  inviterEmail = inviterData.email || '';
-                }
-              } catch (e) { console.error(e); }
-              
-              allInvites.push({
-                eventId,
-                eventName,
-                inviteId: inviteDoc.id,
-                inviter: data.inviter,
-                inviterName,
-                inviterEmail,
-                accepted: data.accepted,
-                timestamp: data.timestamp,
-              });
-            }
-          }
-        }
-        setInvites(allInvites);
+        // TODO: const data = await api.get('/invites/pending');
+        // setInvites(data);
+        setInvites([]); // empty until backend connected
       } catch (err) {
         setInvites([]);
       } finally {
@@ -67,7 +28,7 @@ const Notification = () => {
   const handleAccept = async (eventId, inviteId) => {
     setAcceptingId(inviteId);
     try {
-      await updateDoc(doc(db, 'events', eventId, 'team', inviteId), { accepted: true });
+      // TODO: await api.put(`/invites/${inviteId}/accept`);
       setInvites(prev => prev.filter(invite => invite.inviteId !== inviteId));
     } catch (err) {
       alert('Failed to accept invite.');
@@ -79,7 +40,7 @@ const Notification = () => {
   const handleDismiss = async () => {
     setDismissingId(showConfirm.inviteId);
     try {
-      await deleteDoc(doc(db, 'events', showConfirm.eventId, 'team', showConfirm.inviteId));
+      // TODO: await api.delete(`/invites/${showConfirm.inviteId}`);
       setInvites(prev => prev.filter(i => i.inviteId !== showConfirm.inviteId));
     } catch (err) {
       alert('Failed to dismiss invitation.');

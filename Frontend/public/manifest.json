@@ -1,0 +1,8 @@
+{
+  "name": "CampusLeague",
+  "short_name": "CampusLeague",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#ccff00",
+  "background_color": "#0a0a0a"
+}

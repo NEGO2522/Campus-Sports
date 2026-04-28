@@ -1,316 +1,499 @@
 import React, { useEffect, useState } from 'react';
-const TeamDetailOverlayLazy = React.lazy(() => import('./TeamDetailOverlay'));
-import EventMatches from './quick-actions/EventMatches';
-import { useParams } from 'react-router-dom';
-import { doc, getDoc, collection, getDocs, updateDoc, arrayRemove, addDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaInfoCircle, 
-  FaEdit, FaTrash, FaPlus, FaTrophy, FaChevronRight, FaTimes 
+import { format } from 'date-fns';
+import {
+  FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaTrophy,
+  FaUserCircle, FaSpinner
 } from 'react-icons/fa';
+import { MapPin, Clock, Users, Zap, ArrowLeft, UserPlus, CheckCircle, Shield, Share2 } from 'lucide-react';
+import api from '../utils/api';
+import { getUser } from '../utils/auth';
+
+const SPORT_META = {
+  Cricket:        { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', glow: '#10b981', emoji: '🏏' },
+  Football:       { color: 'text-blue-400',    bg: 'bg-blue-500/10',    border: 'border-blue-500/25',    glow: '#3b82f6', emoji: '⚽' },
+  Basketball:     { color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/25',  glow: '#f97316', emoji: '🏀' },
+  Badminton:      { color: 'text-yellow-400',  bg: 'bg-yellow-500/10',  border: 'border-yellow-500/25',  glow: '#eab308', emoji: '🏸' },
+  Volleyball:     { color: 'text-purple-400',  bg: 'bg-purple-500/10',  border: 'border-purple-500/25',  glow: '#a855f7', emoji: '🏐' },
+  Tennis:         { color: 'text-red-400',     bg: 'bg-red-500/10',     border: 'border-red-500/25',     glow: '#ef4444', emoji: '🎾' },
+  'Table Tennis': { color: 'text-pink-400',    bg: 'bg-pink-500/10',    border: 'border-pink-500/25',    glow: '#ec4899', emoji: '🏓' },
+};
+const DEFAULT_META = { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10', glow: '#ccff00', emoji: '🏆' };
+
+const STATUS_STYLE = {
+  upcoming:  { badge: 'bg-[#ccff00]/10 border-[#ccff00]/30 text-[#ccff00]', label: 'Upcoming' },
+  ongoing:   { badge: 'bg-green-500/10 border-green-500/30 text-green-400', label: '🔴 Live' },
+  completed: { badge: 'bg-gray-500/10 border-gray-500/30 text-gray-500',    label: 'Ended' },
+};
 
 const EventDetail = () => {
-  const [showTeamOverlay, setShowTeamOverlay] = useState(false);
-  const [teamDetail, setTeamDetail] = useState({ teamName: '', leader: null, members: [] });
   const { id } = useParams();
+  const navigate = useNavigate();
+  const currentUser = getUser();
+
   const [event, setEvent] = useState(null);
-  const [deletingTeam, setDeletingTeam] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [editField, setEditField] = useState(null);
-  const [editValue, setEditValue] = useState('');
-  const [savingField, setSavingField] = useState(false);
-  const [removingId, setRemovingId] = useState(null);
+  const [joining, setJoining] = useState(false);
+  const [hasJoined, setHasJoined] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  // Match Modal State
-  const [showMatchModal, setShowMatchModal] = useState(false);
-  const [matchForm, setMatchForm] = useState({ round: '', team1: '', team2: '', location: '', date: '', time: '' });
-  const [savingMatch, setSavingMatch] = useState(false);
-
-  const fetchEventAndParticipants = async () => {
-    setLoading(true);
-    try {
-      const eventDoc = await getDoc(doc(db, 'events', id));
-      if (eventDoc.exists()) {
-        const eventData = eventDoc.data();
-        setEvent(eventData);
-        if (Array.isArray(eventData.participants) && eventData.participants.length > 0) {
-          const usersSnapshot = await getDocs(collection(db, 'users'));
-          const users = [];
-          usersSnapshot.forEach(userDoc => {
-            if (eventData.participants.includes(userDoc.id)) {
-              users.push({ id: userDoc.id, ...userDoc.data() });
-            }
-          });
-          setParticipants(users);
-        } else {
-          setParticipants([]);
-        }
+  useEffect(() => {
+    const fetchEvent = async () => {
+      setLoading(true);
+      try {
+        const data = await api.get(`/events/${id}`);
+        setEvent(data);
+        setParticipants(data.participants || []);
+        const joined = (data.participants || []).some(p => p.id === currentUser?.id);
+        setHasJoined(joined);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching event:', error);
+    };
+    fetchEvent();
+  }, [id]);
+
+  const handleJoin = async () => {
+    if (hasJoined) return;
+    setJoining(true);
+    try {
+      await api.post(`/events/${id}/join`);
+      setHasJoined(true);
+      setParticipants(prev => [...prev, {
+        id: currentUser?.id,
+        full_name: currentUser?.fullName,
+      }]);
+    } catch (err) {
+      alert(err.error || 'Failed to join event');
     } finally {
-      setLoading(false);
+      setJoining(false);
     }
   };
 
-  useEffect(() => { fetchEventAndParticipants(); }, [id]);
-
-  const handleEdit = (field) => {
-    setEditField(field);
-    if (field === 'dateTime') {
-      let dt = event.dateTime?.toDate ? event.dateTime.toDate() : new Date(event.dateTime);
-      const pad = n => n.toString().padStart(2, '0');
-      setEditValue(`${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`);
-    } else {
-      setEditValue(event[field] || '');
-    }
-  };
-
-  const handleSave = async (field) => {
-    setSavingField(true);
-    try {
-      let value = field === 'dateTime' ? new Date(editValue) : editValue;
-      await updateDoc(doc(db, 'events', id), { [field]: value });
-      setEvent(prev => ({ ...prev, [field]: value }));
-      setEditField(null);
-    } catch (err) { alert('UPDATE FAILED'); } 
-    finally { setSavingField(false); }
-  };
-
-  const handleRemoveParticipant = async (userId) => {
-    if (!window.confirm("ELIMINATE PARTICIPANT FROM EVENT?")) return;
-    setRemovingId(userId);
-    try {
-      await updateDoc(doc(db, 'events', id), { participants: arrayRemove(userId) });
-      setParticipants(prev => prev.filter(p => p.id !== userId));
-    } catch (err) { alert('REMOVAL FAILED'); } 
-    finally { setRemovingId(null); }
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-      <div className="w-12 h-12 border-4 border-[#ccff00] border-t-transparent rounded-full animate-spin"></div>
+      <div className="relative">
+        <div className="w-14 h-14 border-2 border-white/5 rounded-full" />
+        <div className="w-14 h-14 border-2 border-t-[#ccff00] rounded-full animate-spin absolute inset-0" />
+      </div>
     </div>
   );
 
-  if (!event) return <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">EVENT_NOT_FOUND</div>;
+  if (!event) return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center gap-6">
+      <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center">
+        <Zap size={32} className="text-gray-700" />
+      </div>
+      <p className="text-gray-500 font-black italic uppercase tracking-widest">Event not found</p>
+      <button
+        onClick={() => navigate('/dashboard')}
+        className="text-xs font-black text-[#ccff00] uppercase tracking-widest border border-[#ccff00]/30 bg-[#ccff00]/10 px-5 py-2.5 rounded-xl hover:bg-[#ccff00] hover:text-black transition-all"
+      >
+        Back to Dashboard
+      </button>
+    </div>
+  );
+
+  const meta = SPORT_META[event.sport] || DEFAULT_META;
+  const statusStyle = STATUS_STYLE[event.status] || STATUS_STYLE.upcoming;
+  const spotsLeft = event.players_needed - participants.length;
+  const isFull = spotsLeft <= 0;
+  const isDeadlinePassed = new Date() > new Date(event.registration_deadline);
+  const fillPct = Math.min((participants.length / (event.players_needed || 1)) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-12 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
-        
-        {/* Main Content Area */}
-        <div className="flex-1 bg-[#111] border border-white/10 rounded-sm p-6 md:p-10">
-          
-          {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 border-b border-white/5 pb-8">
-            <div>
-              <span className="text-[#ccff00] text-xs font-black tracking-widest uppercase mb-2 block">Event Operations</span>
-              <h1 className="text-4xl md:text-5xl font-black italic uppercase italic tracking-tighter leading-none">
-                {event.eventName}
-              </h1>
-            </div>
-            <button
-              onClick={() => setShowMatchModal(true)}
-              disabled={!event.team || Object.keys(event.team).length < 2}
-              className="flex items-center gap-2 px-6 py-3 bg-[#ccff00] text-black font-black uppercase italic text-sm hover:bg-[#e6ff80] transition-all disabled:opacity-20"
-            >
-              <FaPlus /> Create Match
-            </button>
-          </div>
+    <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-20 px-4 sm:px-6">
+      {/* Sport-tinted ambient glow */}
+      <div
+        className="fixed top-0 right-0 w-[600px] h-[600px] blur-[160px] rounded-full pointer-events-none opacity-10"
+        style={{ background: meta.glow }}
+      />
 
-          {/* Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10 border border-white/10 mb-12">
-            {[
-              { id: 'dateTime', icon: <FaCalendarAlt className="text-[#ccff00]" />, label: 'TIMESTAMP', value: event.dateTime?.toDate ? event.dateTime.toDate().toLocaleString() : new Date(event.dateTime).toLocaleString(), type: 'datetime-local' },
-              { id: 'location', icon: <FaMapMarkerAlt className="text-[#ccff00]" />, label: 'COORDINATES', value: event.location },
-              { id: 'description', icon: <FaInfoCircle className="text-[#ccff00]" />, label: 'MISSION BRIEF', value: event.description || 'N/A' },
-              { id: 'sport', icon: <FaTrophy className="text-[#ccff00]" />, label: 'DISCIPLINE', value: event.sport },
-              { id: 'participationType', icon: <FaUsers className="text-[#ccff00]" />, label: 'ENGAGEMENT', value: event.participationType, readonly: true },
-              { id: 'teamSize', icon: <span className="text-[#ccff00] font-bold">#</span>, label: 'SQUAD SIZE', value: event.teamSize || '1', hidden: event.participationType !== 'team' }
-            ].map((item) => !item.hidden && (
-              <div key={item.id} className="bg-[#111] p-5 flex items-start justify-between group">
-                <div className="flex gap-4">
-                  <div className="mt-1">{item.icon}</div>
-                  <div className="w-full">
-                    <p className="text-[10px] text-white/40 font-black tracking-widest">{item.label}</p>
-                    {editField === item.id ? (
-                      <div className="mt-2 flex gap-2">
-                        {item.id === 'description' ? (
-                          <textarea className="bg-black border border-[#ccff00] text-white p-2 text-sm w-full outline-none" value={editValue} onChange={e => setEditValue(e.target.value)} />
-                        ) : (
-                          <input type={item.type || 'text'} className="bg-black border border-[#ccff00] text-white p-2 text-sm w-full outline-none" value={editValue} onChange={e => setEditValue(e.target.value)} />
-                        )}
-                        <button onClick={() => handleSave(item.id)} className="text-[#ccff00] font-bold text-xs uppercase underline">Save</button>
-                      </div>
-                    ) : (
-                      <p className="text-lg font-bold uppercase tracking-tight break-all">{item.value}</p>
-                    )}
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Back + Share row */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-gray-500 hover:text-white text-xs font-black uppercase tracking-widest transition-colors group"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+            Back
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-500 hover:text-white transition-colors border border-white/10 hover:border-white/20 px-3 py-2 rounded-xl"
+          >
+            {copied ? (
+              <><CheckCircle size={12} className="text-[#ccff00]" /> Copied!</>
+            ) : (
+              <><Share2 size={12} /> Share</>
+            )}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          {/* ── LEFT — Main Info ── */}
+          <div className="lg:col-span-2 space-y-5">
+
+            {/* Hero Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-[#111] border border-white/10 rounded-3xl overflow-hidden"
+            >
+              <div
+                className="h-1 w-full"
+                style={{ background: `linear-gradient(90deg, ${meta.glow}cc, ${meta.glow}20)` }}
+              />
+
+              <div className="p-6 sm:p-8">
+                <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-black uppercase ${meta.color} ${meta.bg} ${meta.border}`}>
+                        {meta.emoji} {event.sport}
+                      </span>
+                      <span className={`px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${statusStyle.badge}`}>
+                        {statusStyle.label}
+                      </span>
+                    </div>
+
+                    <h1 className="text-2xl sm:text-4xl font-black italic uppercase tracking-tighter leading-tight">
+                      {event.event_name}
+                    </h1>
+                    <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mt-2">
+                      By {event.creator_name} • {event.college_name}
+                    </p>
                   </div>
                 </div>
-                {!item.readonly && editField !== item.id && (
-                  <button onClick={() => handleEdit(item.id)} className="opacity-0 group-hover:opacity-100 transition-opacity text-white/20 hover:text-[#ccff00]">
-                    <FaEdit />
-                  </button>
+
+                {event.description && (
+                  <div className="relative mb-6">
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"
+                      style={{ background: `linear-gradient(180deg, ${meta.glow}, transparent)` }}
+                    />
+                    <p className="text-gray-400 text-sm leading-relaxed pl-4">
+                      {event.description}
+                    </p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    {
+                      icon: FaCalendarAlt,
+                      label: 'Date & Time',
+                      value: event.date_time ? format(new Date(event.date_time), 'MMM dd, yyyy • hh:mm a') : '—',
+                    },
+                    {
+                      icon: FaMapMarkerAlt,
+                      label: 'Location',
+                      value: event.location,
+                    },
+                    {
+                      icon: FaUsers,
+                      label: 'Format',
+                      value: event.participation_type === 'team'
+                        ? `Team (${event.team_size} players each)`
+                        : 'Individual / Solo',
+                    },
+                    {
+                      icon: Clock,
+                      label: 'Reg. Deadline',
+                      value: event.registration_deadline
+                        ? format(new Date(event.registration_deadline), 'MMM dd, yyyy • hh:mm a')
+                        : '—',
+                    },
+                  ].map(item => (
+                    <div
+                      key={item.label}
+                      className="flex items-start gap-3 bg-white/4 hover:bg-white/6 rounded-2xl px-4 py-3.5 transition-colors border border-white/5"
+                    >
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: `${meta.glow}18` }}>
+                        <item.icon size={12} style={{ color: meta.glow }} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-0.5">{item.label}</p>
+                        <p className="text-[13px] font-bold text-white leading-snug">{item.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Participants Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-[#111] border border-white/10 rounded-3xl p-6"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-[#ccff00]/10 rounded-xl flex items-center justify-center">
+                    <Users size={16} className="text-[#ccff00]" />
+                  </div>
+                  <h2 className="text-lg font-black italic uppercase tracking-tighter">
+                    Squad <span className="text-[#ccff00]">({participants.length})</span>
+                  </h2>
+                </div>
+
+                {event.players_needed > 0 && (
+                  <div className={`px-3 py-1.5 rounded-xl border text-[9px] font-black uppercase tracking-wider ${
+                    isFull
+                      ? 'bg-red-500/10 border-red-500/20 text-red-400'
+                      : spotsLeft <= 3
+                      ? 'bg-orange-500/10 border-orange-500/20 text-orange-400'
+                      : 'bg-[#ccff00]/10 border-[#ccff00]/20 text-[#ccff00]'
+                  }`}>
+                    {isFull ? '🔒 Full' : `${spotsLeft} spots left`}
+                  </div>
                 )}
               </div>
-            ))}
-          </div>
 
-          {/* Participant / Team Section */}
-          <div className="space-y-6">
-             <div className="flex items-center gap-4 mb-4">
-                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Manifest</h3>
-                <div className="h-px flex-1 bg-white/10"></div>
-                <span className="text-[#ccff00] font-mono text-sm">[{participants.length} ASSETS]</span>
-             </div>
+              {event.players_needed > 0 && (
+                <div className="mb-5">
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${fillPct}%` }}
+                      transition={{ duration: 1, ease: 'easeOut' }}
+                      style={{
+                        background: fillPct >= 90
+                          ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+                          : `linear-gradient(90deg, #ccff00, #a3cc00)`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex justify-between mt-1.5">
+                    <span className="text-[9px] text-gray-700 font-bold uppercase">{participants.length} joined</span>
+                    <span className="text-[9px] text-gray-700 font-bold uppercase">{event.players_needed} max</span>
+                  </div>
+                </div>
+              )}
 
-             {event.participationType === 'team' && event.team ? (
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 {Object.keys(event.team).map(teamName => (
-                   <div key={teamName} className="border border-white/10 p-4 flex justify-between items-center hover:border-[#ccff00]/50 transition-colors">
-                     <div 
-                        className="cursor-pointer group flex items-center gap-3"
-                        onClick={async () => {
-                          const teamObj = event.team[teamName];
-                          let leader = null; let members = [];
-                          const leaderSnap = await getDoc(doc(db, 'users', teamObj.leader));
-                          if (leaderSnap.exists()) leader = { id: teamObj.leader, ...leaderSnap.data() };
-                          const membersSnap = await getDocs(collection(db, 'users'));
-                          membersSnap.forEach(d => { if(teamObj.members.includes(d.id)) members.push({id: d.id, ...d.data()}); });
-                          setTeamDetail({ teamName, leader, members });
-                          setShowTeamOverlay(true);
+              {participants.length === 0 ? (
+                <div className="text-center py-12 border border-dashed border-white/5 rounded-2xl">
+                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <FaUsers className="text-gray-700 text-lg" />
+                  </div>
+                  <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">
+                    No participants yet — be the first to join!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {participants.map((p, i) => (
+                    <motion.div
+                      key={p.id || i}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors ${
+                        p.id === currentUser?.id
+                          ? 'bg-[#ccff00]/5 border-[#ccff00]/20'
+                          : 'bg-white/3 border-white/5 hover:bg-white/5'
+                      }`}
+                    >
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black flex-shrink-0"
+                        style={{
+                          background: p.id === currentUser?.id ? '#ccff0020' : '#ffffff08',
+                          color: p.id === currentUser?.id ? '#ccff00' : '#6b7280',
                         }}
                       >
-                       <div className="w-2 h-2 bg-[#ccff00]"></div>
-                       <span className="font-bold uppercase tracking-wider group-hover:text-[#ccff00]">{teamName}</span>
-                       <FaChevronRight className="text-[10px] text-white/20 group-hover:translate-x-1 transition-transform" />
-                     </div>
-                     <button 
-                        onClick={async () => {
-                          if(!window.confirm("ERASE SQUAD?")) return;
-                          setDeletingTeam(teamName);
-                          let teams = { ...event.team }; delete teams[teamName];
-                          await updateDoc(doc(db, 'events', id), { team: teams });
-                          setEvent(prev => ({...prev, team: teams}));
-                          setDeletingTeam(null);
-                        }}
-                        className="text-white/20 hover:text-red-500 transition-colors"
-                     >
-                       {deletingTeam === teamName ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div> : <FaTrash />}
-                     </button>
-                   </div>
-                 ))}
-               </div>
-             ) : (
-               <div className="overflow-x-auto">
-                 <table className="w-full text-left border-collapse">
-                   <thead>
-                     <tr className="border-b border-white/10 text-[10px] text-white/40 tracking-[0.3em] uppercase">
-                       <th className="pb-4 font-black px-2">Operator</th>
-                       <th className="pb-4 font-black">ID_TAG</th>
-                       <th className="pb-4 font-black text-right">Action</th>
-                     </tr>
-                   </thead>
-                   <tbody className="text-sm font-bold uppercase tracking-widest">
-                     {participants.map(student => (
-                       <tr key={student.id} className="border-b border-white/5 hover:bg-white/[0.02]">
-                         <td className="py-4 px-2">{student.fullName}</td>
-                         <td className="py-4 text-white/60">{student.registrationNumber}</td>
-                         <td className="py-4 text-right">
-                           <button onClick={() => handleRemoveParticipant(student.id)} className="text-white/20 hover:text-red-500">
-                             {removingId === student.id ? '...' : <FaTrash />}
-                           </button>
-                         </td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-               </div>
-             )}
-          </div>
-        </div>
+                        {p.full_name?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
 
-        {/* Match Control Panel (Sidebar) */}
-        <div className="lg:w-96 w-full flex flex-col gap-6">
-          <div className="bg-[#111] border border-white/10 p-6 rounded-sm">
-            <h3 className="text-xl font-black italic uppercase italic tracking-tighter mb-6 flex items-center gap-3">
-              <span className="w-2 h-6 bg-[#ccff00]"></span> Live Matches
-            </h3>
-            <EventMatches eventId={id} />
-          </div>
-        </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-bold text-white truncate leading-tight">{p.full_name}</p>
+                        {p.registration_number && (
+                          <p className="text-[9px] text-gray-600 uppercase font-bold tracking-wide">{p.registration_number}</p>
+                        )}
+                      </div>
 
-      </div>
-
-      {/* Brutalist Match Modal */}
-      <AnimatePresence>
-        {showMatchModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }} 
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#111] border-2 border-[#ccff00] w-full max-w-md p-8 relative overflow-hidden"
-            >
-              <button onClick={() => setShowMatchModal(false)} className="absolute top-4 right-4 text-white/40 hover:text-[#ccff00] text-xl">
-                <FaTimes />
-              </button>
-              
-              <h3 className="text-3xl font-black italic uppercase tracking-tighter mb-8">INIT_MATCH</h3>
-              
-              <form onSubmit={async e => {
-                e.preventDefault(); setSavingMatch(true);
-                try {
-                  const dateTime = new Date(`${matchForm.date}T${matchForm.time}`);
-                  await addDoc(collection(db, 'events', id, 'matches'), { ...matchForm, dateTime, matchStarted: false });
-                  setShowMatchModal(false);
-                } catch (err) { alert('SYS_ERROR'); } finally { setSavingMatch(false); }
-              }} className="space-y-5">
-                {[
-                  { label: 'ROUND NAME', field: 'round', type: 'text', placeholder: 'e.g. SEMI_FINALS' },
-                  { label: 'TEAM 01', field: 'team1', type: 'select', options: Object.keys(event.team || {}) },
-                  { label: 'TEAM 02', field: 'team2', type: 'select', options: Object.keys(event.team || {}) },
-                  { label: 'ARENA', field: 'location', type: 'text' },
-                  { label: 'DATE', field: 'date', type: 'date' },
-                  { label: 'TIME', field: 'time', type: 'time' }
-                ].map((input) => (
-                  <div key={input.field}>
-                    <label className="text-[10px] font-black tracking-widest text-white/40 block mb-2">{input.label}</label>
-                    {input.type === 'select' ? (
-                      <select className="w-full bg-black border border-white/10 p-3 text-white font-bold outline-none focus:border-[#ccff00]" value={matchForm[input.field]} onChange={e => setMatchForm(f => ({ ...f, [input.field]: e.target.value }))} required>
-                        <option value="">SELECT_TEAM</option>
-                        {input.options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                      </select>
-                    ) : (
-                      <input type={input.type} className="w-full bg-black border border-white/10 p-3 text-white font-bold outline-none focus:border-[#ccff00]" value={matchForm[input.field]} onChange={e => setMatchForm(f => ({ ...f, [input.field]: e.target.value }))} placeholder={input.placeholder} required />
-                    )}
-                  </div>
-                ))}
-                
-                <button type="submit" disabled={savingMatch} className="w-full bg-[#ccff00] text-black font-black py-4 uppercase italic tracking-tighter mt-4 hover:bg-[#e6ff80] disabled:opacity-50">
-                  {savingMatch ? 'UPLOADING...' : 'CONFIRM MATCH'}
-                </button>
-              </form>
+                      {p.id === currentUser?.id && (
+                        <span className="text-[8px] font-black text-[#ccff00] uppercase tracking-wider bg-[#ccff00]/10 px-2 py-0.5 rounded-md flex-shrink-0">
+                          You
+                        </span>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           </div>
-        )}
-      </AnimatePresence>
 
-      {/* Team Detail Overlay */}
-      {showTeamOverlay && (
-        <React.Suspense fallback={<div className="fixed inset-0 bg-black/80 flex items-center justify-center text-[#ccff00] font-black italic">LOADING_SQUAD...</div>}>
-          <TeamDetailOverlayLazy
-            open={showTeamOverlay}
-            onClose={() => setShowTeamOverlay(false)}
-            team={teamDetail}
-            leader={teamDetail.leader}
-            members={teamDetail.members}
-          />
-        </React.Suspense>
-      )}
+          {/* ── RIGHT — Join + Stats ── */}
+          <div className="space-y-4">
+
+            {/* Join Card */}
+            {event.status === 'upcoming' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-[#111] border border-white/10 rounded-3xl p-6 sticky top-28 overflow-hidden"
+              >
+                <div
+                  className="absolute top-0 right-0 w-32 h-32 blur-3xl rounded-full pointer-events-none opacity-20"
+                  style={{ background: meta.glow }}
+                />
+
+                <div className="relative z-10">
+                  <h3 className="text-lg font-black italic uppercase tracking-tighter mb-5">
+                    {hasJoined ? "You're In! 🎉" : 'Join Event'}
+                  </h3>
+
+                  <AnimatePresence mode="wait">
+                    {hasJoined ? (
+                      <motion.div
+                        key="joined"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="text-center py-6"
+                      >
+                        <div
+                          className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 border"
+                          style={{ background: `${meta.glow}15`, borderColor: `${meta.glow}30` }}
+                        >
+                          <CheckCircle size={36} style={{ color: meta.glow }} />
+                        </div>
+                        <p className="text-base font-black text-white uppercase italic">Registered!</p>
+                        <p className="text-[10px] text-gray-500 mt-1 uppercase font-bold tracking-widest">
+                          Good luck, champ 🏆
+                        </p>
+                      </motion.div>
+                    ) : isDeadlinePassed ? (
+                      <motion.div key="closed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-4">
+                          <p className="text-xs font-black text-red-400 uppercase tracking-widest">Registration Closed</p>
+                          <p className="text-[9px] text-red-500/60 mt-1 uppercase font-bold">Deadline has passed</p>
+                        </div>
+                      </motion.div>
+                    ) : isFull ? (
+                      <motion.div key="full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
+                        <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-4">
+                          <p className="text-xs font-black text-gray-500 uppercase tracking-widest">Event Full</p>
+                          <p className="text-[9px] text-gray-600 mt-1 uppercase font-bold">All spots are taken</p>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div key="join" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                        <button
+                          onClick={handleJoin}
+                          disabled={joining}
+                          className="w-full font-black italic uppercase py-4 rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] text-black text-sm"
+                          style={{ background: 'linear-gradient(135deg, #ccff00, #a3cc00)' }}
+                        >
+                          {joining ? (
+                            <FaSpinner className="animate-spin" />
+                          ) : (
+                            <><UserPlus size={18} /> Join Now</>
+                          )}
+                        </button>
+
+                        <p className="text-center text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-3">
+                          Free • No registration fee
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {!hasJoined && event.players_needed > 0 && (
+                    <div className="mt-5 pt-5 border-t border-white/5">
+                      <div className="flex justify-between text-[9px] font-black uppercase text-gray-600 mb-2">
+                        <span>{participants.length} joined</span>
+                        <span>{event.players_needed} total</span>
+                      </div>
+                      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${fillPct}%`,
+                            background: `linear-gradient(90deg, ${meta.glow}, ${meta.glow}80)`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Stats Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-[#111] border border-white/10 rounded-3xl p-5"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Shield size={14} className="text-gray-600" />
+                <h3 className="text-[10px] font-black italic uppercase tracking-widest text-gray-500">Event Stats</h3>
+              </div>
+
+              <div className="space-y-1">
+                {[
+                  { label: 'Players Needed', value: event.players_needed || '—' },
+                  { label: 'Currently Joined', value: participants.length },
+                  { label: 'Participation', value: event.participation_type === 'team' ? 'Team' : 'Solo' },
+                  { label: 'Sport', value: `${meta.emoji} ${event.sport}` },
+                  { label: 'Status', value: event.status?.charAt(0).toUpperCase() + event.status?.slice(1) },
+                ].map(s => (
+                  <div
+                    key={s.label}
+                    className="flex justify-between items-center py-2.5 border-b border-white/5 last:border-0"
+                  >
+                    <span className="text-[9px] font-bold text-gray-600 uppercase tracking-widest">{s.label}</span>
+                    <span className="text-[12px] font-black text-white">{s.value}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Venue Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-[#111] border border-white/10 rounded-3xl p-5"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: `${meta.glow}15` }}
+                >
+                  <MapPin size={14} style={{ color: meta.glow }} />
+                </div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-gray-600">Venue</p>
+              </div>
+              <p className="text-[13px] font-bold text-white leading-snug">{event.location}</p>
+              <p className="text-[10px] text-gray-600 mt-1.5 font-bold uppercase tracking-wide">
+                {event.college_name}
+                {event.city ? ` • ${event.city}` : ''}
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

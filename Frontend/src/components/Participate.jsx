@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db, auth } from '../firebase/firebase';
+// TODO: import api from '../utils/api';
 
 const Participate = () => {
   const { id } = useParams();
@@ -17,33 +16,14 @@ const Participate = () => {
     const fetchEvent = async () => {
       setLoading(true);
       try {
-        const eventDoc = await getDoc(doc(db, 'events', id));
-        if (eventDoc.exists()) {
-          setParticipationType(eventDoc.data().participationType);
-          const user = auth.currentUser;
-          if (user) {
-            // Get registration number
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc.exists()) {
-              setUserReg(userDoc.data().registrationNumber);
-            }
-            // Check for individual participation
-            const participants = eventDoc.data().participants || [];
-            if (participants.includes(user.uid)) {
-              setAlreadyParticipated(true);
-            } else {
-              // Check for team participation
-              const teamObj = eventDoc.data().team || {};
-              let found = false;
-              Object.values(teamObj).forEach(team => {
-                if (Array.isArray(team.members) && team.members.includes(user.uid)) {
-                  found = true;
-                }
-              });
-              setAlreadyParticipated(found);
-            }
-          }
-        }
+        // TODO: const eventData = await api.get(`/events/${id}`);
+        // TODO: setParticipationType(eventData.participationType);
+        // TODO: const user = await api.get('/auth/me');
+        // TODO: if (user) {
+        // TODO:   setUserReg(user.registrationNumber);
+        // TODO:   // Check participation status
+        // TODO:   setAlreadyParticipated(eventData.participants?.includes(user.id) || false);
+        // TODO: }
       } catch (error) {
         console.error('Error fetching event:', error);
       } finally {
@@ -56,15 +36,12 @@ const Participate = () => {
   const handleParticipate = async () => {
     setSaving(true);
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        alert('You must be logged in to participate.');
-        return;
-      }
-      const eventRef = doc(db, 'events', id);
-      await updateDoc(eventRef, {
-        participants: arrayUnion(user.uid)
-      });
+      // TODO: const user = await api.get('/auth/me');
+      // TODO: if (!user) {
+      // TODO:   alert('You must be logged in to participate.');
+      // TODO:   return;
+      // TODO: }
+      // TODO: await api.post(`/events/${id}/participate`, { userId: user.id });
       setShowConfirm(false);
       navigate('/dashboard');
     } catch (error) {
