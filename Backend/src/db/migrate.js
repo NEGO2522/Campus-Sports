@@ -54,6 +54,7 @@ const migrate = async () => {
         teams_needed INTEGER DEFAULT 2,
         team_size INTEGER DEFAULT 5,
         status VARCHAR(20) DEFAULT 'upcoming',
+        event_type VARCHAR(20) DEFAULT 'official' NOT NULL,
         created_by UUID REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -138,15 +139,10 @@ const migrate = async () => {
       );
     `);
 
-    // Indexes for fast queries (location-based filtering)
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_college ON events(college_id);`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events(sport);`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_college ON users(college_id);`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_participants_event ON event_participants(event_id);`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);`);
+    // ── ALTER: Add new columns to existing tables (safe for re-runs) ──────────
+    await client.query(`ALTER TABLE events ADD COLUMN IF NOT EXISTS event_type VARCHAR(20) DEFAULT 'official' NOT NULL;`);
 
-    // ── Point logs table — audit trail for every award ────────────────────────
+    // ── Point logs table ──────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS point_logs (
         id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -158,13 +154,22 @@ const migrate = async () => {
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
+
+    // ── Indexes (after all columns exist) ────────────────────────────────────
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_college ON events(college_id);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_sport ON events(sport);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_college ON users(college_id);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_participants_event ON event_participants(event_id);`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_point_logs_user ON point_logs(user_id);`);
 
     await client.query('COMMIT');
-    console.log('✅ Database migration complete. All tables created.');
+    console.log('Database migration complete. All tables created.');
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('❌ Migration failed:', err);
+    console.error('Migration failed:', err);
   } finally {
     client.release();
     process.exit();

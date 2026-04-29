@@ -15,7 +15,7 @@ import {
   Check, Trophy
 } from 'lucide-react';
 import api from '../../utils/api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const ONLINE_GAMES = [
   { name: 'Free Fire',        color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
@@ -65,6 +65,7 @@ const STEPS = [
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userEvents, setUserEvents] = useState([]);
@@ -75,6 +76,7 @@ const CreateEvent = () => {
     eventName: '', sport: '', dateTime: '', registrationDeadline: '',
     location: '', description: '', participationType: 'player',
     playersNeeded: 10, teamsNeeded: 2, teamSize: 5,
+    eventType: 'official'
   });
   const [showOnlineGames, setShowOnlineGames] = useState(false);
 
@@ -85,6 +87,14 @@ const CreateEvent = () => {
       .finally(() => setLoadingEvents(false));
   }, []);
 
+  // URL query param se eventType pre-select karo
+  useEffect(() => {
+    const typeFromUrl = searchParams.get('type');
+    if (typeFromUrl === 'community' || typeFromUrl === 'official') {
+      setFormData(p => ({ ...p, eventType: typeFromUrl }));
+    }
+  }, [searchParams]);
+
   const selectedSport = SPORTS.find(s => s.name === formData.sport);
 
   const validateStep = () => {
@@ -94,9 +104,13 @@ const CreateEvent = () => {
     if (step === 2) {
       if (!formData.eventName) { toast.error('Event name daalo'); return false; }
       if (!formData.dateTime) { toast.error('Date & time daalo'); return false; }
-      if (!formData.registrationDeadline) { toast.error('Deadline daalo'); return false; }
+      // Deadline required only for official events
+      if (formData.eventType !== 'community' && !formData.registrationDeadline) {
+        toast.error('Deadline daalo'); return false;
+      }
       if (!formData.location) { toast.error('Location daalo'); return false; }
-      if (new Date(formData.registrationDeadline) >= new Date(formData.dateTime)) {
+      // Deadline validation only if deadline is set
+      if (formData.registrationDeadline && new Date(formData.registrationDeadline) >= new Date(formData.dateTime)) {
         toast.error('Deadline event se pehle honi chahiye'); return false;
       }
     }
@@ -114,7 +128,8 @@ const CreateEvent = () => {
         description: formData.description,
         location: formData.location,
         dateTime: formData.dateTime,
-        registrationDeadline: formData.registrationDeadline,
+        registrationDeadline: formData.registrationDeadline || (formData.eventType === 'community' ? formData.dateTime : undefined),
+        eventType: formData.eventType,
         participationType: formData.participationType,
         playersNeeded: formData.playersNeeded,
         teamsNeeded: formData.teamsNeeded,
@@ -211,6 +226,42 @@ const CreateEvent = () => {
                 {/* STEP 1 — Sport */}
                 {step === 1 && (
                   <div>
+                    {/* Event Type Selector */}
+                    <div className="mb-8">
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">
+                        Event Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { value: 'official', label: 'Official Event', desc: 'College/Admin organized', icon: Trophy },
+                          { value: 'community', label: 'Community Pickup', desc: 'Casual — just show up & play', icon: Zap }
+                        ].map((type) => {
+                          const Icon = type.icon;
+                          const isSelected = formData.eventType === type.value;
+                          return (
+                            <button
+                              key={type.value}
+                              type="button"
+                              onClick={() => setFormData(p => ({ ...p, eventType: type.value }))}
+                              className={`flex flex-col gap-1 p-4 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
+                                isSelected
+                                  ? 'border-[#ccff00] bg-[#ccff00] text-black'
+                                  : 'border-white/10 bg-white/5 text-white hover:border-white/30'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Icon size={16} />
+                                <span>{type.label}</span>
+                              </div>
+                              <span className={`text-[9px] normal-case font-medium ${isSelected ? 'text-black/70' : 'text-gray-500'}`}>
+                                {type.desc}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Kaunsa sport?</h2>
                     <p className="text-xs text-gray-600 mb-6">Ek select karo</p>
 
@@ -307,7 +358,7 @@ const CreateEvent = () => {
                           </div>
                         </div>
                         <div>
-                          <label className={labelClass}>Reg. Deadline *</label>
+                          <label className={labelClass}>Reg. Deadline {formData.eventType === 'community' ? '(Optional)' : '*'}</label>
                           <div className="relative">
                             <Clock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
                             <input type="datetime-local" value={formData.registrationDeadline}
@@ -450,6 +501,7 @@ const CreateEvent = () => {
                       )}
                       {[
                         { icon: Target,   label: 'Event Name', value: formData.eventName },
+                        { icon: Zap,      label: 'Event Type', value: formData.eventType === 'official' ? '🏆 Official Event' : '🏃 Community Pickup' },
                         { icon: MapPin,   label: 'Location',   value: formData.location },
                         { icon: Calendar, label: 'Date & Time',value: formData.dateTime ? format(new Date(formData.dateTime), 'MMM dd, yyyy • hh:mm a') : '—' },
                         { icon: Clock,    label: 'Deadline',   value: formData.registrationDeadline ? format(new Date(formData.registrationDeadline), 'MMM dd, yyyy') : '—' },

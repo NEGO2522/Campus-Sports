@@ -18,7 +18,7 @@ const SPORT_META = {
 
 const DEFAULT_META = { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10', glow: '#ccff00', emoji: '🏆' };
 
-const UpcomingEvents = () => {
+const UpcomingEvents = ({ eventType = null }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
@@ -27,7 +27,11 @@ const UpcomingEvents = () => {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const data = await api.get('/events?status=upcoming');
+        const queryParams = new URLSearchParams({ status: 'upcoming' });
+        if (eventType) {
+          queryParams.append('eventType', eventType);
+        }
+        const data = await api.get(`/events?${queryParams.toString()}`);
         setEvents(data);
       } catch (err) {
         console.error(err);
@@ -36,7 +40,7 @@ const UpcomingEvents = () => {
       }
     };
     fetchEvents();
-  }, []);
+  }, [eventType]);
 
   if (loading) return (
     <div className="flex justify-center p-12">
@@ -107,15 +111,29 @@ const UpcomingEvents = () => {
                   {event.sport}
                 </div>
 
-                {isFull ? (
-                  <span className="text-[9px] font-black text-gray-500 uppercase bg-white/5 border border-white/10 px-2 py-1 rounded-lg">
-                    FULL
-                  </span>
-                ) : isAlmostFull ? (
-                  <span className="inline-flex items-center gap-1 text-[9px] font-black text-red-400 uppercase bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-lg animate-pulse">
-                    🔥 {spotsLeft} left
-                  </span>
-                ) : null}
+                <div className="flex items-center gap-2">
+                  {/* Event Type Badge */}
+                  {event.event_type === 'community' && (
+                    <span className="text-[9px] font-black uppercase bg-green-500/10 border border-green-500/20 text-green-400 px-2 py-1 rounded-lg">
+                      Pickup Game
+                    </span>
+                  )}
+                  {event.event_type === 'official' && (
+                    <span className="text-[9px] font-black uppercase bg-blue-500/10 border border-blue-500/20 text-blue-400 px-2 py-1 rounded-lg">
+                      Official
+                    </span>
+                  )}
+
+                  {isFull ? (
+                    <span className="text-[9px] font-black text-gray-500 uppercase bg-white/5 border border-white/10 px-2 py-1 rounded-lg">
+                      FULL
+                    </span>
+                  ) : isAlmostFull ? (
+                    <span className="inline-flex items-center gap-1 text-[9px] font-black text-red-400 uppercase bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-lg animate-pulse">
+                      🔥 {spotsLeft} left
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               {/* Event Name */}

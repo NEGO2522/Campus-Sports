@@ -203,6 +203,16 @@ const EventDetail = () => {
                       <span className={`px-3 py-1 rounded-lg border text-[10px] font-black uppercase tracking-wider ${statusStyle.badge}`}>
                         {statusStyle.label}
                       </span>
+                      {/* Event Type Badge */}
+                      {event.event_type === 'community' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-black uppercase bg-green-500/10 border-green-500/20 text-green-400">
+                          🏃 Community Pickup
+                        </span>
+                      ) : event.event_type === 'official' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border text-[10px] font-black uppercase bg-blue-500/10 border-blue-500/20 text-blue-400">
+                          🏆 Official
+                        </span>
+                      ) : null}
                     </div>
                     <h1 className="text-2xl sm:text-4xl font-black italic uppercase tracking-tighter leading-tight">
                       {event.event_name}
@@ -228,7 +238,7 @@ const EventDetail = () => {
                     { icon: FaCalendarAlt, label: 'Date & Time', value: event.date_time ? format(new Date(event.date_time), 'MMM dd, yyyy • hh:mm a') : '—' },
                     { icon: FaMapMarkerAlt, label: 'Location', value: event.location },
                     { icon: FaUsers, label: 'Format', value: event.participation_type === 'team' ? `Team (${event.team_size} players each)` : 'Individual / Solo' },
-                    { icon: Clock, label: 'Reg. Deadline', value: event.registration_deadline ? format(new Date(event.registration_deadline), 'MMM dd, yyyy • hh:mm a') : '—' },
+                    { icon: Clock, label: 'Reg. Deadline', value: event.event_type === 'community' && (!event.registration_deadline || event.registration_deadline === event.date_time) ? 'Flexible' : (event.registration_deadline ? format(new Date(event.registration_deadline), 'MMM dd, yyyy • hh:mm a') : '—') },
                   ].map(item => (
                     <div
                       key={item.label}
@@ -553,7 +563,7 @@ const EventDetail = () => {
                           className="w-full font-black italic uppercase py-4 rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] text-black text-sm"
                           style={{ background: 'linear-gradient(135deg, #ccff00, #a3cc00)' }}
                         >
-                          {joining ? <FaSpinner className="animate-spin" /> : <><UserPlus size={18} /> Join Now</>}
+                          {joining ? <FaSpinner className="animate-spin" /> : <><UserPlus size={18} /> {event.event_type === 'community' ? 'Join Pickup' : 'Join Now'}</>}
                         </button>
                         {/* Team event hai to Create Team button bhi dikhao */}
                         {event.participation_type === 'team' && hasJoined && (
@@ -602,6 +612,7 @@ const EventDetail = () => {
               </div>
               <div className="space-y-1">
                 {[
+                  { label: 'Event Type', value: event.event_type === 'community' ? '🏃 Pickup Game' : '🏆 Official' },
                   { label: 'Players Needed', value: event.players_needed || '—' },
                   { label: 'Currently Joined', value: participants.length },
                   { label: 'Participation', value: event.participation_type === 'team' ? 'Team' : 'Solo' },

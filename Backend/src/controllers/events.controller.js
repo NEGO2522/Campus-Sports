@@ -3,7 +3,7 @@ import pool from '../db/pool.js';
 // GET /api/events
 export const getEvents = async (req, res, next) => {
   try {
-    const { sport, status = 'upcoming', createdByMe } = req.query;
+    const { sport, status = 'upcoming', createdByMe, eventType } = req.query;
     const collegeId = req.user.college_id;
 
     const conditions = [];
@@ -25,6 +25,10 @@ export const getEvents = async (req, res, next) => {
 
     if (sport) {
       conditions.push('e.sport = ' + addParam(sport));
+    }
+
+    if (eventType) {
+      conditions.push('e.event_type = ' + addParam(eventType));
     }
 
     const whereClause = conditions.length > 0
@@ -94,19 +98,25 @@ export const createEvent = async (req, res, next) => {
     const {
       eventName, sport, description, location, lat, lng,
       dateTime, registrationDeadline, participationType,
-      playersNeeded, teamsNeeded, teamSize
+      playersNeeded, teamsNeeded, teamSize, eventType = 'official'
     } = req.body;
+
+    // For community events, use dateTime as registrationDeadline if not provided
+    let effectiveDeadline = registrationDeadline;
+    if (eventType === 'community' && !registrationDeadline) {
+      effectiveDeadline = dateTime;
+    }
 
     const result = await pool.query(
       `INSERT INTO events
        (event_name, sport, description, location, lat, lng, college_id,
         date_time, registration_deadline, participation_type,
-        players_needed, teams_needed, team_size, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        players_needed, teams_needed, team_size, created_by, event_type)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        RETURNING *`,
       [eventName, sport, description, location, lat, lng,
-       req.user.college_id, dateTime, registrationDeadline,
-       participationType, playersNeeded, teamsNeeded, teamSize, req.user.id]
+       req.user.college_id, dateTime, effectiveDeadline,
+       participationType, playersNeeded, teamsNeeded, teamSize, req.user.id, eventType]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) { next(err); }

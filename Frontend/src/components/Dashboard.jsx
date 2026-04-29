@@ -212,16 +212,29 @@ const Dashboard = () => {
           <OngoingEvents />
         </section>
 
-        {/* ── UPCOMING EVENTS ── */}
+        {/* ── OFFICIAL EVENTS ── */}
         <section className="mb-14">
           <div className="flex items-center gap-4 mb-6">
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter">Upcoming <span className="text-[#ccff00]">Events</span></h2>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter">🏆 Official <span className="text-[#ccff00]">Events</span></h2>
             <div className="flex-1 h-px bg-white/10" />
             <Link to="/create-event" className="text-[10px] font-black text-[#ccff00] uppercase tracking-widest hover:underline flex items-center gap-1">
               + Create <ChevronRight size={12} />
             </Link>
           </div>
-          <UpcomingEvents />
+          <UpcomingEvents eventType="official" />
+        </section>
+
+        {/* ── COMMUNITY PICKUPS ── */}
+        <section className="mb-14">
+          <div className="flex items-center gap-4 mb-6">
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter">🏃 Community <span className="text-[#ccff00]">Pickups</span></h2>
+            <div className="flex-1 h-px bg-white/10" />
+            <Link to="/create-event?type=community" className="text-[10px] font-black text-[#ccff00] uppercase tracking-widest hover:underline flex items-center gap-1">
+              + Create <ChevronRight size={12} />
+            </Link>
+          </div>
+          <p className="text-xs text-gray-500 mb-4">Casual games — join karo aur khelo</p>
+          <UpcomingEvents eventType="community" />
         </section>
 
         {/* ── PAST EVENTS ── */}
