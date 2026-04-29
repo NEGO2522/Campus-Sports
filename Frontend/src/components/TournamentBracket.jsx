@@ -1,385 +1,406 @@
-import React, { useState } from 'react';
-import { FaTrophy, FaMedal, FaCrown, FaArrowLeft } from 'react-icons/fa';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaTrophy, FaMedal, FaCrown, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
+import { ArrowLeft, Zap, Clock, Edit3, Shield } from 'lucide-react';
+import { format } from 'date-fns';
+import api from '../utils/api';
+import { getUser } from '../utils/auth';
 
-const TournamentBracket = () => {
-  const navigate = useNavigate();
-  
-  // Tournament data
-  const tournamentData = {
-    title: "Campus Sports Championship 2024",
-    status: "Completed",
-    startDate: "March 15, 2024",
-    endDate: "March 22, 2024",
-    rounds: {
-      quarterFinals: [
-        {
-          id: 'qf1',
-          title: 'Quarter Final 1',
-          team1: { name: 'Thunder Bolts', score: 1, winner: true },
-          team2: { name: 'Eagles', score: 0, winner: false },
-          date: 'March 15, 2024',
-          time: '10:00 AM'
-        },
-        {
-          id: 'qf2',
-          title: 'Quarter Final 2',
-          team1: { name: 'Storm', score: 2, winner: true },
-          team2: { name: 'Wolves', score: 1, winner: false },
-          date: 'March 15, 2024',
-          time: '2:00 PM'
-        },
-        {
-          id: 'qf3',
-          title: 'Quarter Final 3',
-          team1: { name: 'Lightning FC', score: 4, winner: true },
-          team2: { name: 'Knights', score: 1, winner: false },
-          date: 'March 16, 2024',
-          time: '10:00 AM'
-        },
-        {
-          id: 'qf4',
-          title: 'Quarter Final 4',
-          team1: { name: 'Fire', score: 3, winner: true },
-          team2: { name: 'Tigers', score: 2, winner: false },
-          date: 'March 16, 2024',
-          time: '2:00 PM'
-        }
-      ],
-      semiFinals: [
-        {
-          id: 'sf1',
-          title: 'Semi Final 1',
-          team1: { name: 'Thunder Bolts', score: 2, winner: true },
-          team2: { name: 'Storm', score: 0, winner: false },
-          date: 'March 19, 2024',
-          time: '10:00 AM'
-        },
-        {
-          id: 'sf2',
-          title: 'Semi Final 2',
-          team1: { name: 'Lightning FC', score: 3, winner: true },
-          team2: { name: 'Fire', score: 2, winner: false },
-          date: 'March 19, 2024',
-          time: '2:00 PM'
-        }
-      ],
-      final: {
-        id: 'final',
-        title: 'FINAL',
-        team1: { name: 'Thunder Bolts', score: 3, winner: true },
-        team2: { name: 'Lightning FC', score: 1, winner: false },
-        date: 'March 22, 2024',
-        time: '3:00 PM'
-      },
-      winner: { name: 'Thunder Bolts', trophy: '🏆' }
-    }
-  };
+const STATUS_STYLE = {
+  scheduled: { bg: 'bg-white/5',          border: 'border-white/10',         text: 'text-gray-500',  label: 'Scheduled' },
+  live:       { bg: 'bg-red-500/10',       border: 'border-red-500/25',       text: 'text-red-400',   label: '🔴 Live'    },
+  completed:  { bg: 'bg-[#ccff00]/10',     border: 'border-[#ccff00]/25',     text: 'text-[#ccff00]', label: 'Done'       },
+};
 
-  const [selectedMatch, setSelectedMatch] = useState(null);
+// ── Single match card ────────────────────────────────────────────────────────
+const MatchCard = ({ match, isCreator, onEdit, onSelect }) => {
+  const ss = STATUS_STYLE[match.status] || STATUS_STYLE.scheduled;
+  const t1Wins = match.status === 'completed' && match.team1_score != null && match.team1_score > match.team2_score;
+  const t2Wins = match.status === 'completed' && match.team2_score != null && match.team2_score > match.team1_score;
 
-  const MatchCard = ({ match, size = 'normal', showDate = false }) => (
+  return (
     <motion.div
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.015 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => setSelectedMatch(match)}
-      className={`
-        bg-white rounded-lg border-2 shadow-lg cursor-pointer transition-all duration-300
-        ${size === 'large' ? 'p-6 border-yellow-400' : size === 'small' ? 'p-3 border-gray-200' : 'p-4 border-gray-200'}
-        hover:shadow-xl hover:border-blue-300
-        ${size === 'small' ? 'max-w-[180px]' : ''}
-      `}
+      onClick={() => onSelect(match)}
+      className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden cursor-pointer hover:border-[#ccff00]/30 transition-all group"
     >
-      <div className="text-center mb-3">
-        <h3 className={`font-bold text-gray-700 ${
-          size === 'large' ? 'text-lg' : size === 'small' ? 'text-xs' : 'text-sm'
-        }`}>
-          {match.title}
-        </h3>
-        {showDate && (
-          <p className="text-xs text-gray-500 mt-1">
-            {match.date} - {match.time}
-          </p>
-        )}
-      </div>
-      
-      <div className="space-y-2">
-        <div className={`
-          flex justify-between items-center px-2 py-1 rounded border
-          ${match.team1.winner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}
-        `}>
-          <span className={`font-medium ${
-            size === 'large' ? 'text-base' : size === 'small' ? 'text-xs' : 'text-sm'
-          }`}>
-            {match.team1.name}
+      {/* top colour bar */}
+      <div className={`h-[3px] ${match.status === 'live' ? 'bg-gradient-to-r from-red-500 via-red-400 to-red-500/30' : 'bg-gradient-to-r from-[#ccff00]/40 to-transparent'}`} />
+
+      <div className="p-4">
+        {/* header row */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[9px] font-black bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#ccff00] uppercase tracking-widest px-2 py-0.5 rounded-md truncate max-w-[140px]">
+            {match.round || 'Match'}
           </span>
-          <span className={`
-            font-bold ${size === 'large' ? 'text-lg' : size === 'small' ? 'text-xs' : 'text-sm'}
-            ${match.team1.winner ? 'text-green-600' : 'text-gray-600'}
-          `}>
-            {match.team1.score}
-          </span>
-          {match.team1.winner && <FaCrown className={`text-yellow-500 ml-1 ${
-            size === 'small' ? 'text-xs' : ''
-          }`} />}
+          <div className="flex items-center gap-2">
+            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md border ${ss.bg} ${ss.border} ${ss.text}`}>
+              {ss.label}
+            </span>
+            {isCreator && (
+              <button
+                onClick={e => { e.stopPropagation(); onEdit(match); }}
+                className="w-6 h-6 flex items-center justify-center rounded-lg bg-white/5 hover:bg-[#ccff00] hover:text-black text-gray-600 transition-all opacity-0 group-hover:opacity-100"
+              >
+                <Edit3 size={11} />
+              </button>
+            )}
+          </div>
         </div>
-        
-        <div className={`
-          flex justify-between items-center px-2 py-1 rounded border
-          ${match.team2.winner ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}
-        `}>
-          <span className={`font-medium ${
-            size === 'large' ? 'text-base' : size === 'small' ? 'text-xs' : 'text-sm'
-          }`}>
-            {match.team2.name}
-          </span>
-          <span className={`
-            font-bold ${size === 'large' ? 'text-lg' : size === 'small' ? 'text-xs' : 'text-sm'}
-            ${match.team2.winner ? 'text-green-600' : 'text-gray-600'}
-          `}>
-            {match.team2.score}
-          </span>
-          {match.team2.winner && <FaCrown className={`text-yellow-500 ml-1 ${
-            size === 'small' ? 'text-xs' : ''
-          }`} />}
+
+        {/* teams */}
+        <div className="space-y-2">
+          {[
+            { name: match.team1_name || 'TBD', score: match.team1_score, wins: t1Wins },
+            { name: match.team2_name || 'TBD', score: match.team2_score, wins: t2Wins },
+          ].map((t, i) => (
+            <div
+              key={i}
+              className={`flex items-center justify-between rounded-xl px-3 py-2 border transition-all ${
+                t.wins
+                  ? 'bg-[#ccff00]/8 border-[#ccff00]/20'
+                  : 'bg-white/3 border-white/5'
+              }`}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-[9px] font-black text-gray-500 flex-shrink-0">
+                  {(t.name || '?').charAt(0).toUpperCase()}
+                </div>
+                <span className={`text-xs font-bold uppercase tracking-tight truncate ${t.wins ? 'text-[#ccff00]' : 'text-gray-300'}`}>
+                  {t.name}
+                </span>
+                {t.wins && <FaCrown size={8} className="text-[#ccff00] flex-shrink-0" />}
+              </div>
+              <span className={`text-xl font-black italic tabular-nums ml-3 ${t.score != null ? (t.wins ? 'text-[#ccff00]' : 'text-white') : 'text-gray-700'}`}>
+                {t.score != null ? t.score : '—'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* footer */}
+        <div className="mt-3 pt-2.5 border-t border-white/5 flex items-center justify-between">
+          {match.location ? (
+            <div className="flex items-center gap-1 text-[9px] text-gray-600 font-bold uppercase">
+              <FaMapMarkerAlt size={8} className="text-[#ccff00]/40" />
+              {match.location}
+            </div>
+          ) : <div />}
+          {match.match_date && (
+            <div className="flex items-center gap-1 text-[9px] text-gray-600 font-bold">
+              <Clock size={8} />
+              {format(new Date(match.match_date), 'MMM d • HH:mm')}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
   );
+};
 
-  const ConnectionLine = ({ direction = 'horizontal', className = '' }) => (
-    <div className={`
-      bg-gradient-to-r from-blue-400 to-purple-500 
-      ${direction === 'horizontal' ? 'h-1 w-16' : 'w-1 h-16'}
-      ${className}
-    `} />
+// ── Main component ────────────────────────────────────────────────────────────
+const TournamentBracket = () => {
+  const { eventId } = useParams();
+  const navigate = useNavigate();
+  const currentUser = getUser();
+
+  const [event, setEvent]     = useState(null);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState('');
+  const [selected, setSelected] = useState(null);
+  const [isCreator, setIsCreator] = useState(false);
+
+  const fetchData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const [eventData, matchData] = await Promise.all([
+        api.get(`/events/${eventId}`),
+        api.get(`/events/${eventId}/matches`),
+      ]);
+      setEvent(eventData);
+      setMatches(matchData);
+      if (eventData.created_by && currentUser?.id && eventData.created_by === currentUser.id) {
+        setIsCreator(true);
+      }
+    } catch (err) {
+      setError(err?.error || 'Failed to load bracket data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, [eventId]);
+
+  // Group matches by round label
+  const rounds = React.useMemo(() => {
+    const map = {};
+    matches.forEach(m => {
+      const key = m.round || 'Matches';
+      if (!map[key]) map[key] = [];
+      map[key].push(m);
+    });
+    return map;
+  }, [matches]);
+
+  const roundKeys = Object.keys(rounds);
+
+  // Derive champion: completed final match winner
+  const champion = React.useMemo(() => {
+    if (!matches.length) return null;
+    const finalMatch = [...matches]
+      .filter(m => m.status === 'completed')
+      .sort((a, b) => new Date(b.match_date || 0) - new Date(a.match_date || 0))[0];
+    if (!finalMatch) return null;
+    if (finalMatch.team1_score > finalMatch.team2_score) return finalMatch.team1_name;
+    if (finalMatch.team2_score > finalMatch.team1_score) return finalMatch.team2_name;
+    return null;
+  }, [matches]);
+
+  const stats = React.useMemo(() => {
+    const total     = matches.length;
+    const completed = matches.filter(m => m.status === 'completed').length;
+    const live      = matches.filter(m => m.status === 'live').length;
+    const teams     = new Set([...matches.map(m => m.team1_name), ...matches.map(m => m.team2_name)].filter(Boolean)).size;
+    return { total, completed, live, teams };
+  }, [matches]);
+
+  // ── Loading ──
+  if (loading) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="relative w-12 h-12">
+        <div className="w-12 h-12 border-2 border-white/5 rounded-full" />
+        <div className="w-12 h-12 border-2 border-t-[#ccff00] rounded-full animate-spin absolute inset-0" />
+      </div>
+    </div>
+  );
+
+  // ── Error ──
+  if (error) return (
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-6 text-white px-4">
+      <div className="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-3xl flex items-center justify-center text-3xl">⚠️</div>
+      <p className="text-red-400 font-bold uppercase tracking-widest text-sm">{error}</p>
+      <button onClick={() => navigate(-1)} className="bg-[#ccff00] text-black font-black italic uppercase px-6 py-3 rounded-xl text-xs">
+        Go Back
+      </button>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        
-        {/* Header */}
-        <div className="text-center mb-8">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center mb-4 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+    <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-20 px-4 sm:px-6">
+      {/* ambient glow */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] blur-[150px] rounded-full pointer-events-none opacity-10 bg-[#ccff00]" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+
+        {/* ── HEADER ── */}
+        <div className="mb-10">
+          <button onClick={() => navigate(`/events/${eventId}`)}
+            className="flex items-center gap-2 text-gray-500 hover:text-white text-xs font-black uppercase tracking-widest mb-5 transition-colors"
           >
-            <FaArrowLeft className="mr-2" />
-            Back to Dashboard
+            <ArrowLeft size={14} /> Back to Event
           </button>
-          
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center">
-              <FaTrophy className="text-yellow-500 mr-3" />
-              {tournamentData.title}
-            </h1>
-            <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-              <span className={`px-3 py-1 rounded-full font-medium ${
-                tournamentData.status === 'Completed' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-blue-100 text-blue-800'
-              }`}>
-                {tournamentData.status}
-              </span>
-              <span>{tournamentData.startDate} - {tournamentData.endDate}</span>
+
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-[#ccff00] font-bold uppercase tracking-[0.3em] text-[10px] mb-2">
+                <Zap size={12} className="animate-pulse" />
+                Tournament Bracket
+              </div>
+              <h1 className="text-4xl sm:text-6xl font-black italic uppercase tracking-tighter leading-none">
+                {event?.event_name || 'Tournament'}
+              </h1>
+              <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-2">
+                {event?.sport} • {event?.college_name}
+              </p>
             </div>
-          </motion.div>
+
+            {isCreator && (
+              <button
+                onClick={() => navigate(`/events/${eventId}`)}
+                className="flex items-center gap-2 bg-white/5 border border-white/10 hover:border-[#ccff00]/50 hover:text-[#ccff00] text-gray-400 font-black uppercase text-[10px] tracking-widest px-4 py-2.5 rounded-xl transition-all"
+              >
+                <Shield size={12} /> Manage Event
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Winner Celebration */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-center mb-12"
-        >
-          <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white rounded-2xl p-8 shadow-2xl mx-auto max-w-md">
-            <div className="text-6xl mb-4">{tournamentData.rounds.winner.trophy}</div>
-            <h2 className="text-2xl font-bold mb-2">CHAMPION</h2>
-            <h3 className="text-3xl font-extrabold">{tournamentData.rounds.winner.name}</h3>
-            <div className="flex justify-center mt-4 space-x-2">
-              <FaMedal className="text-yellow-200 text-2xl" />
-              <FaCrown className="text-yellow-200 text-2xl" />
-              <FaMedal className="text-yellow-200 text-2xl" />
+        {/* ── CHAMPION BANNER (only when available) ── */}
+        <AnimatePresence>
+          {champion && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-10 bg-gradient-to-r from-[#ccff00]/20 via-[#ccff00]/10 to-transparent border border-[#ccff00]/30 rounded-3xl p-6 flex items-center gap-5"
+            >
+              <div className="text-5xl">🏆</div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#ccff00]/60 mb-1">Champion</p>
+                <h2 className="text-3xl font-black italic uppercase tracking-tighter text-[#ccff00]">{champion}</h2>
+              </div>
+              <div className="ml-auto flex gap-1">
+                <FaMedal className="text-[#ccff00]/40 text-xl" />
+                <FaCrown className="text-[#ccff00] text-xl" />
+                <FaMedal className="text-[#ccff00]/40 text-xl" />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── STATS ROW ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+          {[
+            { label: 'Teams',     value: stats.teams,     accent: true  },
+            { label: 'Matches',   value: stats.total,     accent: false },
+            { label: 'Completed', value: stats.completed, accent: false },
+            { label: 'Live Now',  value: stats.live,      accent: stats.live > 0 },
+          ].map(s => (
+            <div key={s.label} className={`rounded-2xl p-5 border ${s.accent ? 'bg-[#ccff00]/10 border-[#ccff00]/20' : 'bg-[#111] border-white/10'}`}>
+              <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${s.accent ? 'text-[#ccff00]/60' : 'text-gray-600'}`}>{s.label}</p>
+              <p className={`text-3xl font-black italic ${s.accent ? 'text-[#ccff00]' : 'text-white'}`}>{s.value}</p>
             </div>
+          ))}
+        </div>
+
+        {/* ── NO MATCHES STATE ── */}
+        {matches.length === 0 ? (
+          <div className="text-center py-20 border border-dashed border-white/5 rounded-3xl">
+            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FaTrophy className="text-gray-700 text-2xl" />
+            </div>
+            <p className="text-gray-600 font-black uppercase tracking-widest text-xs mb-1">No Matches Yet</p>
+            <p className="text-gray-700 text-[10px] font-bold uppercase tracking-widest">
+              {isCreator ? 'Add matches from the Event page' : 'Matches will appear here when the creator adds them'}
+            </p>
+            {isCreator && (
+              <button
+                onClick={() => navigate(`/events/${eventId}`)}
+                className="mt-6 bg-[#ccff00] text-black font-black italic uppercase px-6 py-3 rounded-xl text-xs hover:bg-[#d9ff33] transition-all"
+              >
+                Go to Event Page
+              </button>
+            )}
           </div>
-        </motion.div>
-
-        {/* Tournament Bracket - Horizontal Layout */}
-        <div className="overflow-x-auto">
-          <div className="min-w-[1200px] mx-auto">
-            <div className="grid grid-cols-7 gap-8 items-center">
-              
-              {/* Quarter Finals - Left Side */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="space-y-6"
+        ) : (
+          /* ── ROUNDS ── */
+          <div className="space-y-10">
+            {roundKeys.map((roundName, ri) => (
+              <motion.section
+                key={roundName}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: ri * 0.08 }}
               >
-                <h3 className="text-sm font-bold text-gray-700 text-center mb-4">QUARTER FINALS</h3>
-                <div className="space-y-16">
-                  <MatchCard match={tournamentData.rounds.quarterFinals[0]} size="small" />
-                  <MatchCard match={tournamentData.rounds.quarterFinals[1]} size="small" />
-                  <MatchCard match={tournamentData.rounds.quarterFinals[2]} size="small" />
-                  <MatchCard match={tournamentData.rounds.quarterFinals[3]} size="small" />
-                </div>
-              </motion.div>
-
-              {/* Connection Lines - QF to SF */}
-              <div className="flex flex-col justify-center space-y-16 h-full">
-                <div className="flex items-center">
-                  <ConnectionLine className="w-8" />
-                  <div className="w-2 h-16 bg-gradient-to-b from-blue-400 to-purple-500"></div>
-                  <ConnectionLine className="w-8" />
-                </div>
-                <div className="flex items-center">
-                  <ConnectionLine className="w-8" />
-                  <div className="w-2 h-16 bg-gradient-to-b from-blue-400 to-purple-500"></div>
-                  <ConnectionLine className="w-8" />
-                </div>
-              </div>
-
-              {/* Semi Finals - Left */}
-              <motion.div
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="space-y-6"
-              >
-                <h3 className="text-sm font-bold text-gray-700 text-center mb-4">SEMI FINALS</h3>
-                <div className="space-y-32">
-                  <MatchCard match={tournamentData.rounds.semiFinals[0]} />
-                  <MatchCard match={tournamentData.rounds.semiFinals[1]} />
-                </div>
-              </motion.div>
-
-              {/* Connection Lines - SF to Final */}
-              <div className="flex flex-col justify-center items-center h-full">
-                <div className="flex items-center">
-                  <ConnectionLine className="w-12" />
-                  <div className="w-2 h-32 bg-gradient-to-b from-blue-400 to-purple-500"></div>
-                  <ConnectionLine className="w-12" />
-                </div>
-              </div>
-
-              {/* Final */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-                className="flex flex-col items-center justify-center"
-              >
-                <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                  <FaTrophy className="text-yellow-500 mr-2" />
-                  FINAL
-                </h2>
-                <MatchCard match={tournamentData.rounds.final} size="large" showDate />
-              </motion.div>
-
-              {/* Connection Line - Final to Winner */}
-              <div className="flex justify-center items-center">
-                <ConnectionLine className="w-16" />
-              </div>
-
-              {/* Winner */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 1.0 }}
-                className="flex flex-col items-center justify-center"
-              >
-                <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white rounded-xl p-6 shadow-xl text-center">
-                  <div className="text-4xl mb-2">{tournamentData.rounds.winner.trophy}</div>
-                  <h3 className="text-lg font-bold mb-1">CHAMPION</h3>
-                  <h4 className="text-xl font-extrabold">{tournamentData.rounds.winner.name}</h4>
-                  <div className="flex justify-center mt-2 space-x-1">
-                    <FaMedal className="text-yellow-200" />
-                    <FaCrown className="text-yellow-200" />
-                    <FaMedal className="text-yellow-200" />
+                {/* Round header */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#ccff00]/10 border border-[#ccff00]/20 rounded-xl flex items-center justify-center text-[#ccff00] font-black text-sm">
+                      {ri + 1}
+                    </div>
+                    <h2 className="text-lg font-black italic uppercase tracking-tighter">{roundName}</h2>
                   </div>
+                  <div className="flex-1 h-px bg-white/5" />
+                  <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">
+                    {rounds[roundName].length} match{rounds[roundName].length !== 1 ? 'es' : ''}
+                  </span>
                 </div>
-              </motion.div>
-            </div>
-          </div>
-        </div>
 
-        {/* Tournament Statistics */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.0 }}
-          className="mt-16 bg-white rounded-2xl p-8 shadow-lg"
-        >
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Tournament Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-3xl font-bold text-blue-600">8</div>
-              <div className="text-sm text-gray-600">Teams</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <div className="text-3xl font-bold text-green-600">7</div>
-              <div className="text-sm text-gray-600">Matches</div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-3xl font-bold text-purple-600">21</div>
-              <div className="text-sm text-gray-600">Total Goals</div>
-            </div>
-            <div className="text-center p-4 bg-yellow-50 rounded-lg">
-              <div className="text-3xl font-bold text-yellow-600">8</div>
-              <div className="text-sm text-gray-600">Days</div>
-            </div>
+                {/* Match cards grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {rounds[roundName].map((match, mi) => (
+                    <MatchCard
+                      key={match.id}
+                      match={match}
+                      isCreator={isCreator}
+                      onEdit={m => navigate(`/events/${eventId}/matches/${m.id}/edit`)}
+                      onSelect={setSelected}
+                    />
+                  ))}
+                </div>
+              </motion.section>
+            ))}
           </div>
-        </motion.div>
+        )}
       </div>
 
-      {/* Match Detail Modal */}
-      {selectedMatch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {/* ── MATCH DETAIL MODAL ── */}
+      <AnimatePresence>
+        {selected && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-md w-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setSelected(null)}
           >
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">{selectedMatch.title}</h3>
-              <div className="space-y-4 mb-6">
-                <div className={`
-                  flex justify-between items-center px-4 py-3 rounded-lg border-2
-                  ${selectedMatch.team1.winner ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'}
-                `}>
-                  <span className="font-bold text-lg">{selectedMatch.team1.name}</span>
-                  <span className="text-2xl font-bold text-green-600">{selectedMatch.team1.score}</span>
-                </div>
-                <div className="text-gray-500 font-medium">VS</div>
-                <div className={`
-                  flex justify-between items-center px-4 py-3 rounded-lg border-2
-                  ${selectedMatch.team2.winner ? 'bg-green-50 border-green-300' : 'bg-gray-50 border-gray-300'}
-                `}>
-                  <span className="font-bold text-lg">{selectedMatch.team2.name}</span>
-                  <span className="text-2xl font-bold text-green-600">{selectedMatch.team2.score}</span>
-                </div>
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-[#111] border border-white/10 rounded-3xl p-8 w-full max-w-sm"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <span className="text-[9px] font-black bg-[#ccff00]/10 border border-[#ccff00]/20 text-[#ccff00] uppercase tracking-widest px-2 py-1 rounded-md">
+                  {selected.round || 'Match'}
+                </span>
+                <button onClick={() => setSelected(null)} className="text-gray-500 hover:text-white text-2xl leading-none">×</button>
               </div>
-              <div className="text-sm text-gray-600 mb-6">
-                <p><strong>Date:</strong> {selectedMatch.date}</p>
-                <p><strong>Time:</strong> {selectedMatch.time}</p>
+
+              <div className="space-y-3 mb-6">
+                {[
+                  { name: selected.team1_name || 'TBD', score: selected.team1_score, wins: selected.status === 'completed' && selected.team1_score > selected.team2_score },
+                  { name: selected.team2_name || 'TBD', score: selected.team2_score, wins: selected.status === 'completed' && selected.team2_score > selected.team1_score },
+                ].map((t, i) => (
+                  <div key={i} className={`flex items-center justify-between rounded-2xl px-5 py-4 border ${t.wins ? 'bg-[#ccff00]/8 border-[#ccff00]/25' : 'bg-white/3 border-white/5'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center font-black text-sm text-gray-400">
+                        {(t.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-black uppercase italic ${t.wins ? 'text-[#ccff00]' : 'text-white'}`}>{t.name}</p>
+                        {t.wins && <p className="text-[9px] text-[#ccff00]/60 font-bold uppercase tracking-widest">Winner 🏆</p>}
+                      </div>
+                    </div>
+                    <span className={`text-4xl font-black italic tabular-nums ${t.score != null ? (t.wins ? 'text-[#ccff00]' : 'text-white') : 'text-gray-700'}`}>
+                      {t.score != null ? t.score : '—'}
+                    </span>
+                  </div>
+                ))}
               </div>
-              <button
-                onClick={() => setSelectedMatch(null)}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Close
-              </button>
-            </div>
+
+              <div className="space-y-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
+                {selected.location && (
+                  <div className="flex items-center gap-2">
+                    <FaMapMarkerAlt size={10} className="text-[#ccff00]/50" />
+                    {selected.location}
+                  </div>
+                )}
+                {selected.match_date && (
+                  <div className="flex items-center gap-2">
+                    <Clock size={10} className="text-[#ccff00]/50" />
+                    {format(new Date(selected.match_date), 'MMM dd, yyyy • hh:mm a')}
+                  </div>
+                )}
+              </div>
+
+              {isCreator && (
+                <button
+                  onClick={() => { setSelected(null); navigate(`/events/${eventId}/matches/${selected.id}/edit`); }}
+                  className="w-full mt-6 py-3 bg-[#ccff00] text-black font-black italic uppercase text-xs tracking-widest rounded-xl hover:bg-[#d9ff33] transition-all flex items-center justify-center gap-2"
+                >
+                  <Edit3 size={14} /> Edit Match
+                </button>
+              )}
+            </motion.div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

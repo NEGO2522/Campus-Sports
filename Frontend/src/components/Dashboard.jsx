@@ -5,10 +5,9 @@ import {
   FaCalendarAlt, FaTrophy, FaCalendarPlus, FaClipboardList,
   FaBolt, FaInstagram, FaTwitter, FaDiscord, FaRunning, FaHistory
 } from 'react-icons/fa';
-import { MapPin, BookOpen, Star, Bell, Settings, ChevronRight, Zap, Users } from 'lucide-react';
+import { MapPin, BookOpen, Star, Bell, Settings, ChevronRight, Zap, Users, Swords } from 'lucide-react';
 import UpcomingEvents from './UpcomingEvents';
 import OngoingEvents from './OngoingEvents';
-import Leaderboard from './Leaderboard';
 import PastEvents from './PastEvents';
 import { getUser } from '../utils/auth';
 import api from '../utils/api';
@@ -124,13 +123,26 @@ const Dashboard = () => {
               </div>
             )}
 
-            <div className="relative z-10 bg-[#ccff00] rounded-2xl p-4 flex items-center justify-between mb-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-black/60">Total Points</p>
-                <p className="text-4xl font-black italic text-black">{profile?.points || 0}</p>
+            <div className="relative z-10 grid grid-cols-2 gap-3 mb-4">
+              {/* Matches Played KPI */}
+              <div className="bg-[#ccff00] rounded-2xl p-4 flex flex-col justify-between">
+                <div className="w-8 h-8 bg-black/10 rounded-lg flex items-center justify-center mb-3">
+                  <Swords size={16} className="text-black" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-black/50 leading-none mb-1">Matches Played</p>
+                  <p className="text-3xl font-black italic text-black leading-none">{profile?.matches_played ?? 0}</p>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-black/10 rounded-xl flex items-center justify-center">
-                <FaTrophy size={24} className="text-black" />
+              {/* Events Joined KPI */}
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="w-8 h-8 bg-[#ccff00]/10 rounded-lg flex items-center justify-center mb-3">
+                  <FaRunning size={16} className="text-[#ccff00]" />
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 leading-none mb-1">Events Joined</p>
+                  <p className="text-3xl font-black italic text-white leading-none">{profile?.events_joined ?? 0}</p>
+                </div>
               </div>
             </div>
 
@@ -156,8 +168,7 @@ const Dashboard = () => {
 
             {[
               { to: '/manage-events', icon: FaClipboardList, label: 'Your Events', title: 'Manage', delay: 0.15 },
-              { to: '/leaderboard', icon: FaTrophy, label: 'Rankings', title: 'Leaderboard', delay: 0.2 },
-              { to: '/notification', icon: Bell, label: 'Inbox', title: 'Notifications', delay: 0.25 },
+              { to: '/notification', icon: Bell, label: 'Inbox', title: 'Notifications', delay: 0.2 },
             ].map((item) => (
               <motion.div key={item.to} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: item.delay }}>
                 <Link to={item.to} className="group flex flex-col justify-between bg-[#111] border border-white/10 hover:border-[#ccff00]/40 transition-all rounded-3xl p-6 h-full min-h-[140px]">
@@ -172,18 +183,32 @@ const Dashboard = () => {
               </motion.div>
             ))}
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-              <div className="flex flex-col justify-between bg-gradient-to-br from-blue-600/20 to-blue-600/5 border border-blue-500/20 rounded-3xl p-6 h-full min-h-[140px]">
-                <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4">
-                  <Users size={20} className="text-blue-400" />
+            {/* ── TOTAL POINTS CARD (fetched from backend) ── */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+              <Link to="/leaderboard" className="group flex flex-col justify-between bg-gradient-to-br from-[#ccff00]/15 to-[#ccff00]/5 border border-[#ccff00]/20 hover:border-[#ccff00]/50 transition-all rounded-3xl p-6 h-full min-h-[140px]">
+                <div className="w-12 h-12 bg-[#ccff00]/10 rounded-xl flex items-center justify-center group-hover:bg-[#ccff00]/20 transition-all mb-4">
+                  <FaTrophy size={20} className="text-[#ccff00]" />
                 </div>
                 <div>
-                  <p className="text-[10px] text-blue-400/60 uppercase font-bold tracking-widest mb-1">Your Campus</p>
-                  <h4 className="text-lg font-black italic uppercase tracking-tighter text-blue-300 leading-tight">
-                    {profile?.college_name?.split(' ').slice(0, 2).join(' ') || 'Campus'}
-                  </h4>
+                  <p className="text-[10px] text-[#ccff00]/50 uppercase font-bold tracking-widest mb-0.5">Total Points</p>
+                  <div className="flex items-end gap-2">
+                    <h4 className="text-3xl font-black italic text-[#ccff00] leading-none">{profile?.points ?? 0}</h4>
+                    <span className="text-[10px] font-black uppercase text-[#ccff00]/60 mb-0.5 tracking-wider">pts</span>
+                  </div>
                 </div>
-              </div>
+              </Link>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+              <Link to="/create-event" className="group flex flex-col justify-between bg-gradient-to-br from-[#ccff00]/15 to-[#ccff00]/5 border border-[#ccff00]/20 hover:border-[#ccff00]/50 transition-all rounded-3xl p-6 h-full min-h-[140px]">
+                <div className="w-12 h-12 bg-[#ccff00]/10 rounded-xl flex items-center justify-center group-hover:bg-[#ccff00]/20 transition-all mb-4">
+                  <FaCalendarPlus size={20} className="text-[#ccff00]" />
+                </div>
+                <div>
+                  <p className="text-[10px] text-[#ccff00]/50 uppercase font-bold tracking-widest mb-0.5">Create New</p>
+                  <h4 className="text-xl font-black italic uppercase tracking-tighter text-[#ccff00] group-hover:text-[#e6ff80] transition-colors">Create Event</h4>
+                </div>
+              </Link>
             </motion.div>
           </div>
         </div>
@@ -212,17 +237,6 @@ const Dashboard = () => {
             </Link>
           </div>
           <UpcomingEvents />
-        </section>
-
-        {/* ── LEADERBOARD ── */}
-        <section className="bg-[#111] border border-white/5 rounded-3xl p-6 sm:p-8 mb-14">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter"><span className="text-[#ccff00]">Hall</span> of Fame</h2>
-            <Link to="/leaderboard" className="text-[10px] font-black text-[#ccff00] uppercase tracking-widest hover:underline flex items-center gap-1">
-              View All <ChevronRight size={12} />
-            </Link>
-          </div>
-          <Leaderboard initialLimit={5} />
         </section>
 
         {/* ── PAST EVENTS ── */}
@@ -262,7 +276,6 @@ const Dashboard = () => {
               <div>
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-3">Platform</h4>
                 <ul className="space-y-2 text-xs font-bold text-gray-600">
-                  <li><Link to="/leaderboard" className="hover:text-[#ccff00] transition-colors">Rankings</Link></li>
                   <li><Link to="/create-event" className="hover:text-[#ccff00] transition-colors">Tournaments</Link></li>
                 </ul>
               </div>

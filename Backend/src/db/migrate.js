@@ -146,6 +146,20 @@ const migrate = async () => {
     await client.query(`CREATE INDEX IF NOT EXISTS idx_participants_event ON event_participants(event_id);`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read);`);
 
+    // ── Point logs table — audit trail for every award ────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS point_logs (
+        id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id    UUID REFERENCES users(id) ON DELETE CASCADE,
+        event_id   UUID REFERENCES events(id) ON DELETE SET NULL,
+        awarded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        points     INTEGER NOT NULL,
+        reason     TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_point_logs_user ON point_logs(user_id);`);
+
     await client.query('COMMIT');
     console.log('✅ Database migration complete. All tables created.');
   } catch (err) {

@@ -49,7 +49,6 @@ const Navbar = () => {
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={16} /> },
     { name: 'Create', path: '/create-event', icon: <PlusCircle size={16} /> },
     { name: 'Manage', path: '/manage-events', icon: <Calendar size={16} /> },
-    { name: 'Inbox', path: '/notification', icon: <Bell size={16} /> },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -62,7 +61,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
 
         {/* Logo */}
-        <Link to={loggedIn ? '/dashboard' : '/'} className="flex items-center gap-2 group flex-shrink-0">
+        <Link to="/" className="flex items-center gap-2 group flex-shrink-0">
           <div className="bg-[#ccff00] p-1.5 rounded-lg group-hover:rotate-12 transition-transform duration-300">
             <Trophy className="text-black" size={20} strokeWidth={3} />
           </div>

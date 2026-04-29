@@ -19,7 +19,6 @@ import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
 import About from './components/About';
 import ContactUs from './components/ContactUs';
-import Leaderboard from './components/Leaderboard';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 
@@ -44,13 +43,9 @@ const LoadingSpinner = () => (
 );
 
 function App() {
-  // Auth state will come from our own backend JWT stored in localStorage
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Verify JWT token with backend on app load
-    // const token = localStorage.getItem('cl_token');
-    // if (token) { api.get('/auth/me').then(...).catch(() => localStorage.removeItem('cl_token')); }
     setLoading(false);
   }, []);
 
@@ -73,7 +68,6 @@ function App() {
             <ProtectedRoute><MainLayout><UserProfileForm /></MainLayout></ProtectedRoute>
           } />
           <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
-          <Route path="/leaderboard" element={<ProtectedRoute><MainLayout><Leaderboard /></MainLayout></ProtectedRoute>} />
           <Route path="/create-event" element={<ProtectedRoute><MainLayout><CreateEvent /></MainLayout></ProtectedRoute>} />
           <Route path="/manage-events" element={<ProtectedRoute><MainLayout><ManageEvents /></MainLayout></ProtectedRoute>} />
           <Route path="/form" element={<ProtectedRoute><MainLayout><UserProfileForm /></MainLayout></ProtectedRoute>} />

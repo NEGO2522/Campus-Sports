@@ -1,25 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaEdit, FaPlay, FaPause, FaSpinner } from 'react-icons/fa';
+import { Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../utils/api';
+import { getUser } from '../../utils/auth';
 
-// No Firebase. Data from backend API.
-// TODO: import api from '../../utils/api';
-
-const EventMatches = ({ eventId }) => {
+// isCreator prop must be passed from parent (EventDetail) — only renders controls if true
+const EventMatches = ({ eventId, isCreator }) => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(true);
+  const [actionId, setActionId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMatches = async () => {
       setLoading(true);
       try {
-        // TODO: const data = await api.get(`/events/${eventId}/matches`);
-        // setMatches(data);
-        setMatches([]);
+        const data = await api.get(`/events/${eventId}/matches`);
+        setMatches(data);
       } catch {
         setMatches([]);
       } finally {
@@ -29,22 +31,35 @@ const EventMatches = ({ eventId }) => {
     if (eventId) fetchMatches();
   }, [eventId]);
 
-  const handleToggleMatch = async (matchId, currentState) => {
+  const handleToggleMatch = async (matchId, currentStatus) => {
+    // Guard: only creator can do this
+    if (!isCreator) return;
+    const newStatus = currentStatus === 'live' ? 'scheduled' : 'live';
     try {
-      // TODO: await api.put(`/events/${eventId}/matches/${matchId}`, { status: currentState ? 'scheduled' : 'live' });
-      setMatches(prev => prev.map(m => m.id === matchId ? { ...m, status: m.status === 'live' ? 'scheduled' : 'live' } : m));
+      setActionId(matchId);
+      await api.put(`/events/${eventId}/matches/${matchId}`, { status: newStatus });
+      setMatches(prev => prev.map(m => m.id === matchId ? { ...m, status: newStatus } : m));
+      toast.success(newStatus === 'live' ? 'Match is LIVE!' : 'Match paused');
     } catch (err) {
-      console.error(err);
+      toast.error(err?.error || 'Action failed');
+    } finally {
+      setActionId(null);
     }
   };
 
   const handleDelete = async (matchId) => {
-    if (!window.confirm('Delete this match?')) return;
+    // Guard: only creator can do this
+    if (!isCreator) return;
+    if (!window.confirm('Delete this match? Cannot be undone.')) return;
     try {
-      // TODO: await api.delete(`/events/${eventId}/matches/${matchId}`);
+      setActionId(matchId);
+      await api.delete(`/events/${eventId}/matches/${matchId}`);
       setMatches(prev => prev.filter(m => m.id !== matchId));
+      toast.success('Match deleted');
     } catch (err) {
-      console.error(err);
+      toast.error(err?.error || 'Delete failed');
+    } finally {
+      setActionId(null);
     }
   };
 
@@ -53,7 +68,11 @@ const EventMatches = ({ eventId }) => {
   }
 
   if (!matches.length) {
-    return <div className="text-center text-gray-500 text-sm py-4 font-bold uppercase tracking-widest">No matches created yet</div>;
+    return (
+      <div className="text-center text-gray-500 text-sm py-4 font-bold uppercase tracking-widest">
+        No matches created yet
+      </div>
+    );
   }
 
   return (
@@ -68,14 +87,18 @@ const EventMatches = ({ eventId }) => {
       {expanded && (
         <div className="space-y-3">
           {matches.map((match, idx) => (
-            <motion.div key={match.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
+            <motion.div
+              key={match.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
               className="bg-[#0a0a0a] border border-white/10 p-4 rounded-xl relative"
             >
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[10px] font-black text-[#ccff00] uppercase tracking-widest">{match.round}</span>
                 {match.status === 'live' && (
                   <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                     <span className="text-[10px] font-black text-red-500 uppercase">LIVE</span>
                   </div>
                 )}
@@ -95,23 +118,40 @@ const EventMatches = ({ eventId }) => {
                 {match.location} • {match.match_date ? format(new Date(match.match_date), 'MMM dd, h:mm a') : 'TBD'}
               </div>
 
-              <div className="flex gap-2">
-                <button onClick={() => handleToggleMatch(match.id, match.status === 'live')}
-                  className={`p-2 rounded-lg text-xs font-black ${match.status === 'live' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}
-                >
-                  {match.status === 'live' ? <FaPause size={12} /> : <FaPlay size={12} />}
-                </button>
-                <button onClick={() => navigate(`/events/${eventId}/matches/${match.id}/edit`)}
-                  className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white"
-                >
-                  <FaEdit size={12} />
-                </button>
-                <button onClick={() => handleDelete(match.id)}
-                  className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white ml-auto"
-                >
-                  Del
-                </button>
-              </div>
+              {/* Action buttons — only visible to event creator */}
+              {isCreator && (
+                <div className="flex gap-2 pt-3 border-t border-white/5">
+                  <button
+                    onClick={() => handleToggleMatch(match.id, match.status)}
+                    disabled={actionId === match.id}
+                    className={`p-2 rounded-lg text-xs font-black transition-all ${
+                      match.status === 'live'
+                        ? 'bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/40'
+                        : 'bg-green-500/20 text-green-500 hover:bg-green-500/40'
+                    }`}
+                    title={match.status === 'live' ? 'Pause match' : 'Start match'}
+                  >
+                    {actionId === match.id ? <FaSpinner className="animate-spin" size={12} /> : match.status === 'live' ? <FaPause size={12} /> : <FaPlay size={12} />}
+                  </button>
+
+                  <button
+                    onClick={() => navigate(`/events/${eventId}/matches/${match.id}/edit`)}
+                    className="p-2 rounded-lg bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white transition-all"
+                    title="Edit match"
+                  >
+                    <FaEdit size={12} />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(match.id)}
+                    disabled={actionId === match.id}
+                    className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all ml-auto"
+                    title="Delete match"
+                  >
+                    {actionId === match.id ? <FaSpinner className="animate-spin" size={12} /> : <Trash2 size={12} />}
+                  </button>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>

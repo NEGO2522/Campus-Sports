@@ -7,7 +7,7 @@ import {
   FaRunning, FaFutbol, FaBasketballBall,
   FaTableTennis, FaVolleyballBall, FaUsers
 } from 'react-icons/fa';
-import { GiCricketBat, GiBadmintonBird } from 'react-icons/gi';
+import { GiCricketBat, GiShuttlecock } from 'react-icons/gi';
 import {
   PlusCircle, Clock, ChevronRight, ChevronLeft,
   Zap, Target, Users, Calendar, MapPin, FileText,
@@ -20,7 +20,7 @@ const SPORTS = [
   { name: 'Cricket',       icon: GiCricketBat,        color: 'text-green-400 bg-green-500/10 border-green-500/30' },
   { name: 'Football',      icon: FaFutbol,             color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
   { name: 'Basketball',    icon: FaBasketballBall,     color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
-  { name: 'Badminton',     icon: GiBadmintonBird,      color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
+  { name: 'Badminton',     icon: GiShuttlecock,        color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
   { name: 'Volleyball',    icon: FaVolleyballBall,     color: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
   { name: 'Tennis',        icon: FaRunning,            color: 'text-red-400 bg-red-500/10 border-red-500/30' },
   { name: 'Table Tennis',  icon: FaTableTennis,        color: 'text-pink-400 bg-pink-500/10 border-pink-500/30' },
@@ -48,7 +48,8 @@ const CreateEvent = () => {
   });
 
   useEffect(() => {
-    api.get('/events?status=upcoming')
+    // createdByMe=true — sirf login user ke events load honge
+    api.get('/events?createdByMe=true')
       .then(setUserEvents).catch(console.error)
       .finally(() => setLoadingEvents(false));
   }, []);

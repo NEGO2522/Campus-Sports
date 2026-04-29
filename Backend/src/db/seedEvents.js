@@ -31,7 +31,6 @@ const seedEvents = async () => {
         teams_needed: 8,
         team_size: 11,
         status: 'completed',
-        fake_participants: 72,
       },
       {
         event_name: 'Friday Football Fiesta',
@@ -45,7 +44,6 @@ const seedEvents = async () => {
         teams_needed: 12,
         team_size: 5,
         status: 'completed',
-        fake_participants: 58,
       },
       {
         event_name: 'Badminton Battle Royale',
@@ -59,7 +57,6 @@ const seedEvents = async () => {
         teams_needed: 0,
         team_size: 0,
         status: 'completed',
-        fake_participants: 30,
       },
       {
         event_name: 'Basketball Slam Dunk Showdown',
@@ -73,7 +70,6 @@ const seedEvents = async () => {
         teams_needed: 8,
         team_size: 3,
         status: 'completed',
-        fake_participants: 24,
       },
       {
         event_name: 'Table Tennis Open',
@@ -87,20 +83,17 @@ const seedEvents = async () => {
         teams_needed: 0,
         team_size: 0,
         status: 'completed',
-        fake_participants: 16,
       },
     ];
 
     for (const event of events) {
-      // Event insert karo
-      const eventResult = await client.query(
+      await client.query(
         `INSERT INTO events (
           event_name, sport, description, location,
           date_time, registration_deadline, participation_type,
           players_needed, teams_needed, team_size,
           college_id, created_by, status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-        RETURNING id`,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
         [
           event.event_name, event.sport, event.description, event.location,
           event.date_time, event.registration_deadline, event.participation_type,
@@ -108,31 +101,12 @@ const seedEvents = async () => {
           collegeId, userId, event.status,
         ]
       );
-
-      const eventId = eventResult.rows[0].id;
-
-      // Fake participants directly event_participants mein insert karo
-      // participant_count column update karo with fake number
-      await client.query(
-        `UPDATE events SET participant_count_override = $1 WHERE id = $2`,
-        [event.fake_participants, eventId]
-      ).catch(() => {}); // ignore if column doesn't exist
-
-      // Seedha participant_count fake karne ke liye — ek simple approach:
-      // events table mein ek fake_participant_count store karte hain description mein nahi
-      // Instead, hum sirf creator ko participant banate hain + COUNT query mein override
-
-      // Creator ko participant banao
-      await client.query(
-        `INSERT INTO event_participants (event_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-        [eventId, userId]
-      );
-
-      console.log(`Added: ${event.event_name} (${event.fake_participants} participants)`);
+      // NOTE: Creator is NOT inserted into event_participants.
+      // Creating an event ≠ joining an event.
+      console.log(`Added: ${event.event_name}`);
     }
 
-    console.log('\nDone! 5 past events added.');
-    console.log('\nNOTE: participant_count backend se aayega — frontend mein fake numbers dikhane ke liye PastEvents.jsx update karein.');
+    console.log('\nDone! 5 past events seeded (creator not auto-joined).');
   } catch (err) {
     console.error('Error:', err.message);
   } finally {

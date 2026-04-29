@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FaMapMarkerAlt, FaBolt, FaChevronRight, FaTrophy } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaChevronRight } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Flame, Radio } from 'lucide-react';
-// import api from '../utils/api';
+import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 
 const SPORT_META = {
   Cricket:        { color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', emoji: '🏏' },
@@ -18,6 +19,12 @@ const SPORT_META = {
 const DEFAULT_META = { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10', emoji: '🏆' };
 
 const OngoingEvents = ({ onEventClick }) => {
+  const navigate = useNavigate();
+
+  const handleEventClick = (event) => {
+    if (onEventClick) onEventClick(event);
+    else navigate('/events/' + event.id);
+  };
   const [events, setEvents] = useState([]);
   const [matchesByEvent, setMatchesByEvent] = useState({});
   const [loading, setLoading] = useState(true);
@@ -26,17 +33,22 @@ const OngoingEvents = ({ onEventClick }) => {
     const fetchOngoingEventsAndMatches = async () => {
       setLoading(true);
       try {
-        // TODO: Uncomment when backend ready
-        // const eventsArr = await api.get('/events?status=ongoing');
-        // setEvents(eventsArr);
-        // const matchesObj = {};
-        // for (const event of eventsArr) {
-        //   const matches = await api.get(`/events/${event.id}/matches`);
-        //   matchesObj[event.id] = matches;
-        // }
-        // setMatchesByEvent(matchesObj);
+        const eventsArr = await api.get('/events?status=ongoing');
+        setEvents(eventsArr);
+
+        const matchesObj = {};
+        for (const event of eventsArr) {
+          try {
+            const matches = await api.get('/events/' + event.id + '/matches');
+            matchesObj[event.id] = matches;
+          } catch {
+            matchesObj[event.id] = [];
+          }
+        }
+        setMatchesByEvent(matchesObj);
       } catch (err) {
-        console.error(err);
+        console.error('Failed to fetch ongoing events:', err);
+        setEvents([]);
       } finally {
         setLoading(false);
       }
@@ -63,18 +75,15 @@ const OngoingEvents = ({ onEventClick }) => {
         className="relative text-center p-14 bg-[#111] border border-dashed border-white/10 rounded-3xl overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-red-500/3 to-transparent pointer-events-none" />
-
         <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Radio size={26} className="text-gray-700" />
         </div>
-
         <p className="text-gray-600 uppercase tracking-widest text-xs font-black mb-1">
           No Live Action Right Now
         </p>
         <p className="text-[10px] text-gray-700 font-bold uppercase tracking-widest">
           Ongoing events will appear here
         </p>
-
         <div className="flex items-center justify-center gap-1.5 mt-5">
           {[0, 1, 2].map(i => (
             <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-700" />
@@ -90,6 +99,7 @@ const OngoingEvents = ({ onEventClick }) => {
         const matches = matchesByEvent[event.id] || [];
         const matchesToShow = matches.slice(0, 2);
         const meta = SPORT_META[event.sport] || DEFAULT_META;
+        const eventName = event.event_name || event.eventName || event.title;
 
         return (
           <motion.div
@@ -99,9 +109,9 @@ const OngoingEvents = ({ onEventClick }) => {
             viewport={{ once: true }}
             transition={{ delay: index * 0.1, type: 'spring', stiffness: 200, damping: 22 }}
             className="group relative bg-[#111] border border-white/10 rounded-2xl overflow-hidden hover:border-[#ccff00]/30 transition-all duration-300 cursor-pointer hover:-translate-y-0.5"
-            onClick={() => onEventClick && onEventClick(event)}
+            onClick={() => handleEventClick(event)}
           >
-            {/* Live pulse bar at top */}
+            {/* Live pulse bar */}
             <div className="h-[3px] bg-gradient-to-r from-red-500 via-red-400 to-red-500/50 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
             </div>
@@ -110,7 +120,7 @@ const OngoingEvents = ({ onEventClick }) => {
               <div className="flex items-start justify-between mb-5">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase ${meta.color} ${meta.bg} ${meta.border}`}>
+                    <span className={'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[9px] font-black uppercase ' + meta.color + ' ' + meta.bg + ' ' + meta.border}>
                       {meta.emoji} {event.sport || 'Sport'}
                     </span>
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-[9px] font-black text-red-400 uppercase">
@@ -118,17 +128,14 @@ const OngoingEvents = ({ onEventClick }) => {
                       Live
                     </span>
                   </div>
-
                   <h3 className="text-lg font-black italic uppercase tracking-tighter text-white group-hover:text-[#ccff00] transition-colors leading-tight truncate">
-                    {event.eventName || event.title || event.event_name}
+                    {eventName}
                   </h3>
-
                   <div className="flex items-center gap-1.5 mt-1 text-[9px] font-bold text-gray-600 uppercase">
                     <FaMapMarkerAlt size={8} className="text-[#ccff00]/50" />
                     {event.location}
                   </div>
                 </div>
-
                 <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-[#ccff00]/10 transition-all flex-shrink-0 ml-3">
                   <Flame size={16} className="text-gray-600 group-hover:text-[#ccff00] transition-colors" />
                 </div>
@@ -147,45 +154,39 @@ const OngoingEvents = ({ onEventClick }) => {
                     >
                       <div className="flex items-center justify-between mb-3">
                         <span className="text-[8px] font-black bg-[#ccff00] text-black uppercase tracking-widest px-2 py-0.5 rounded-md">
-                          {match.matchName}
+                          {match.round || match.matchName}
                         </span>
-                        {match.matchStarted ? (
+                        {match.status === 'live' ? (
                           <div className="flex items-center gap-1.5">
                             <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping" />
                             <span className="text-[9px] font-black text-red-400 uppercase italic">Live</span>
                           </div>
                         ) : (
                           <span className="text-[9px] text-gray-600 font-bold uppercase">
-                            {match.dateTime ? format(match.dateTime, 'HH:mm') : 'Soon'}
+                            {match.match_date ? format(new Date(match.match_date), 'HH:mm') : 'Soon'}
                           </span>
                         )}
                       </div>
 
                       <div className="space-y-2">
                         {[
-                          { team: match.team1?.name || match.team1, score: match[`score_${(match.team1?.name || match.team1 || '').replace(/[~*\/\[\]]/g, '_')}`] },
-                          { team: match.team2?.name || match.team2, score: match[`score_${(match.team2?.name || match.team2 || '').replace(/[~*\/\[\]]/g, '_')}`] },
+                          { team: match.team1_name || 'Team 1', score: match.team1_score },
+                          { team: match.team2_name || 'Team 2', score: match.team2_score },
                         ].map((t, i) => (
                           <div key={i} className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-md bg-white/5 flex items-center justify-center text-[9px] font-black text-gray-500">
-                                {(t.team || `T${i + 1}`).charAt(0).toUpperCase()}
+                                {t.team.charAt(0).toUpperCase()}
                               </div>
                               <span className="text-xs font-bold uppercase tracking-tight text-gray-300 truncate max-w-[120px]">
-                                {t.team || `Team ${i + 1}`}
+                                {t.team}
                               </span>
                             </div>
-                            <span className={`text-xl font-black italic tabular-nums ${t.score !== undefined && t.score !== '' ? 'text-white' : 'text-gray-800'}`}>
-                              {t.score !== undefined && t.score !== '' ? t.score : '—'}
+                            <span className={'text-xl font-black italic tabular-nums ' + (t.score != null ? 'text-white' : 'text-gray-800')}>
+                              {t.score != null ? t.score : '—'}
                             </span>
                           </div>
                         ))}
-                      </div>
-
-                      <div className="flex items-center gap-2 -mt-8 mb-1 pointer-events-none">
-                        <div className="flex-1 h-px bg-white/5" />
-                        <span className="text-[8px] font-black text-gray-800 uppercase tracking-widest">vs</span>
-                        <div className="flex-1 h-px bg-white/5" />
                       </div>
 
                       {match.location && (

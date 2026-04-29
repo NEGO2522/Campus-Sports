@@ -100,10 +100,40 @@ export const getMyProfile = async (req, res, next) => {
          u.id, u.full_name, u.email, u.phone, u.age, u.gender,
          u.registration_number, u.course_name, u.college_id,
          u.sport_preferences, u.points, u.profile_completed,
-         c.name as college_name, c.city, c.state
+         c.name as college_name, c.city, c.state,
+         COUNT(DISTINCT ev.id) as managed_events_count,
+         (
+           -- Count events joined directly as individual participant
+           SELECT COUNT(DISTINCT ep.event_id)
+           FROM event_participants ep
+           WHERE ep.user_id = u.id
+         ) +
+         (
+           -- Count events joined via a team (team-based events),
+           -- but only if NOT already counted as a direct participant
+           SELECT COUNT(DISTINCT t.event_id)
+           FROM team_members tm
+           JOIN teams t ON tm.team_id = t.id
+           WHERE tm.user_id = u.id
+             AND t.event_id NOT IN (
+               SELECT ep2.event_id
+               FROM event_participants ep2
+               WHERE ep2.user_id = u.id
+             )
+         ) AS events_joined,
+         (
+           SELECT COUNT(DISTINCT m.id)
+           FROM matches m
+           JOIN teams t ON (t.id = m.team1_id OR t.id = m.team2_id)
+           JOIN team_members tm ON tm.team_id = t.id
+           WHERE tm.user_id = u.id
+             AND m.status = 'completed'
+         ) as matches_played
        FROM users u
        LEFT JOIN colleges c ON u.college_id = c.id
-       WHERE u.id = $1`,
+       LEFT JOIN events ev  ON ev.created_by = u.id
+       WHERE u.id = $1
+       GROUP BY u.id, c.name, c.city, c.state`,
       [req.user.id]
     );
 

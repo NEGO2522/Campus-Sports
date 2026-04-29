@@ -57,6 +57,7 @@ app.use(errorHandler);
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
   socket.on('join_event', (eventId) => socket.join(`event_${eventId}`));
+  socket.on('leave_event', (eventId) => socket.leave(`event_${eventId}`));
   socket.on('disconnect', () => console.log('Client disconnected:', socket.id));
 });
 
