@@ -5,7 +5,7 @@ import {
   FaCalendarAlt, FaCalendarPlus, FaClipboardList,
   FaBolt, FaInstagram, FaTwitter, FaDiscord, FaRunning, FaHistory
 } from 'react-icons/fa';
-import { MapPin, BookOpen, Star, Bell, Settings, ChevronRight, Zap, Users, Swords, Calendar } from 'lucide-react';
+import { MapPin, BookOpen, Star, Bell, Settings, ChevronRight, Zap, Users, Swords, Calendar, Instagram, Linkedin } from 'lucide-react';
 import UpcomingEvents from './UpcomingEvents';
 import OngoingEvents from './OngoingEvents';
 import PastEvents from './PastEvents';
@@ -13,9 +13,33 @@ import { getUser } from '../utils/auth';
 import api from '../utils/api';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState(null);
+  const [stats, setStats] = useState({ athletes: 0, events: 0, sports: 12 });
+  const [statsLoading, setStatsLoading] = useState(true);
   const localUser = getUser();
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [usersRes, eventsRes] = await Promise.all([
+          api.get('/users/count').catch(() => ({ count: 0 })),
+          api.get('/events/count').catch(() => ({ count: 0 }))
+        ]);
+        setStats({
+          athletes: usersRes.count || 0,
+          events: eventsRes.count || 0,
+          sports: 12
+        });
+      } catch (err) {
+        console.error('Failed to load stats', err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -255,45 +279,108 @@ const Dashboard = () => {
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="pt-10 border-t border-white/5">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            <div>
-              <h3 className="text-xl font-black italic uppercase tracking-tighter mb-2">
-                Campus <span className="text-[#ccff00]">League.</span>
-              </h3>
-              <p className="text-gray-600 text-xs max-w-xs leading-relaxed">India ka pehla location-based college sports platform.</p>
-              <div className="flex gap-3 mt-4">
-                {[FaInstagram, FaTwitter, FaDiscord].map((Icon, i) => (
-                  <a key={i} href="#" className="p-2 bg-white/5 hover:bg-[#ccff00] hover:text-black transition-all rounded-lg text-gray-500">
-                    <Icon size={14} />
+        <footer className="pt-10 pb-2 px-6 border-t border-white/5 relative overflow-hidden">
+          {/* Background glow */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#ccff00]/5 blur-[120px] rounded-full pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto relative z-10">
+
+            {/* Top row */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+
+              {/* Brand col */}
+              <div className="md:col-span-4 flex flex-col gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#ccff00] p-2 rounded-xl">
+                    <Zap className="text-black" size={22} fill="currentColor" />
+                  </div>
+                  <span className="text-2xl font-black italic uppercase tracking-tighter">Campus<span className="text-[#ccff00]">League</span></span>
+                </div>
+                <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                  The elite OS for campus sports. Tournaments, teams, and titles — all in one platform.
+                </p>
+                {/* Socials */}
+                <div className="flex gap-3">
+                  <a href="/" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black hover:border-[#ccff00] transition-all text-gray-400">
+                    <Instagram size={18} />
                   </a>
-                ))}
+                  <a href="https://www.linkedin.com/company/campusleauge" target="_blank" rel="noreferrer"
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black hover:border-[#ccff00] transition-all text-gray-400">
+                    <Linkedin size={18} />
+                  </a>
+                </div>
+              </div>
+
+              {/* Links col 1 */}
+              <div className="md:col-span-2 flex flex-col gap-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Platform</p>
+                <div className="flex flex-col gap-3">
+                  <Link to="/dashboard" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Dashboard</Link>
+                  <Link to="/create-event" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Create Event</Link>
+                  <Link to="/manage-events" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Manage Events</Link>
+                  <Link to="/notification" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Notifications</Link>
+                </div>
+              </div>
+
+              {/* Links col 2 */}
+              <div className="md:col-span-2 flex flex-col gap-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Company</p>
+                <div className="flex flex-col gap-3">
+                  <Link to="/about" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">About Us</Link>
+                  <Link to="/contact" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Contact Us</Link>
+                  <Link to="/privacy-policy" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Privacy Policy</Link>
+                  <Link to="/terms-of-service" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Terms of Service</Link>
+                </div>
+              </div>
+
+              {/* Newsletter / CTA col */}
+              <div className="md:col-span-4 flex flex-col gap-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Join the League</p>
+                <p className="text-gray-500 text-sm">Ready to compete? Create your account and start your first tournament today.</p>
+                <button onClick={() => navigate('/create-event')}
+                  className="flex items-center justify-center gap-2 bg-[#ccff00] text-black px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#d9ff33] transition-all active:scale-95 w-full">
+                  <Zap size={14} fill="currentColor" />
+                  Create Event
+                </button>
+                {/* Stats row */}
+                <div className="grid grid-cols-3 gap-3 mt-2">
+                  {[
+                    { key: 'athletes', label: 'Athletes' },
+                    { key: 'events', label: 'Events' },
+                    { key: 'sports', label: 'Sports' },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-white/5 border border-white/5 rounded-xl py-3 text-center">
+                      {statsLoading ? (
+                        <div className="h-5 w-12 bg-gray-700 rounded animate-pulse mx-auto" />
+                      ) : (
+                        <p className="text-[#ccff00] font-black text-lg leading-none">{stats[s.key]}+</p>
+                      )}
+                      <p className="text-[9px] text-gray-600 uppercase font-bold tracking-wider mt-1">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div className="flex gap-12">
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-3">Platform</h4>
-                <ul className="space-y-2 text-xs font-bold text-gray-600">
-                  <li><Link to="/create-event" className="hover:text-[#ccff00] transition-colors">Tournaments</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-3">Legal</h4>
-                <ul className="space-y-2 text-xs font-bold text-gray-600">
-                  <li><Link to="/privacy-policy" className="hover:text-[#ccff00] transition-colors">Privacy</Link></li>
-                  <li><Link to="/terms-of-service" className="hover:text-[#ccff00] transition-colors">Terms</Link></li>
-                </ul>
+
+            {/* Divider */}
+            <div className="h-px bg-white/5 mb-8" />
+
+            {/* Bottom row */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-[11px] text-gray-700 font-medium">
+                © {new Date().getFullYear()} CampusLeague. All rights reserved.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#ccff00] animate-pulse" />
+                <p className="text-[11px] text-gray-700 font-medium">Built for campus athletes</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-[#ccff00] animate-pulse" />
-              <span className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">All Systems Operational</span>
-            </div>
+
           </div>
         </footer>
       </div>
     </div>
   );
-};
+}
 
 export default Dashboard;
