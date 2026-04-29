@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { isLoggedIn } from '../utils/auth';
+import api from '../utils/api';
 import {
   Trophy, Users, Zap, Calendar, ArrowRight,
   Target, Activity, ChevronRight, Instagram, Linkedin,
@@ -356,6 +357,8 @@ const Home = () => {
   const { pathname } = useLocation();
   const [currentWord, setCurrentWord] = useState(0);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [stats, setStats] = useState({ athletes: null, events: null, sports: 20 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   const videoRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: videoRef, offset: ["start end", "end start"] });
@@ -369,6 +372,30 @@ const Home = () => {
   useEffect(() => {
     const interval = setInterval(() => setCurrentWord(prev => (prev + 1) % words.length), 2500);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch dynamic stats from backend
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [usersRes, eventsRes] = await Promise.all([
+          api.get('/users/count'),
+          api.get('/events/count')
+        ]);
+        setStats({
+          athletes: usersRes.count || 0,
+          events: eventsRes.count || 0,
+          sports: 20 // Static count from CreateEvent.jsx
+        });
+      } catch (err) {
+        console.error('Failed to fetch stats:', err);
+        // Fallback to static values if API fails
+        setStats({ athletes: 500, events: 50, sports: 20 });
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
   }, []);
 
   const handleAuthRedirect = () => navigate(loggedIn ? '/dashboard' : '/login');
@@ -528,31 +555,103 @@ const Home = () => {
       </section>
 
       {/* FOOTER */}
-      <footer className="pt-20 pb-10 px-6 border-t border-white/5">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-12 mb-12">
-            <div className="flex flex-col items-center md:items-start">
-              <div className="flex items-center gap-2 mb-6">
-                <Zap className="text-[#ccff00]" size={28} fill="currentColor" />
-                <span className="text-2xl font-black italic uppercase">Campus League</span>
+      <footer className="pt-24 pb-10 px-6 border-t border-white/5 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#ccff00]/5 blur-[120px] rounded-full pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto relative z-10">
+
+          {/* Top row */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+
+            {/* Brand col */}
+            <div className="md:col-span-4 flex flex-col gap-6">
+              <div className="flex items-center gap-2">
+                <div className="bg-[#ccff00] p-2 rounded-xl">
+                  <Zap className="text-black" size={22} fill="currentColor" />
+                </div>
+                <span className="text-2xl font-black italic uppercase tracking-tighter">Campus<span className="text-[#ccff00]">League</span></span>
               </div>
-              <div className="flex gap-4">
-                <a href="/" className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all">
-                  <Instagram size={20} />
+              <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                The elite OS for campus sports. Tournaments, teams, and titles — all in one platform.
+              </p>
+              {/* Socials */}
+              <div className="flex gap-3">
+                <a href="/" className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black hover:border-[#ccff00] transition-all text-gray-400">
+                  <Instagram size={18} />
                 </a>
                 <a href="https://www.linkedin.com/company/campusleauge" target="_blank" rel="noreferrer"
-                  className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black transition-all">
-                  <Linkedin size={20} />
+                  className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-[#ccff00] hover:text-black hover:border-[#ccff00] transition-all text-gray-400">
+                  <Linkedin size={18} />
                 </a>
               </div>
             </div>
-            <div className="flex flex-wrap justify-center gap-x-10 gap-y-4">
-              <Link to="/about" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase">About Us</Link>
-              <Link to="/contact" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase">Contact Us</Link>
-              <Link to="/privacy-policy" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase">Privacy Policy</Link>
-              <Link to="/terms-of-service" className="text-gray-400 hover:text-[#ccff00] text-xs font-bold tracking-widest uppercase">Terms of Service</Link>
+
+            {/* Links col 1 */}
+            <div className="md:col-span-2 flex flex-col gap-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Platform</p>
+              <div className="flex flex-col gap-3">
+                <Link to="/dashboard" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Dashboard</Link>
+                <Link to="/create-event" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Create Event</Link>
+                <Link to="/manage-events" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Manage Events</Link>
+                <Link to="/notification" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Notifications</Link>
+              </div>
+            </div>
+
+            {/* Links col 2 */}
+            <div className="md:col-span-2 flex flex-col gap-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Company</p>
+              <div className="flex flex-col gap-3">
+                <Link to="/about" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">About Us</Link>
+                <Link to="/contact" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Contact Us</Link>
+                <Link to="/privacy-policy" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Privacy Policy</Link>
+                <Link to="/terms-of-service" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Terms of Service</Link>
+              </div>
+            </div>
+
+            {/* Newsletter / CTA col */}
+            <div className="md:col-span-4 flex flex-col gap-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Join the League</p>
+              <p className="text-gray-500 text-sm">Ready to compete? Create your account and start your first tournament today.</p>
+              <button onClick={handleAuthRedirect}
+                className="flex items-center justify-center gap-2 bg-[#ccff00] text-black px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[#d9ff33] transition-all active:scale-95 w-full">
+                <Zap size={14} fill="currentColor" />
+                {loggedIn ? 'Go to Dashboard' : 'Get Started Free'}
+              </button>
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-3 mt-2">
+                {[
+                  { key: 'athletes', label: 'Athletes' },
+                  { key: 'events', label: 'Events' },
+                  { key: 'sports', label: 'Sports' },
+                ].map((s) => (
+                  <div key={s.label} className="bg-white/5 border border-white/5 rounded-xl py-3 text-center">
+                    {statsLoading ? (
+                      <div className="h-5 w-12 bg-gray-700 rounded animate-pulse mx-auto" />
+                    ) : (
+                      <p className="text-[#ccff00] font-black text-lg leading-none">{stats[s.key]}+</p>
+                    )}
+                    <p className="text-[9px] text-gray-600 uppercase font-bold tracking-wider mt-1">{s.label}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+
+          {/* Divider */}
+          <div className="h-px bg-white/5 mb-8" />
+
+          {/* Bottom row */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-[11px] text-gray-700 font-medium">
+              © {new Date().getFullYear()} CampusLeague. All rights reserved.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ccff00] animate-pulse" />
+              <p className="text-[11px] text-gray-700 font-medium">Built for campus athletes</p>
+            </div>
+          </div>
+
         </div>
       </footer>
     </div>

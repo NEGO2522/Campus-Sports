@@ -521,6 +521,15 @@ const EventDetail = () => {
                         </div>
                         <p className="text-base font-black text-white uppercase italic">Registered!</p>
                         <p className="text-[10px] text-gray-500 mt-1 uppercase font-bold tracking-widest">Good luck, champ 🏆</p>
+                        {/* Team event mein already joined ho to Create Team dikhao */}
+                        {event.participation_type === 'team' && (
+                          <button
+                            onClick={() => navigate(`/events/${id}/create-team/${currentUser?.registrationNumber || currentUser?.registration_number}`)}
+                            className="mt-5 w-full font-black italic uppercase py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm border border-[#ccff00]/40 text-[#ccff00] hover:bg-[#ccff00]/10 active:scale-[0.98]"
+                          >
+                            <Users size={16} /> Create Team
+                          </button>
+                        )}
                       </motion.div>
                     ) : isDeadlinePassed ? (
                       <motion.div key="closed" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-4">
@@ -546,6 +555,15 @@ const EventDetail = () => {
                         >
                           {joining ? <FaSpinner className="animate-spin" /> : <><UserPlus size={18} /> Join Now</>}
                         </button>
+                        {/* Team event hai to Create Team button bhi dikhao */}
+                        {event.participation_type === 'team' && hasJoined && (
+                          <button
+                            onClick={() => navigate(`/events/${id}/create-team/${currentUser?.registrationNumber || currentUser?.registration_number}`)}
+                            className="mt-3 w-full font-black italic uppercase py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm border border-[#ccff00]/40 text-[#ccff00] hover:bg-[#ccff00]/10 active:scale-[0.98]"
+                          >
+                            <Users size={16} /> Create Team
+                          </button>
+                        )}
                         <p className="text-center text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-3">
                           Free • No registration fee
                         </p>

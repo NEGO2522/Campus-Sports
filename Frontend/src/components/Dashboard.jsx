@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  FaCalendarAlt, FaTrophy, FaCalendarPlus, FaClipboardList,
+  FaCalendarAlt, FaCalendarPlus, FaClipboardList,
   FaBolt, FaInstagram, FaTwitter, FaDiscord, FaRunning, FaHistory
 } from 'react-icons/fa';
-import { MapPin, BookOpen, Star, Bell, Settings, ChevronRight, Zap, Users, Swords } from 'lucide-react';
+import { MapPin, BookOpen, Star, Bell, Settings, ChevronRight, Zap, Users, Swords, Calendar } from 'lucide-react';
 import UpcomingEvents from './UpcomingEvents';
 import OngoingEvents from './OngoingEvents';
 import PastEvents from './PastEvents';
@@ -169,6 +169,7 @@ const Dashboard = () => {
             {[
               { to: '/manage-events', icon: FaClipboardList, label: 'Your Events', title: 'Manage', delay: 0.15 },
               { to: '/notification', icon: Bell, label: 'Inbox', title: 'Notifications', delay: 0.2 },
+              { to: '/my-events', icon: Calendar, label: 'Joined Events', title: 'My Events', delay: 0.25 },
             ].map((item) => (
               <motion.div key={item.to} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: item.delay }}>
                 <Link to={item.to} className="group flex flex-col justify-between bg-[#111] border border-white/10 hover:border-[#ccff00]/40 transition-all rounded-3xl p-6 h-full min-h-[140px]">
@@ -183,23 +184,7 @@ const Dashboard = () => {
               </motion.div>
             ))}
 
-            {/* ── TOTAL POINTS CARD (fetched from backend) ── */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
-              <Link to="/leaderboard" className="group flex flex-col justify-between bg-gradient-to-br from-[#ccff00]/15 to-[#ccff00]/5 border border-[#ccff00]/20 hover:border-[#ccff00]/50 transition-all rounded-3xl p-6 h-full min-h-[140px]">
-                <div className="w-12 h-12 bg-[#ccff00]/10 rounded-xl flex items-center justify-center group-hover:bg-[#ccff00]/20 transition-all mb-4">
-                  <FaTrophy size={20} className="text-[#ccff00]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-[#ccff00]/50 uppercase font-bold tracking-widest mb-0.5">Total Points</p>
-                  <div className="flex items-end gap-2">
-                    <h4 className="text-3xl font-black italic text-[#ccff00] leading-none">{profile?.points ?? 0}</h4>
-                    <span className="text-[10px] font-black uppercase text-[#ccff00]/60 mb-0.5 tracking-wider">pts</span>
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
               <Link to="/create-event" className="group flex flex-col justify-between bg-gradient-to-br from-[#ccff00]/15 to-[#ccff00]/5 border border-[#ccff00]/20 hover:border-[#ccff00]/50 transition-all rounded-3xl p-6 h-full min-h-[140px]">
                 <div className="w-12 h-12 bg-[#ccff00]/10 rounded-xl flex items-center justify-center group-hover:bg-[#ccff00]/20 transition-all mb-4">
                   <FaCalendarPlus size={20} className="text-[#ccff00]" />

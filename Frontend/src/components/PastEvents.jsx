@@ -17,14 +17,6 @@ const SPORT_META = {
 
 const DEFAULT_META = { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10', emoji: '🏆', gradient: 'from-white/5 to-transparent' };
 
-const FAKE_PARTICIPANT_COUNT = {
-  'Poornima Premier Cricket League': 72,
-  'Friday Football Fiesta':          58,
-  'Badminton Battle Royale':         30,
-  'Basketball Slam Dunk Showdown':   24,
-  'Table Tennis Open':               16,
-};
-
 const PastEvents = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,10 +58,7 @@ const PastEvents = () => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {events.map((event, index) => {
         const meta = SPORT_META[event.sport] || DEFAULT_META;
-        const participantCount =
-          FAKE_PARTICIPANT_COUNT[event.event_name] ||
-          event.players_needed ||
-          10;
+        const participantCount = event.participant_count || 0;
 
         return (
           <motion.div

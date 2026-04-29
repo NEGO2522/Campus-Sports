@@ -19,7 +19,7 @@ export const getEvents = async (req, res, next) => {
     } else {
       conditions.push('e.status = ' + addParam(status));
       if (collegeId) {
-        conditions.push('e.college_id = ' + addParam(collegeId));
+        conditions.push('(e.college_id = ' + addParam(collegeId) + ' OR e.college_id IS NULL)');
       }
     }
 
@@ -292,4 +292,15 @@ export const deleteMatch = async (req, res, next) => {
     await pool.query('DELETE FROM matches WHERE id=$1 AND event_id=$2', [matchId, eventId]);
     res.json({ message: 'Match deleted' });
   } catch (err) { next(err); }
+};
+
+// GET /api/events/count — public endpoint for total events count
+export const getEventsCount = async (req, res, next) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM events');
+    const count = parseInt(result.rows[0].count, 10);
+    res.json({ count });
+  } catch (err) {
+    next(err);
+  }
 };

@@ -1,5 +1,16 @@
 import pool from '../db/pool.js';
 
+// GET /api/users/count — public endpoint for total users count
+export const getUsersCount = async (req, res, next) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM users');
+    const count = parseInt(result.rows[0].count, 10);
+    res.json({ count });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // PUT /api/users/profile
 export const updateProfile = async (req, res, next) => {
   try {
@@ -90,6 +101,57 @@ export const getUserProfile = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// GET /api/users/me/events — events jo maine join kiye hain
+export const getMyEvents = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const result = await pool.query(
+      `SELECT DISTINCT
+         e.id, e.event_name, e.sport, e.location, e.date_time,
+         e.status, e.participation_type,
+         c.name as college_name,
+         t.name as team_name
+       FROM events e
+       LEFT JOIN colleges c ON e.college_id = c.id
+       LEFT JOIN event_participants ep ON ep.event_id = e.id AND ep.user_id = $1
+       LEFT JOIN team_members tm ON tm.user_id = $1
+       LEFT JOIN teams t ON t.id = tm.team_id AND t.event_id = e.id
+       WHERE ep.user_id = $1 OR tm.user_id = $1
+       ORDER BY e.date_time DESC`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) { next(err); }
+};
+
+// GET /api/users/search?q=rahul — search users by name or reg number
+export const searchUsers = async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim().length < 2) {
+      return res.json([]);
+    }
+    const result = await pool.query(
+      `SELECT
+         u.id, u.full_name, u.registration_number, u.course_name,
+         u.sport_preferences,
+         c.name as college_name
+       FROM users u
+       LEFT JOIN colleges c ON u.college_id = c.id
+       WHERE (
+         u.full_name ILIKE $1 OR
+         u.registration_number ILIKE $1
+       )
+       AND u.id != $2
+       AND u.profile_completed = true
+       ORDER BY u.full_name ASC
+       LIMIT 20`,
+      [`%${q.trim()}%`, req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) { next(err); }
 };
 
 // GET /api/users/me — current logged in user full profile

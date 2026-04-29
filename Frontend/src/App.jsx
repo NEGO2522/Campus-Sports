@@ -17,6 +17,7 @@ import CreateTeam from './components/CreateTeam';
 import Notification from './components/Notification';
 import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
+import MyEvents from './components/MyEvents';
 import About from './components/About';
 import ContactUs from './components/ContactUs';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -74,8 +75,9 @@ function App() {
           <Route path="/notification" element={<ProtectedRoute><MainLayout><Notification /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:id" element={<ProtectedRoute><MainLayout><EventDetail /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:id/participate" element={<ProtectedRoute><MainLayout><Participate /></MainLayout></ProtectedRoute>} />
-          <Route path="/events/:id/create-team/" element={<ProtectedRoute><MainLayout><CreateTeam /></MainLayout></ProtectedRoute>} />
+          <Route path="/events/:id/create-team/:reg" element={<ProtectedRoute><MainLayout><CreateTeam /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:eventId/matches/:matchId/edit" element={<ProtectedRoute><MainLayout><EditMatch /></MainLayout></ProtectedRoute>} />
+          <Route path="/my-events" element={<ProtectedRoute><MainLayout><MyEvents /></MainLayout></ProtectedRoute>} />
           <Route path="/tournament-bracket" element={<ProtectedRoute><MainLayout><TournamentBracket /></MainLayout></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

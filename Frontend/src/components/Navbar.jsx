@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Bell, User, LogOut, PlusCircle, Calendar, Menu, X, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { isLoggedIn, clearAuth, getUser } from '../utils/auth';
+import api from '../utils/api';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -51,12 +52,27 @@ const Navbar = () => {
     { name: 'Manage', path: '/manage-events', icon: <Calendar size={16} /> },
   ];
 
+  const [inviteCount, setInviteCount] = useState(0);
+
+  useEffect(() => {
+    if (!loggedIn) return;
+    const fetchCount = async () => {
+      try {
+        const data = await api.get('/invites/pending');
+        setInviteCount(Array.isArray(data) ? data.length : 0);
+      } catch { setInviteCount(0); }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, [loggedIn]);
+
   const isActive = (path) => location.pathname === path;
   const userInitial = user?.fullName?.charAt(0)?.toUpperCase() || '?';
 
   return (
     <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${
-      scrolled ? 'py-2.5 bg-black/90 backdrop-blur-xl border-b border-white/5' : 'py-4 bg-transparent'
+      scrolled ? 'py-2.5 bg-black/90 backdrop-blur-xl' : 'py-4 bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
 
@@ -89,6 +105,16 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
+
+              {/* Bell icon */}
+              <Link to="/notification" className="relative p-2 rounded-xl text-gray-500 hover:text-white hover:bg-white/5 transition-all">
+                <Bell size={18} />
+                {inviteCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-1">
+                    {inviteCount > 9 ? '9+' : inviteCount}
+                  </span>
+                )}
+              </Link>
 
               <div className="w-px h-6 bg-white/10 mx-2" />
 

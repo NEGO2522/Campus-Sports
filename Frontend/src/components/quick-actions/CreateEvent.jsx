@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import { FaSpinner, FaTrash, FaCalendarAlt, FaRunning, FaFutbol, FaBasketballBall, FaTableTennis, FaVolleyballBall, FaUsers, FaSwimmer, FaChess, FaDumbbell, FaBicycle, FaGamepad } from 'react-icons/fa';
 import {
-  FaSpinner, FaTrash, FaCalendarAlt,
-  FaRunning, FaFutbol, FaBasketballBall,
-  FaTableTennis, FaVolleyballBall, FaUsers
-} from 'react-icons/fa';
-import { GiCricketBat, GiShuttlecock } from 'react-icons/gi';
+  GiCricketBat, GiShuttlecock, GiBoxingGlove,
+  GiArcheryTarget, GiTennisRacket, GiWeightLiftingUp,
+  GiSoccerKick, GiHockey, GiKickScooter,
+  GiRunningShoe, GiKimono, GiFencer
+} from 'react-icons/gi';
 import {
   PlusCircle, Clock, ChevronRight, ChevronLeft,
   Zap, Target, Users, Calendar, MapPin, FileText,
@@ -16,14 +17,43 @@ import {
 import api from '../../utils/api';
 import { useNavigate } from 'react-router-dom';
 
+const ONLINE_GAMES = [
+  { name: 'Free Fire',        color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
+  { name: 'PUBG Mobile',      color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
+  { name: 'Valorant',         color: 'text-red-400 bg-red-500/10 border-red-500/30' },
+  { name: 'BGMI',             color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
+  { name: 'Call of Duty',     color: 'text-green-400 bg-green-500/10 border-green-500/30' },
+  { name: 'FIFA',             color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
+  { name: 'Clash Royale',     color: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
+  { name: 'Clash of Clans',   color: 'text-teal-400 bg-teal-500/10 border-teal-500/30' },
+  { name: 'Pokemon GO',       color: 'text-pink-400 bg-pink-500/10 border-pink-500/30' },
+  { name: 'Among Us',         color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30' },
+  { name: 'Minecraft',        color: 'text-lime-400 bg-lime-500/10 border-lime-500/30' },
+  { name: 'Other Online',     color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' },
+];
+
 const SPORTS = [
-  { name: 'Cricket',       icon: GiCricketBat,        color: 'text-green-400 bg-green-500/10 border-green-500/30' },
-  { name: 'Football',      icon: FaFutbol,             color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
-  { name: 'Basketball',    icon: FaBasketballBall,     color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
-  { name: 'Badminton',     icon: GiShuttlecock,        color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
-  { name: 'Volleyball',    icon: FaVolleyballBall,     color: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
-  { name: 'Tennis',        icon: FaRunning,            color: 'text-red-400 bg-red-500/10 border-red-500/30' },
-  { name: 'Table Tennis',  icon: FaTableTennis,        color: 'text-pink-400 bg-pink-500/10 border-pink-500/30' },
+  { name: 'Cricket',        icon: GiCricketBat,       color: 'text-green-400 bg-green-500/10 border-green-500/30' },
+  { name: 'Football',       icon: FaFutbol,            color: 'text-blue-400 bg-blue-500/10 border-blue-500/30' },
+  { name: 'Basketball',     icon: FaBasketballBall,    color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
+  { name: 'Badminton',      icon: GiShuttlecock,       color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' },
+  { name: 'Volleyball',     icon: FaVolleyballBall,    color: 'text-purple-400 bg-purple-500/10 border-purple-500/30' },
+  { name: 'Table Tennis',   icon: FaTableTennis,       color: 'text-pink-400 bg-pink-500/10 border-pink-500/30' },
+  { name: 'Tennis',         icon: GiTennisRacket,      color: 'text-red-400 bg-red-500/10 border-red-500/30' },
+  { name: 'Boxing',         icon: GiBoxingGlove,       color: 'text-red-500 bg-red-600/10 border-red-600/30' },
+  { name: 'Archery',        icon: GiArcheryTarget,     color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' },
+  { name: 'Swimming',       icon: FaSwimmer,           color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30' },
+  { name: 'Athletics',      icon: GiRunningShoe,       color: 'text-lime-400 bg-lime-500/10 border-lime-500/30' },
+  { name: 'Hockey',         icon: GiHockey,            color: 'text-sky-400 bg-sky-500/10 border-sky-500/30' },
+  { name: 'Kabaddi',        icon: GiKimono,            color: 'text-orange-500 bg-orange-600/10 border-orange-600/30' },
+  { name: 'Kho-Kho',        icon: GiSoccerKick,        color: 'text-teal-400 bg-teal-500/10 border-teal-500/30' },
+  { name: 'Cycling',        icon: FaBicycle,           color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30' },
+  { name: 'Chess',          icon: FaChess,             color: 'text-gray-300 bg-gray-500/10 border-gray-500/30' },
+  { name: 'Gym/Fitness',    icon: GiWeightLiftingUp,   color: 'text-yellow-500 bg-yellow-600/10 border-yellow-600/30' },
+  { name: 'Martial Arts',   icon: GiFencer,            color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' },
+  { name: 'Skipping',       icon: GiKickScooter,       color: 'text-violet-400 bg-violet-500/10 border-violet-500/30' },
+  { name: 'Online Gaming',    icon: FaGamepad,           color: 'text-fuchsia-400 bg-fuchsia-500/10 border-fuchsia-500/30' },
+  { name: 'Other',            icon: FaRunning,           color: 'text-gray-400 bg-gray-500/10 border-gray-500/30' },
 ];
 
 const STEPS = [
@@ -46,6 +76,7 @@ const CreateEvent = () => {
     location: '', description: '', participationType: 'player',
     playersNeeded: 10, teamsNeeded: 2, teamSize: 5,
   });
+  const [showOnlineGames, setShowOnlineGames] = useState(false);
 
   useEffect(() => {
     // createdByMe=true — sirf login user ke events load honge
@@ -182,32 +213,74 @@ const CreateEvent = () => {
                   <div>
                     <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Kaunsa sport?</h2>
                     <p className="text-xs text-gray-600 mb-6">Ek select karo</p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                      {SPORTS.map(sport => {
-                        const Icon = sport.icon;
-                        const isSelected = formData.sport === sport.name;
-                        return (
-                          <button
-                            key={sport.name}
-                            type="button"
-                            onClick={() => setFormData(p => ({ ...p, sport: sport.name }))}
-                            className={`relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
-                              isSelected
-                                ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
-                                : `${sport.color} hover:scale-[1.02]`
-                            }`}
-                          >
-                            {isSelected && (
-                              <div className="absolute top-2 right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center">
-                                <Check size={10} strokeWidth={3} className="text-[#ccff00]" />
-                              </div>
-                            )}
-                            <Icon size={28} />
-                            {sport.name}
+
+                    <AnimatePresence mode="wait">
+                      {!showOnlineGames ? (
+                        <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          {SPORTS.map(sport => {
+                            const Icon = sport.icon;
+                            const isSelected = formData.sport === sport.name;
+                            return (
+                              <button key={sport.name} type="button"
+                                onClick={() => {
+                                  if (sport.name === 'Online Gaming') { setShowOnlineGames(true); return; }
+                                  setFormData(p => ({ ...p, sport: sport.name }));
+                                }}
+                                className={`relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
+                                  isSelected
+                                    ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
+                                    : `${sport.color} hover:scale-[1.02]`
+                                }`}>
+                                {isSelected && (
+                                  <div className="absolute top-2 right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center">
+                                    <Check size={10} strokeWidth={3} className="text-[#ccff00]" />
+                                  </div>
+                                )}
+                                <Icon size={28} />
+                                {sport.name}
+                                {sport.name === 'Online Gaming' && (
+                                  <span className="text-[8px] opacity-60 normal-case font-bold">tap to expand</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </motion.div>
+                      ) : (
+                        <motion.div key="online" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                          <button type="button" onClick={() => setShowOnlineGames(false)}
+                            className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500 hover:text-white mb-4 transition-colors">
+                            <ChevronLeft size={14} /> Back to all sports
                           </button>
-                        );
-                      })}
-                    </div>
+                          <div className="flex items-center gap-2 mb-4">
+                            <FaGamepad className="text-fuchsia-400" size={18} />
+                            <h3 className="text-sm font-black uppercase tracking-wider text-fuchsia-400">Online Games</h3>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {ONLINE_GAMES.map(game => {
+                              const isSelected = formData.sport === game.name;
+                              return (
+                                <button key={game.name} type="button"
+                                  onClick={() => setFormData(p => ({ ...p, sport: game.name }))}
+                                  className={`relative flex items-center gap-3 p-4 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
+                                    isSelected
+                                      ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
+                                      : `${game.color} hover:scale-[1.02]`
+                                  }`}>
+                                  {isSelected && (
+                                    <div className="absolute top-2 right-2 w-4 h-4 bg-black rounded-full flex items-center justify-center">
+                                      <Check size={8} strokeWidth={3} className="text-[#ccff00]" />
+                                    </div>
+                                  )}
+                                  <FaGamepad size={18} />
+                                  {game.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
 
