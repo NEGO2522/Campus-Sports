@@ -1,5 +1,5 @@
-// Auth utility - apna JWT token localStorage mein store hoga
-// Firebase bilkul nahi hai yahan
+// Auth utility - store JWT token in localStorage
+// No Firebase here
 
 export const getToken = () => localStorage.getItem('cl_token');
 

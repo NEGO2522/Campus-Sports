@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { io } from 'socket.io-client';
 import api from '../utils/api';
 import { getUser } from '../utils/auth';
 
@@ -67,6 +68,44 @@ const EditMatch = () => {
       }
     };
     fetchData();
+
+    // Connect to socket for real-time updates
+    const socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
+    socket.emit('join_event', eventId);
+
+    socket.on('match_updated', (updatedMatch) => {
+      if (updatedMatch.id === matchId) {
+        const d = updatedMatch.match_date ? new Date(updatedMatch.match_date) : null;
+        setForm({
+          round: updatedMatch.round || '',
+          team1Id: updatedMatch.team1_id || '',
+          team2Id: updatedMatch.team2_id || '',
+          location: updatedMatch.location || '',
+          date: d ? d.toISOString().slice(0, 10) : '',
+          time: d ? d.toTimeString().slice(0, 5) : '',
+          team1Score: updatedMatch.team1_score ?? '',
+          team2Score: updatedMatch.team2_score ?? '',
+          status: updatedMatch.status || 'scheduled',
+        });
+      }
+    });
+
+    socket.on('match_completed', ({ matchId: completedMatchId, team1Score, team2Score }) => {
+      if (completedMatchId === matchId) {
+        setForm(prev => ({
+          ...prev,
+          team1Score: team1Score ?? prev.team1Score,
+          team2Score: team2Score ?? prev.team2Score,
+          status: 'completed',
+        }));
+        toast.info('Match completed!');
+      }
+    });
+
+    return () => {
+      socket.emit('leave_event', eventId);
+      socket.disconnect();
+    };
   }, [eventId, matchId]);
 
   const handleChange = e => {

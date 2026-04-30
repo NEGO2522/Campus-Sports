@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import CreateEvent from './components/quick-actions/CreateEvent';
 import ManageEvents from './components/quick-actions/ManageEvents';
+import EditEvent from './components/quick-actions/EditEvent';
 import TournamentBracket from './components/TournamentBracket';
 import Participate from './components/Participate';
 import CreateTeam from './components/CreateTeam';
@@ -18,6 +19,7 @@ import Notification from './components/Notification';
 import EventDetail from './components/EventDetail';
 import EditMatch from './components/EditMatch';
 import MyEvents from './components/MyEvents';
+import UserProfile from './components/UserProfile';
 import About from './components/About';
 import ContactUs from './components/ContactUs';
 import PrivacyPolicy from './components/PrivacyPolicy';
@@ -60,6 +62,7 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout><Home /></MainLayout>} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
           <Route path="/about" element={<MainLayout><About /></MainLayout>} />
           <Route path="/contact" element={<MainLayout><ContactUs /></MainLayout>} />
           <Route path="/privacy-policy" element={<MainLayout><PrivacyPolicy /></MainLayout>} />
@@ -71,6 +74,8 @@ function App() {
           <Route path="/dashboard" element={<ProtectedRoute><MainLayout><Dashboard /></MainLayout></ProtectedRoute>} />
           <Route path="/create-event" element={<ProtectedRoute><MainLayout><CreateEvent /></MainLayout></ProtectedRoute>} />
           <Route path="/manage-events" element={<ProtectedRoute><MainLayout><ManageEvents /></MainLayout></ProtectedRoute>} />
+          <Route path="/events/:id/edit" element={<ProtectedRoute><MainLayout><EditEvent /></MainLayout></ProtectedRoute>} />
+          <Route path="/edit-event/:id" element={<ProtectedRoute><MainLayout><EditEvent /></MainLayout></ProtectedRoute>} />
           <Route path="/form" element={<ProtectedRoute><MainLayout><UserProfileForm /></MainLayout></ProtectedRoute>} />
           <Route path="/notification" element={<ProtectedRoute><MainLayout><Notification /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:id" element={<ProtectedRoute><MainLayout><EventDetail /></MainLayout></ProtectedRoute>} />
@@ -78,7 +83,9 @@ function App() {
           <Route path="/events/:id/create-team/:reg" element={<ProtectedRoute><MainLayout><CreateTeam /></MainLayout></ProtectedRoute>} />
           <Route path="/events/:eventId/matches/:matchId/edit" element={<ProtectedRoute><MainLayout><EditMatch /></MainLayout></ProtectedRoute>} />
           <Route path="/my-events" element={<ProtectedRoute><MainLayout><MyEvents /></MainLayout></ProtectedRoute>} />
-          <Route path="/tournament-bracket" element={<ProtectedRoute><MainLayout><TournamentBracket /></MainLayout></ProtectedRoute>} />
+          <Route path="/tournament-bracket/:eventId" element={<ProtectedRoute><MainLayout><TournamentBracket /></MainLayout></ProtectedRoute>} />
+          <Route path="/users/:id" element={<ProtectedRoute><MainLayout><UserProfile /></MainLayout></ProtectedRoute>} />
+          <Route path="/profile/:id" element={<ProtectedRoute><MainLayout><UserProfile /></MainLayout></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

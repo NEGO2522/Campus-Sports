@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { format } from 'date-fns';
-import { FaSpinner, FaTrash, FaCalendarAlt, FaRunning, FaFutbol, FaBasketballBall, FaTableTennis, FaVolleyballBall, FaUsers, FaSwimmer, FaChess, FaDumbbell, FaBicycle, FaGamepad } from 'react-icons/fa';
+import { format, parseISO } from 'date-fns';
+import { FaSpinner, FaRunning, FaFutbol, FaBasketballBall, FaTableTennis, FaVolleyballBall, FaUsers, FaSwimmer, FaChess, FaDumbbell, FaBicycle, FaGamepad } from 'react-icons/fa';
 import {
   GiCricketBat, GiShuttlecock, GiBoxingGlove,
   GiArcheryTarget, GiTennisRacket, GiWeightLiftingUp,
@@ -10,12 +10,12 @@ import {
   GiRunningShoe, GiKimono, GiFencer
 } from 'react-icons/gi';
 import {
-  PlusCircle, Clock, ChevronRight, ChevronLeft,
+  Edit3, Clock, ChevronRight, ChevronLeft,
   Zap, Target, Users, Calendar, MapPin, FileText,
-  Check, Trophy
+  Check, Trophy, Save
 } from 'lucide-react';
 import api from '../../utils/api';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const ONLINE_GAMES = [
   { name: 'Free Fire',        color: 'text-orange-400 bg-orange-500/10 border-orange-500/30' },
@@ -63,14 +63,13 @@ const STEPS = [
   { id: 4, label: 'Confirm',  icon: Check },
 ];
 
-const CreateEvent = () => {
+const EditEvent = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const { id } = useParams();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [userEvents, setUserEvents] = useState([]);
-  const [loadingEvents, setLoadingEvents] = useState(true);
-  const [deletingId, setDeletingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [eventData, setEventData] = useState(null);
 
   const [formData, setFormData] = useState({
     eventName: '', sport: '', dateTime: '', registrationDeadline: '',
@@ -80,20 +79,46 @@ const CreateEvent = () => {
   });
   const [showOnlineGames, setShowOnlineGames] = useState(false);
 
+  // Fetch existing event data on load
   useEffect(() => {
-    // createdByMe=true — only load events for logged in user
-    api.get('/events?createdByMe=true')
-      .then(setUserEvents).catch(console.error)
-      .finally(() => setLoadingEvents(false));
-  }, []);
+    const fetchEvent = async () => {
+      try {
+        const data = await api.get(`/events/${id}`);
+        setEventData(data);
+        
+        // Format dates for datetime-local input (YYYY-MM-DDTHH:mm)
+        const formatForInput = (dateString) => {
+          if (!dateString) return '';
+          try {
+            const date = parseISO(dateString);
+            return format(date, "yyyy-MM-dd'T'HH:mm");
+          } catch {
+            return '';
+          }
+        };
 
-  // Pre-select eventType from URL query param
-  useEffect(() => {
-    const typeFromUrl = searchParams.get('type');
-    if (typeFromUrl === 'community' || typeFromUrl === 'official') {
-      setFormData(p => ({ ...p, eventType: typeFromUrl }));
-    }
-  }, [searchParams]);
+        setFormData({
+          eventName: data.event_name || '',
+          sport: data.sport || '',
+          dateTime: formatForInput(data.date_time),
+          registrationDeadline: formatForInput(data.registration_deadline),
+          location: data.location || '',
+          description: data.description || '',
+          participationType: data.participation_type || 'player',
+          playersNeeded: data.players_needed || 10,
+          teamsNeeded: data.teams_needed || 2,
+          teamSize: data.team_size || 5,
+          eventType: data.event_type || 'official'
+        });
+      } catch (err) {
+        toast.error(err.error || 'Failed to load event');
+        navigate('/manage-events');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchEvent();
+  }, [id, navigate]);
 
   const selectedSport = SPORTS.find(s => s.name === formData.sport);
 
@@ -104,12 +129,10 @@ const CreateEvent = () => {
     if (step === 2) {
       if (!formData.eventName) { toast.error('Please enter an event name'); return false; }
       if (!formData.dateTime) { toast.error('Please enter date and time'); return false; }
-      // Deadline required only for official events
       if (formData.eventType !== 'community' && !formData.registrationDeadline) {
         toast.error('Please enter a registration deadline'); return false;
       }
       if (!formData.location) { toast.error('Please enter a location'); return false; }
-      // Deadline validation only if deadline is set
       if (formData.registrationDeadline && new Date(formData.registrationDeadline) >= new Date(formData.dateTime)) {
         toast.error('Registration deadline must be before the event date'); return false;
       }
@@ -122,7 +145,7 @@ const CreateEvent = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      const newEvent = await api.post('/events', {
+      await api.put(`/events/${id}`, {
         eventName: formData.eventName,
         sport: formData.sport,
         description: formData.description,
@@ -135,29 +158,28 @@ const CreateEvent = () => {
         teamsNeeded: formData.teamsNeeded,
         teamSize: formData.teamSize,
       });
-      toast.success('Event created successfully!');
-      if (newEvent?.id) navigate(`/events/${newEvent.id}`);
+      toast.success('Event updated successfully!');
+      navigate('/manage-events');
     } catch (err) {
-      toast.error(err.error || 'Something went wrong');
+      toast.error(err.error || 'Failed to update event');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (eventId, e) => {
-    e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
-    setDeletingId(eventId);
-    try {
-      await api.delete(`/events/${eventId}`);
-      setUserEvents(p => p.filter(ev => ev.id !== eventId));
-      toast.success('Event deleted');
-    } catch { toast.error('Failed to delete event'); }
-    finally { setDeletingId(null); }
-  };
-
   const inputClass = "w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#ccff00] transition-all text-sm font-medium";
   const labelClass = "block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2";
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-16 px-4 sm:px-6 flex items-center justify-center">
+        <div className="text-center">
+          <FaSpinner className="animate-spin text-[#ccff00] mx-auto mb-4" size={32} />
+          <p className="text-[10px] font-black uppercase tracking-widest text-gray-600">Loading event...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white pt-24 pb-16 px-4 sm:px-6">
@@ -174,12 +196,13 @@ const CreateEvent = () => {
 
             <div className="mb-8">
               <div className="flex items-center gap-2 text-[#ccff00] text-[10px] font-black uppercase tracking-widest mb-2">
-                <PlusCircle size={14} />
-                <span>New Event</span>
+                <Edit3 size={14} />
+                <span>Edit Event</span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-black italic uppercase tracking-tighter">
-                Create <span className="text-[#ccff00]">Event</span>
+                Edit <span className="text-[#ccff00]">Event</span>
               </h1>
+              <p className="text-gray-500 text-sm mt-2">{formData.eventName}</p>
             </div>
 
             {/* Step indicator */}
@@ -226,7 +249,7 @@ const CreateEvent = () => {
                 {/* STEP 1 — Sport */}
                 {step === 1 && (
                   <div>
-                    {/* Event Type Selector */}
+                    {/* Event Type Display (Read-only for edit) */}
                     <div className="mb-8">
                       <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">
                         Event Type
@@ -239,14 +262,12 @@ const CreateEvent = () => {
                           const Icon = type.icon;
                           const isSelected = formData.eventType === type.value;
                           return (
-                            <button
+                            <div
                               key={type.value}
-                              type="button"
-                              onClick={() => setFormData(p => ({ ...p, eventType: type.value }))}
-                              className={`flex flex-col gap-1 p-4 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
+                              className={`flex flex-col gap-1 p-4 rounded-2xl border-2 font-black text-xs uppercase tracking-wide ${
                                 isSelected
                                   ? 'border-[#ccff00] bg-[#ccff00] text-black'
-                                  : 'border-white/10 bg-white/5 text-white hover:border-white/30'
+                                  : 'border-white/10 bg-white/5 text-white opacity-50'
                               }`}
                             >
                               <div className="flex items-center gap-2">
@@ -256,82 +277,38 @@ const CreateEvent = () => {
                               <span className={`text-[9px] normal-case font-medium ${isSelected ? 'text-black/70' : 'text-gray-500'}`}>
                                 {type.desc}
                               </span>
-                            </button>
+                            </div>
                           );
                         })}
                       </div>
                     </div>
 
-                    <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Select a Sport</h2>
-                    <p className="text-xs text-gray-600 mb-6">Choose one to continue</p>
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Sport</h2>
+                    <p className="text-xs text-gray-600 mb-6">Selected sport cannot be changed</p>
 
-                    <AnimatePresence mode="wait">
-                      {!showOnlineGames ? (
-                        <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                          {SPORTS.map(sport => {
-                            const Icon = sport.icon;
-                            const isSelected = formData.sport === sport.name;
-                            return (
-                              <button key={sport.name} type="button"
-                                onClick={() => {
-                                  if (sport.name === 'Online Gaming') { setShowOnlineGames(true); return; }
-                                  setFormData(p => ({ ...p, sport: sport.name }));
-                                }}
-                                className={`relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
-                                  isSelected
-                                    ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
-                                    : `${sport.color} hover:scale-[1.02]`
-                                }`}>
-                                {isSelected && (
-                                  <div className="absolute top-2 right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center">
-                                    <Check size={10} strokeWidth={3} className="text-[#ccff00]" />
-                                  </div>
-                                )}
-                                <Icon size={28} />
-                                {sport.name}
-                                {sport.name === 'Online Gaming' && (
-                                  <span className="text-[8px] opacity-60 normal-case font-bold">tap to expand</span>
-                                )}
-                              </button>
-                            );
-                          })}
-                        </motion.div>
-                      ) : (
-                        <motion.div key="online" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                          <button type="button" onClick={() => setShowOnlineGames(false)}
-                            className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-500 hover:text-white mb-4 transition-colors">
-                            <ChevronLeft size={14} /> Back to all sports
-                          </button>
-                          <div className="flex items-center gap-2 mb-4">
-                            <FaGamepad className="text-fuchsia-400" size={18} />
-                            <h3 className="text-sm font-black uppercase tracking-wider text-fuchsia-400">Online Games</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                      {SPORTS.map(sport => {
+                        const Icon = sport.icon;
+                        const isSelected = formData.sport === sport.name;
+                        return (
+                          <div key={sport.name}
+                            className={`relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 font-black text-xs uppercase tracking-wide ${
+                              isSelected
+                                ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
+                                : `${sport.color} opacity-50 cursor-not-allowed`
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 w-5 h-5 bg-black rounded-full flex items-center justify-center">
+                                <Check size={10} strokeWidth={3} className="text-[#ccff00]" />
+                              </div>
+                            )}
+                            <Icon size={28} />
+                            {sport.name}
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {ONLINE_GAMES.map(game => {
-                              const isSelected = formData.sport === game.name;
-                              return (
-                                <button key={game.name} type="button"
-                                  onClick={() => setFormData(p => ({ ...p, sport: game.name }))}
-                                  className={`relative flex items-center gap-3 p-4 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
-                                    isSelected
-                                      ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
-                                      : `${game.color} hover:scale-[1.02]`
-                                  }`}>
-                                  {isSelected && (
-                                    <div className="absolute top-2 right-2 w-4 h-4 bg-black rounded-full flex items-center justify-center">
-                                      <Check size={8} strokeWidth={3} className="text-[#ccff00]" />
-                                    </div>
-                                  )}
-                                  <FaGamepad size={18} />
-                                  {game.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 
@@ -339,7 +316,7 @@ const CreateEvent = () => {
                 {step === 2 && (
                   <div>
                     <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Event details</h2>
-                    <p className="text-xs text-gray-600 mb-6">Fill in the basic details</p>
+                    <p className="text-xs text-gray-600 mb-6">Update the event information</p>
                     <div className="space-y-5">
                       <div>
                         <label className={labelClass}>Event Name *</label>
@@ -391,7 +368,7 @@ const CreateEvent = () => {
                 {step === 3 && (
                   <div>
                     <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Participation setup</h2>
-                    <p className="text-xs text-gray-600 mb-6">Solo ya team based?</p>
+                    <p className="text-xs text-gray-600 mb-6">Solo or team based?</p>
 
                     <div className="grid grid-cols-2 gap-3 mb-6">
                       {[
@@ -487,8 +464,8 @@ const CreateEvent = () => {
                 {/* STEP 4 — Confirm */}
                 {step === 4 && (
                   <div>
-                    <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Confirm Details</h2>
-                    <p className="text-xs text-gray-600 mb-6">Ready to create?</p>
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter mb-1">Confirm Changes</h2>
+                    <p className="text-xs text-gray-600 mb-6">Review and save your updates</p>
                     <div className="space-y-3">
                       {selectedSport && (
                         <div className={`flex items-center gap-3 p-4 rounded-2xl border ${selectedSport.color}`}>
@@ -549,7 +526,7 @@ const CreateEvent = () => {
                   className="flex-1 py-4 bg-[#ccff00] text-black font-black italic uppercase rounded-2xl hover:bg-[#d9ff33] transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98]">
                   {isSubmitting
                     ? <FaSpinner className="animate-spin" />
-                    : <><Zap size={18} fill="currentColor" /> Deploy Event</>
+                    : <><Save size={18} /> Save Changes</>
                   }
                 </button>
               )}
@@ -560,38 +537,29 @@ const CreateEvent = () => {
           <div className="xl:col-span-4">
             <div className="bg-[#111] border border-white/10 rounded-3xl p-6 sticky top-24">
               <div className="flex items-center gap-2 mb-5">
-                <Clock size={15} className="text-gray-500" />
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">My Events</h3>
+                <Edit3 size={15} className="text-gray-500" />
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Editing</h3>
               </div>
-              {loadingEvents ? (
-                <div className="flex justify-center py-10"><FaSpinner className="animate-spin text-[#ccff00]" /></div>
-              ) : userEvents.length === 0 ? (
-                <div className="text-center py-10 border border-dashed border-white/5 rounded-2xl">
-                  <Trophy size={24} className="text-gray-700 mx-auto mb-3" />
-                  <p className="text-[10px] font-bold text-gray-700 uppercase tracking-widest">No events yet</p>
-                  <p className="text-[9px] text-gray-800 mt-1">Create your first event!</p>
+              
+              <div className="space-y-4">
+                <div className="bg-white/5 rounded-2xl p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Event ID</p>
+                  <p className="text-sm font-bold text-[#ccff00] font-mono">#{id}</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {userEvents.map(ev => (
-                    <div key={ev.id} onClick={() => navigate(`/events/${ev.id}`)}
-                      className="group bg-white/5 border border-white/5 rounded-2xl p-4 hover:border-[#ccff00]/30 transition-all cursor-pointer">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-[11px] font-black text-[#ccff00] uppercase truncate pr-3">{ev.event_name}</span>
-                        <button onClick={e => handleDelete(ev.id, e)} disabled={deletingId === ev.id}
-                          className="text-red-500/50 hover:text-red-400 flex-shrink-0 transition-colors">
-                          {deletingId === ev.id ? <FaSpinner className="animate-spin" size={10} /> : <FaTrash size={10} />}
-                        </button>
-                      </div>
-                      <p className="text-[9px] font-bold text-gray-600 uppercase">{ev.sport}</p>
-                      <div className="flex items-center gap-1.5 mt-1.5 text-[9px] font-bold text-gray-700 uppercase">
-                        <FaCalendarAlt size={8} />
-                        {ev.date_time ? format(new Date(ev.date_time), 'MMM dd, hh:mm a') : '—'}
-                      </div>
-                    </div>
-                  ))}
+                
+                <div className="bg-white/5 rounded-2xl p-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-600 mb-1">Created</p>
+                  <p className="text-sm font-bold text-white">
+                    {eventData?.created_at ? format(new Date(eventData.created_at), 'MMM dd, yyyy') : '—'}
+                  </p>
                 </div>
-              )}
+
+                <div className="bg-[#ccff00]/5 border border-[#ccff00]/20 rounded-xl px-4 py-3">
+                  <p className="text-[11px] text-gray-400">
+                    Changes will be immediately visible to all participants.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -601,4 +569,4 @@ const CreateEvent = () => {
   );
 };
 
-export default CreateEvent;
+export default EditEvent;

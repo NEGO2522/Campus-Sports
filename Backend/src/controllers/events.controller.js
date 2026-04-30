@@ -131,7 +131,7 @@ export const updateEvent = async (req, res, next) => {
 
     const { eventName, sport, description, location, dateTime, registrationDeadline, status } = req.body;
 
-    // Status-only patch (ManageEvents page se)
+    // Status-only patch (from ManageEvents page)
     if (status && !eventName && !sport && !dateTime) {
       const allowed = ['upcoming', 'ongoing', 'completed'];
       if (!allowed.includes(status)) return res.status(400).json({ error: 'Invalid status' });
@@ -142,7 +142,7 @@ export const updateEvent = async (req, res, next) => {
       return res.json(result.rows[0]);
     }
 
-    // Full update (COALESCE — sirf jo fields aaye unhe update karo)
+    // Full update (COALESCE — only update fields that were provided)
     const result = await pool.query(
       `UPDATE events
        SET event_name             = COALESCE($1, event_name),

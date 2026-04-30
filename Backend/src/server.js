@@ -10,6 +10,7 @@ import userRoutes from './routes/users.routes.js';
 import teamRoutes from './routes/teams.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import inviteRoutes from './routes/invites.routes.js';
+import statsRoutes from './routes/stats.routes.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/invites', inviteRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'CampusLeague backend is live' }));

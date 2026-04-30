@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import {
   Settings, Zap, Trash2, Eye, Play, CheckCircle,
-  RotateCcw, Trophy, Clock, ChevronRight
+  RotateCcw, Trophy, Clock, ChevronRight, Pencil
 } from 'lucide-react';
 import api from '../../utils/api';
 
@@ -33,7 +33,7 @@ const ManageEvents = () => {
   useEffect(() => {
     api.get('/events?createdByMe=true')
       .then(setEvents)
-      .catch(() => toast.error('Events load nahi hue'))
+      .catch(() => toast.error('Failed to load events'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -52,7 +52,7 @@ const ManageEvents = () => {
   };
 
   const handleDelete = async (eventId, eventName) => {
-    if (!window.confirm(`"${eventName}" delete karein? Yeh undo nahi hoga.`)) return;
+    if (!window.confirm(`Are you sure you want to delete "${eventName}"? This action cannot be undone.`)) return;
     setActionId(eventId);
     try {
       await api.delete(`/events/${eventId}`);
@@ -138,8 +138,8 @@ const ManageEvents = () => {
             className="text-center py-24 bg-[#111] border border-dashed border-white/10 rounded-3xl"
           >
             <Trophy size={40} className="text-gray-700 mx-auto mb-4" />
-            <h3 className="text-xl font-black italic uppercase text-white tracking-tighter mb-2">Koi Event Nahi</h3>
-            <p className="text-gray-600 text-sm mb-6">Pehla event create karo!</p>
+            <h3 className="text-xl font-black italic uppercase text-white tracking-tighter mb-2">No Events Yet</h3>
+            <p className="text-gray-600 text-sm mb-6">Create your first event!</p>
             <button onClick={() => navigate('/create-event')}
               className="bg-[#ccff00] text-black px-6 py-3 rounded-2xl font-black italic uppercase text-xs hover:bg-[#d9ff33] transition-all"
             >
@@ -152,10 +152,10 @@ const ManageEvents = () => {
             className="text-center py-16 bg-[#111] border border-white/5 rounded-3xl"
           >
             <p className="text-gray-600 font-bold uppercase text-sm">
-              Koi <span className="text-white">{filterStatus}</span> event nahi
+              No <span className="text-white">{filterStatus}</span> events
             </p>
             <button onClick={() => setFilter('all')} className="text-[#ccff00] text-xs font-black uppercase mt-3 hover:underline">
-              Sab dekho
+              Show All
             </button>
           </motion.div>
 
@@ -237,6 +237,14 @@ const ManageEvents = () => {
                             {nextS.label}
                           </button>
                         )}
+
+                        {/* Edit */}
+                        <button
+                          onClick={() => navigate(`/events/${event.id}/edit`)}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase bg-white/5 text-gray-400 hover:bg-[#ccff00]/10 hover:text-[#ccff00] transition-all"
+                        >
+                          <Pencil size={11} /> Edit
+                        </button>
 
                         {/* View detail */}
                         <button

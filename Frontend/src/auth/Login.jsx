@@ -63,7 +63,7 @@ const Login = () => {
                 WELCOME TO <span className="text-[#ccff00]">CAMPUS</span>LEAGUE
               </h1>
               <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">
-                India ka pehla college sports platform
+                Sign up or log in with your college Google account
               </p>
             </div>
 
@@ -90,7 +90,7 @@ const Login = () => {
                   <div className="flex items-start gap-3">
                     <Zap size={18} className="text-[#ccff00] flex-shrink-0 mt-0.5" />
                     <p className="text-xs text-gray-400 leading-relaxed">
-                      Apne college email se login karo — tum sirf apne college ke events dekhoge aur join kar sakoge.
+                      Login with your college email — you will only see and be able to join events from your college.
                     </p>
                   </div>
                 </div>

@@ -5,18 +5,18 @@ const seedEvents = async () => {
   try {
     const collegeResult = await client.query(`SELECT id FROM colleges WHERE name ILIKE '%Poornima%' LIMIT 1`);
     const collegeId = collegeResult.rows[0]?.id;
-    if (!collegeId) { console.log('Poornima University nahi mili'); process.exit(1); }
+    if (!collegeId) { console.log('Poornima University not found'); process.exit(1); }
 
     const userResult = await client.query(`SELECT id FROM users LIMIT 1`);
     const userId = userResult.rows[0]?.id;
-    if (!userId) { console.log('Koi user nahi mila'); process.exit(1); }
+    if (!userId) { console.log('No user found'); process.exit(1); }
 
     console.log(`College ID: ${collegeId}`);
     console.log(`Creator User ID: ${userId}`);
 
-    // Pehle purane fake events delete karo
+    // First delete old fake events
     await client.query(`DELETE FROM events WHERE created_by = $1`, [userId]);
-    console.log('Purane events delete kiye');
+    console.log('Deleted old events');
 
     const events = [
       {

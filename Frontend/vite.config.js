@@ -15,7 +15,7 @@ export default defineConfig({
     port: 3000,
     open: true,
     proxy: {
-      // Saare /api calls backend pe forward ho jaayenge
+      // All /api calls will be forwarded to backend
       '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,

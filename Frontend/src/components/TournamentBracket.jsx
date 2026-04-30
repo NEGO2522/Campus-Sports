@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTrophy, FaMedal, FaCrown, FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import { ArrowLeft, Zap, Clock, Edit3, Shield } from 'lucide-react';
 import { format } from 'date-fns';
+import { io } from 'socket.io-client';
 import api from '../utils/api';
 import { getUser } from '../utils/auth';
 
@@ -133,7 +134,26 @@ const TournamentBracket = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, [eventId]);
+  useEffect(() => {
+    fetchData();
+
+    // Connect to socket for real-time updates
+    const socket = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000');
+    socket.emit('join_event', eventId);
+
+    socket.on('match_updated', (updatedMatch) => {
+      setMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
+    });
+
+    socket.on('match_completed', ({ matchId, team1Score, team2Score }) => {
+      setMatches(prev => prev.map(m => m.id === matchId ? { ...m, team1_score: team1Score, team2_score: team2Score, status: 'completed' } : m));
+    });
+
+    return () => {
+      socket.emit('leave_event', eventId);
+      socket.disconnect();
+    };
+  }, [eventId]);
 
   // Group matches by round label
   const rounds = React.useMemo(() => {

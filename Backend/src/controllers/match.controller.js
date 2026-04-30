@@ -1,49 +1,5 @@
 import pool from '../db/pool.js';
 
-// PUT /api/events/:id
-export const updateEvent = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const check = await pool.query('SELECT created_by FROM events WHERE id = $1', [id]);
-    if (!check.rows[0]) return res.status(404).json({ error: 'Event not found' });
-    if (check.rows[0].created_by !== req.user.id) return res.status(403).json({ error: 'Not your event' });
-
-    const { eventName, sport, description, location, dateTime, registrationDeadline, status } = req.body;
-
-    // Status-only update (toggle ongoing/upcoming from ManageEvents)
-    if (status && !eventName) {
-      const result = await pool.query(
-        'UPDATE events SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *',
-        [status, id]
-      );
-      return res.json(result.rows[0]);
-    }
-
-    // Full update
-    const result = await pool.query(
-      `UPDATE events
-       SET event_name=$1, sport=$2, description=$3, location=$4,
-           date_time=$5, registration_deadline=$6, updated_at=NOW()
-       WHERE id=$7
-       RETURNING *`,
-      [eventName, sport, description, location, dateTime, registrationDeadline, id]
-    );
-    res.json(result.rows[0]);
-  } catch (err) { next(err); }
-};
-
-// DELETE /api/events/:id
-export const deleteEvent = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const check = await pool.query('SELECT created_by FROM events WHERE id = $1', [id]);
-    if (!check.rows[0]) return res.status(404).json({ error: 'Event not found' });
-    if (check.rows[0].created_by !== req.user.id) return res.status(403).json({ error: 'Not your event' });
-    await pool.query('DELETE FROM events WHERE id = $1', [id]);
-    res.json({ message: 'Event deleted' });
-  } catch (err) { next(err); }
-};
-
 // PUT /api/events/:id/matches/:matchId
 export const updateMatch = async (req, res, next) => {
   try {
@@ -75,6 +31,19 @@ export const updateMatch = async (req, res, next) => {
     );
 
     if (!result.rows[0]) return res.status(404).json({ error: 'Match not found' });
+
+    // Emit match update to all clients in this event room
+    req.io.to(`event_${eventId}`).emit('match_updated', result.rows[0]);
+
+    // If match is completed, emit completion event with scores
+    if (status === 'completed') {
+      req.io.to(`event_${eventId}`).emit('match_completed', {
+        matchId,
+        team1Score: team1Score || result.rows[0].team1_score,
+        team2Score: team2Score || result.rows[0].team2_score
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (err) { next(err); }
 };

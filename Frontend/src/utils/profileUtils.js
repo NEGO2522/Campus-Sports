@@ -1,4 +1,4 @@
-// profileUtils.js — Firebase wala code hata diya
-// Auth utilities ab src/utils/auth.js mein hain
+// profileUtils.js — Firebase code removed
+// Auth utilities are now in src/utils/auth.js
 
 export { isProfileComplete } from './auth';

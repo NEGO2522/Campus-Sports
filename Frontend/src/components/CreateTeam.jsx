@@ -19,15 +19,15 @@ const CreateTeam = () => {
   const [allTeamMembers, setAllTeamMembers] = useState([]);
   const [inviteLoadingId, setInviteLoadingId] = useState(null);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
-  const [teamCreated, setTeamCreated] = useState(false); // team ban gayi hai kya
-  const [teamId, setTeamId] = useState(null);            // created team ka ID
+  const [teamCreated, setTeamCreated] = useState(false); // whether team has been created
+  const [teamId, setTeamId] = useState(null);            // ID of created team
   const navigate = useNavigate();
 
   const currentUser = getUser();
   const currentUid = currentUser?.id || currentUser?._id || null;
   const userReg = currentUser?.registrationNumber || null;
 
-  // Check access
+  // Check access permission
   useEffect(() => {
     if (!userReg || !regNumberParam) return;
     setAccessDenied(userReg !== regNumberParam);
@@ -40,7 +40,7 @@ const CreateTeam = () => {
       try {
         const eventData = await api.get(`/events/${eventId}`);
         setTeamSize(eventData.team_size || eventData.teamSize || null);
-        // Sab teams ke members nikaalo taaki duplicate na ho
+        // Get all team members to avoid duplicates
         const teamsData = await api.get(`/teams/event/${eventId}`);
         const allMembers = teamsData.flatMap(t => t.members || []).map(m => m.user_id || m.id).filter(Boolean);
         setAllTeamMembers(allMembers);
@@ -54,14 +54,14 @@ const CreateTeam = () => {
     if (eventId) fetchEvent();
   }, [eventId]);
 
-  // Invited list fetch (sirf agar team already bani ho)
+  // Fetch invited list (only if team already exists)
   useEffect(() => {
     const fetchInvited = async () => {
       if (!teamId) return;
       try {
-        // Pending invites backend se fetch karo is team ke liye
-        // (team_invites table mein inviter == currentUid aur team_id == teamId)
-        // Yahan hum local state hi track karenge kyunki invite send karte waqt add kar lete hain
+        // Fetch pending invites from backend for this team
+        // (where inviter == currentUid and team_id == teamId in team_invites table)
+        // We track in local state since we add when sending invite
       } catch {
         setInvited([]);
       }
@@ -69,7 +69,7 @@ const CreateTeam = () => {
     fetchInvited();
   }, [teamId]);
 
-  // Debounced search — har keystroke pe API na chale
+  // Debounced search — don't call API on every keystroke
   const fetchStudents = useCallback(async (query) => {
     if (!query || query.trim().length < 2) {
       setStudents([]);
@@ -80,7 +80,7 @@ const CreateTeam = () => {
     setLoading(true);
     try {
       const users = await api.get(`/users/search?q=${encodeURIComponent(query.trim())}`);
-      // Backend camelCase nahi deta, isliye map karo
+      // Backend doesn't return camelCase, so map it
       const mapped = users.map(u => ({
         id: u.id,
         fullName: u.full_name,
@@ -99,7 +99,7 @@ const CreateTeam = () => {
     }
   }, []);
 
-  // Search input change hone par debounce se API call karo
+  // Call API with debounce when search input changes
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchStudents(search);
@@ -107,25 +107,24 @@ const CreateTeam = () => {
     return () => clearTimeout(timer);
   }, [search, fetchStudents]);
 
-  // Count invited and accepted students (excluding leader)
-  const invitedCount = invited.length;
+    const invitedCount = invited.length;
   const acceptedCount = invited.filter(i => i.accepted).length;
   // Only allow inviting up to teamSize-1 (excluding leader)
   const canInviteMore = teamSize ? invitedCount < teamSize - 1 : true;
   const canSave = teamSize && acceptedCount === teamSize - 1;
 
-  // Save handler — pehle team banao, phir overlay dikhao
+  // Save handler — create team first, then show overlay
   const handleSave = async () => {
     if (!canSave) return;
     const invalidKey = /[.#$\[\]/]/.test(teamName);
     if (!teamName || invalidKey) {
-      alert('Invalid ya empty team name.');
+      alert('Please enter a valid team name');
       return;
     }
     try {
       let tid = teamId;
       if (!tid) {
-        // Pehle team create karo
+        // Create team first
         const team = await api.post('/teams', { eventId, name: teamName });
         tid = team.id;
         setTeamId(tid);
@@ -133,7 +132,7 @@ const CreateTeam = () => {
       setTeamCreated(true);
     } catch (err) {
       console.error('Failed to save team:', err);
-      alert('Team save karne mein problem aayi. Please try again.');
+      alert('Failed to save team. Please try again.');
     }
   };
 
@@ -251,11 +250,11 @@ const CreateTeam = () => {
                                 if (!canInviteMore) return;
                                 setInviteLoadingId(student.id);
                                 try {
-                                  // Agar team abhi bani nahi to pehle banao
+                                  // If team doesn't exist yet, create it first
                                   let tid = teamId;
                                   if (!tid) {
                                     if (!teamName || /[.#$\[\]/]/.test(teamName)) {
-                                      alert('Invite bhejne se pehle team ka naam daalo.');
+                                      alert('Please enter a team name before sending invites.');
                                       return;
                                     }
                                     const team = await api.post('/teams', { eventId, name: teamName });
@@ -266,7 +265,7 @@ const CreateTeam = () => {
                                   setInvited(prev => [...prev, { invitee: student.id, accepted: false }]);
                                 } catch (err) {
                                   console.error('Failed to send invite:', err);
-                                  alert('Invite bhejne mein error aaya.');
+                                  alert('Failed to send invite.');
                                 } finally {
                                   setInviteLoadingId(null);
                                 }
@@ -322,8 +321,8 @@ const CreateTeam = () => {
                         if (!window.confirm('Are you sure you want to remove this team member?')) return;
                         setDeleteLoadingId(student.id);
                         try {
-                          // Note: Team invite cancel karna — backend mein alag endpoint chahiye
-                          // Abhi sirf local state se remove karte hain
+                          // Note: Canceling team invite requires separate backend endpoint
+                          // For now just remove from local state
                           setInvited(prev => prev.filter(i => i.invitee !== student.id));
                         } catch (err) {
                           alert('Failed to remove team member. Please try again.');
@@ -367,7 +366,7 @@ const CreateTeam = () => {
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 sm:p-8 text-center">
             <h2 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Welcome, {teamName}!</h2>
-            <p className="text-gray-600 mb-5 sm:mb-6">Tumhari team successfully ban gayi hai!</p>
+            <p className="text-gray-600 mb-5 sm:mb-6">Your team has been successfully created!</p>
             <div className="flex flex-col sm:flex-row justify-center gap-3">
               <button
                 className="px-5 py-2.5 bg-blue-600 text-white rounded-lg font-semibold text-base hover:bg-blue-700 transition flex-1 max-w-xs"

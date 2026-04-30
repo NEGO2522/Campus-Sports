@@ -1,10 +1,10 @@
 import pool from './pool.js';
 
-// AICTE ka official public API — India ke sabhi approved colleges
+// AICTE official public API — all approved colleges in India
 // Docs: https://facilities.aicte-india.org/dashboard/pages/dashboardaicte.php
 const AICTE_API = 'https://facilities.aicte-india.org/dashboard/pages/dashboardaicte.php';
 
-// Agar AICTE API na chale toh fallback — College Dunia / Shiksha scrape se bana hua
+// If AICTE API doesn't work, fallback — built from College Dunia / Shiksha scrape
 // clean Rajasthan dataset
 const RAJASTHAN_COLLEGES_FALLBACK = [
   // Jaipur
@@ -60,11 +60,11 @@ const RAJASTHAN_COLLEGES_FALLBACK = [
   { name: 'Yagyavalkya Institute of Technology', city: 'Jaipur', state: 'Rajasthan', lat: 26.9100, lng: 75.7500 },
 ];
 
-// AICTE se data fetch karne ki koshish karta hai
-// Agar fail ho toh fallback dataset use karta hai
+// Tries to fetch data from AICTE
+// If it fails, uses fallback dataset
 const fetchFromAICTE = async () => {
   try {
-    console.log('AICTE API se Rajasthan colleges fetch ho rahe hain...');
+    console.log('Fetching Rajasthan colleges from AICTE API...');
 
     const response = await fetch(
       'https://facilities.aicte-india.org/dashboard/pages/dashboardaicte.php?' +
@@ -88,7 +88,7 @@ const fetchFromAICTE = async () => {
 
     // AICTE response format: array of institute objects
     if (Array.isArray(data) && data.length > 0) {
-      console.log(`AICTE se ${data.length} colleges mili Rajasthan mein`);
+      console.log(`Found ${data.length} colleges in Rajasthan from AICTE`);
       return data.map(inst => ({
         name: inst.Institute_Name || inst.name,
         city: inst.City || inst.city || 'Rajasthan',
@@ -98,9 +98,9 @@ const fetchFromAICTE = async () => {
       })).filter(c => c.name);
     }
 
-    throw new Error('AICTE API ne empty data diya');
+    throw new Error('AICTE API returned empty data');
   } catch (err) {
-    console.log(`AICTE API se nahi aaya (${err.message}) — fallback dataset use ho raha hai`);
+    console.log(`Failed to fetch from AICTE API (${err.message}) — using fallback dataset`);
     return null;
   }
 };
@@ -108,13 +108,13 @@ const fetchFromAICTE = async () => {
 const seed = async () => {
   const client = await pool.connect();
   try {
-    // Pehle AICTE se try karo
+    // First try AICTE
     let colleges = await fetchFromAICTE();
 
-    // AICTE fail ho toh fallback
+    // If AICTE fails, use fallback
     if (!colleges) {
       colleges = RAJASTHAN_COLLEGES_FALLBACK;
-      console.log(`Fallback dataset se ${colleges.length} Rajasthan colleges add ho rahe hain...`);
+      console.log(`Adding ${colleges.length} Rajasthan colleges from fallback dataset...`);
     }
 
     let added = 0;

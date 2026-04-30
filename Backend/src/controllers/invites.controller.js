@@ -1,6 +1,6 @@
 import pool from '../db/pool.js';
 
-// GET /api/invites/pending — meri pending invites
+// GET /api/invites/pending — my pending invites
 export const getPendingInvites = async (req, res, next) => {
   try {
     const userId = req.user.id;
@@ -35,7 +35,7 @@ export const acceptInvite = async (req, res, next) => {
       `SELECT * FROM team_invites WHERE id = $1 AND invitee_id = $2 AND status = 'pending'`,
       [inviteId, userId]
     );
-    if (!invite.rows[0]) return res.status(404).json({ error: 'Invite nahi mila' });
+    if (!invite.rows[0]) return res.status(404).json({ error: 'Invite not found' });
 
     const { team_id, event_id } = invite.rows[0];
 
@@ -50,7 +50,7 @@ export const acceptInvite = async (req, res, next) => {
       [event_id, userId, team_id]
     );
 
-    res.json({ message: 'Invite accept ho gaya, team join ho gayi' });
+    res.json({ message: 'Invite accepted, you have joined the team' });
   } catch (err) { next(err); }
 };
 
@@ -64,6 +64,6 @@ export const declineInvite = async (req, res, next) => {
       `DELETE FROM team_invites WHERE id = $1 AND invitee_id = $2`,
       [inviteId, userId]
     );
-    res.json({ message: 'Invite dismiss kar diya' });
+    res.json({ message: 'Invite dismissed' });
   } catch (err) { next(err); }
 };

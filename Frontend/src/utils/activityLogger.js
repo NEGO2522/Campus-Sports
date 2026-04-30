@@ -1,5 +1,5 @@
-// activityLogger.js — Firebase wala code hata diya
-// Activity logging backend API se hoga
+// activityLogger.js — Firebase code removed
+// Activity logging will be done via backend API
 
 export const ACTIVITY_TYPES = {
   EVENT_CREATED: 'event_created',
@@ -9,11 +9,11 @@ export const ACTIVITY_TYPES = {
   COMMENT_ADDED: 'comment_added'
 };
 
-// TODO: Backend se connect hone ke baad implement karna
+// TODO: Implement after connecting to backend
 // export const logActivity = async (data) => {
 //   await api.post('/activities', data);
 // };
 
 export const logActivity = async (data) => {
-  console.log('[Activity log - backend se connect pending]:', data);
+  console.log('[Activity log - backend connection pending]:', data);
 };

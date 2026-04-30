@@ -1,198 +1,231 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import { toast } from 'react-toastify';
-import emailjs from '@emailjs/browser';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  useTheme,
-  useMediaQuery,
-  CircularProgress
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { ChevronRight, AlternateEmail, Person, Message, Subject } from '@mui/icons-material';
+import { Container, Grid } from '@mui/material';
+import { Mail, MapPin, Clock, Phone, Instagram, Twitter, Linkedin, ArrowUpRight } from 'lucide-react';
 
-// Custom Terminal-style Input Group
-const InputWrapper = styled(Box)(({ error }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  background: '#111',
-  borderBottom: error ? '2px solid #ff4444' : '1px solid rgba(255,255,255,0.1)',
-  padding: '15px 0',
-  transition: 'all 0.3s ease',
-  '&:focus-within': {
-    borderBottom: '2px solid #ccff00',
-    '& svg': { color: '#ccff00' }
-  }
-}));
+const contactItems = [
+  { icon: Mail,   label: 'EMAIL US',       value: 'sports@campusleague.in', href: 'mailto:sports@campusleague.in', desc: 'For all general & partnership queries' },
+  { icon: Phone,  label: 'CALL US',        value: '+91 98765 43210',        href: 'tel:+919876543210',            desc: 'Mon – Sat, 10am to 7pm IST'          },
+  { icon: MapPin, label: 'BASED IN',       value: 'India — Remote First',   href: null,                           desc: 'Operating across 15+ campuses nationwide' },
+  { icon: Clock,  label: 'RESPONSE TIME',  value: 'Within 24 Hours',        href: null,                           desc: 'We read every message personally'    },
+];
 
-const StyledInput = styled('input')({
-  background: 'transparent',
-  border: 'none',
-  outline: 'none',
-  color: 'white',
-  width: '100%',
-  padding: '0 15px',
-  fontSize: '1rem',
-  fontFamily: 'inherit',
-  '&::placeholder': { color: '#444' }
-});
+const socials = [
+  { icon: Instagram, label: 'Instagram', href: 'https://instagram.com' },
+  { icon: Twitter,   label: 'Twitter',   href: 'https://twitter.com'   },
+  { icon: Linkedin,  label: 'LinkedIn',  href: 'https://linkedin.com'  },
+];
 
-const StyledTextArea = styled('textarea')({
-  background: 'transparent',
-  border: 'none',
-  outline: 'none',
-  color: 'white',
-  width: '100%',
-  padding: '0 15px',
-  fontSize: '1rem',
-  fontFamily: 'inherit',
-  resize: 'none',
-  height: '100px',
-  '&::placeholder': { color: '#444' }
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 28 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.55, ease: 'easeOut', delay },
 });
 
 const ContactUs = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-  useEffect(() => {
-    emailjs.init("KOupcCiDTxaSNOa2Q");
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.email || !formData.message) {
-      toast.error("REQUIRED FIELDS MISSING");
-      return;
-    }
-    setIsSubmitting(true);
-    try {
-      await emailjs.send('service_zdk28rg', 'template_5htm02w', {
-        from_email: formData.email,
-        to_email: 'sports@campusleague.in',
-        subject: formData.subject,
-        message: formData.message
-      }, 'KOupcCiDTxaSNOa2Q');
-      toast.success('TRANSMISSION SUCCESSFUL');
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (error) {
-      toast.error('FAILED TO SEND');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <Box sx={{ bgcolor: '#0a0a0a', color: 'white', minHeight: '100vh', pt: 15, pb: 10 }}>
-      <Container maxWidth="md">
-        
-        {/* Header Section */}
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography variant="overline" sx={{ color: '#ccff00', fontWeight: 900, letterSpacing: '0.4em' }}>
-            COMMUNICATION PORTAL
-          </Typography>
-          <Typography variant={isMobile ? 'h3' : 'h2'} sx={{ fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase' }}>
-            Contact <span style={{ color: '#ccff00' }}>HQ</span>
-          </Typography>
-        </Box>
+    <div style={{
+      minHeight: '100vh',
+      background: 'radial-gradient(ellipse at top left, rgba(204,255,0,0.06) 0%, transparent 55%), #0a0a0a',
+      color: 'white',
+      paddingTop: '7rem',
+      paddingBottom: '5rem',
+    }}>
+      <Container maxWidth="lg">
 
-        {/* The New Minimal Form */}
-        <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: '600px', mx: 'auto' }}>
-          
-          <InputWrapper sx={{ mt: 2 }}>
-            <Person sx={{ color: '#444', ml: 1 }} />
-            <StyledInput 
-              name="name" 
-              placeholder="ATHLETE NAME" 
-              value={formData.name} 
-              onChange={handleChange} 
-            />
-          </InputWrapper>
+        {/* ── Header ── */}
+        <motion.div {...fadeUp(0)} style={{ marginBottom: '5rem' }}>
+          <p style={{ color: '#ccff00', fontWeight: 900, letterSpacing: '0.35em', fontSize: '0.7rem', textTransform: 'uppercase', marginBottom: 8 }}>
+            GET IN TOUCH
+          </p>
+          <h1 style={{ fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', fontSize: 'clamp(2.8rem, 7vw, 5.5rem)', lineHeight: 0.92, margin: 0 }}>
+            Let's Talk.<br />
+            <span style={{ color: '#ccff00' }}>We're Here.</span>
+          </h1>
+          <motion.div
+            initial={{ width: 48 }}
+            animate={{ width: 140 }}
+            transition={{ duration: 0.9, ease: 'easeOut', delay: 0.4 }}
+            style={{ height: 3, background: '#ccff00', borderRadius: 2, marginTop: 20 }}
+          />
+          <p style={{ color: '#666', marginTop: 24, maxWidth: 480, fontSize: '0.95rem', lineHeight: 1.7 }}>
+            Whether it's a bug, a big idea, or a campus collab — drop us a line and we'll get back to you fast.
+          </p>
+        </motion.div>
 
-          <InputWrapper sx={{ mt: 2 }}>
-            <AlternateEmail sx={{ color: '#444', ml: 1 }} />
-            <StyledInput 
-              name="email" 
-              type="email"
-              placeholder="EMAIL ADDRESS" 
-              value={formData.email} 
-              onChange={handleChange} 
-            />
-          </InputWrapper>
+        {/* ── Contact Info 4 Cards ── */}
+        <Grid container spacing={3} style={{ marginBottom: '2rem' }}>
+          {contactItems.map((item, i) => {
+            const Icon = item.icon;
+            const isClickable = !!item.href;
+            const Wrapper = isClickable ? 'a' : 'div';
+            return (
+              <Grid item xs={12} sm={6} key={item.label}>
+                <motion.div {...fadeUp(0.1 + i * 0.08)}>
+                  <Wrapper href={item.href || undefined} style={{ textDecoration: 'none', display: 'block' }}>
+                    <motion.div
+                      whileHover={isClickable ? { y: -4 } : {}}
+                      style={{
+                        background: '#111', border: '1px solid rgba(255,255,255,0.07)',
+                        borderRadius: '1.4rem', padding: '2rem',
+                        cursor: isClickable ? 'pointer' : 'default', transition: 'border-color 0.25s',
+                      }}
+                      onMouseEnter={e => { if (isClickable) e.currentTarget.style.borderColor = '#ccff00'; }}
+                      onMouseLeave={e => { if (isClickable) e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.4rem' }}>
+                        <div style={{
+                          width: 48, height: 48, borderRadius: '0.9rem',
+                          background: 'rgba(204,255,0,0.08)', border: '1px solid rgba(204,255,0,0.15)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <Icon size={22} color="#ccff00" />
+                        </div>
+                        {isClickable && <ArrowUpRight size={18} color="#444" />}
+                      </div>
+                      <p style={{ color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 6 }}>{item.label}</p>
+                      <p style={{ color: 'white', fontWeight: 800, fontSize: '1.05rem', marginBottom: 8, fontStyle: 'italic' }}>{item.value}</p>
+                      <p style={{ color: '#555', fontSize: '0.8rem', lineHeight: 1.5 }}>{item.desc}</p>
+                    </motion.div>
+                  </Wrapper>
+                </motion.div>
+              </Grid>
+            );
+          })}
+        </Grid>
 
-          <InputWrapper sx={{ mt: 2 }}>
-            <Subject sx={{ color: '#444', ml: 1 }} />
-            <StyledInput 
-              name="subject" 
-              placeholder="SUBJECT" 
-              value={formData.subject} 
-              onChange={handleChange} 
-            />
-          </InputWrapper>
-
-          <InputWrapper sx={{ mt: 2, alignItems: 'flex-start' }}>
-            <Message sx={{ color: '#444', ml: 1, mt: 0.5 }} />
-            <StyledTextArea 
-              name="message" 
-              placeholder="TYPE YOUR MESSAGE..." 
-              value={formData.message} 
-              onChange={handleChange} 
-            />
-          </InputWrapper>
-
-          {/* Action Button */}
-          <Box 
-            component="button"
-            type="submit"
-            disabled={isSubmitting}
-            sx={{
-              width: '100%',
-              mt: 6,
-              py: 2.5,
-              bgcolor: '#ccff00',
-              color: 'black',
-              border: 'none',
-              borderRadius: '4px',
-              fontWeight: 900,
-              textTransform: 'uppercase',
-              fontStyle: 'italic',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              transition: '0.2s',
-              '&:hover': { bgcolor: '#e6ff80', gap: 3 },
-              '&:disabled': { bgcolor: '#222', color: '#444' }
-            }}
-          >
-            {isSubmitting ? <CircularProgress size={20} color="inherit" /> : (
-              <>
-                Initialize Transmission <ChevronRight />
-              </>
-            )}
-          </Box>
-
-          {/* Quick Contact Info */}
-          <Box sx={{ mt: 8, pt: 4, borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'center' }}>
-            <Typography variant="caption" sx={{ color: 'gray', letterSpacing: 2 }}>
-              DIRECT EMAIL: <span style={{ color: 'white' }}>SPORTS@CAMPUSLEAGUE.IN</span>
-            </Typography>
-          </Box>
-        </Box>
+        {/* ── Full-width Quote Banner ── */}
+        <motion.div {...fadeUp(0.5)} style={{ marginBottom: '1.5rem' }}>
+          <div style={{
+            background: '#ccff00', borderRadius: '1.6rem', padding: '3rem 3.5rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexWrap: 'wrap', gap: '1.5rem',
+          }}>
+            <p style={{ color: 'black', fontWeight: 900, fontStyle: 'italic', fontSize: 'clamp(1.1rem, 2.2vw, 1.45rem)', lineHeight: 1.35, margin: 0, maxWidth: 620 }}>
+              "We built Campus League for athletes who deserved better. Every message we receive makes it stronger."
+            </p>
+            <p style={{ color: 'rgba(0,0,0,0.4)', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', margin: 0 }}>
+              — Campus League Team
+            </p>
+          </div>
+        </motion.div>
 
       </Container>
-    </Box>
+
+      {/* ── Bottom 3 Cards — full width matching Container ── */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '1.5rem',
+        }}>
+
+          {/* Follow Us */}
+          <motion.div {...fadeUp(0.6)}>
+            <div style={{
+              background: '#111', border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: '1.6rem', padding: '2rem',
+            }}>
+              <p style={{ color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 20 }}>
+                FOLLOW US
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {socials.map(({ icon: SocialIcon, label, href }) => (
+                  <motion.a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    whileHover={{ x: 5 }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      textDecoration: 'none', padding: '0.85rem 1rem',
+                      borderRadius: '0.9rem', background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)', transition: 'border-color 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = '#ccff00'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <SocialIcon size={18} color="#ccff00" />
+                      <span style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem' }}>{label}</span>
+                    </div>
+                    <ArrowUpRight size={15} color="#444" />
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Quick Links */}
+          <motion.div {...fadeUp(0.7)}>
+            <div style={{
+              background: '#111', border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: '1.6rem', padding: '2rem',
+            }}>
+              <p style={{ color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 20 }}>
+                QUICK LINKS
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {['Home', 'Events', 'Leaderboard', 'About'].map((link) => (
+                  <motion.a
+                    key={link}
+                    href={`/${link.toLowerCase()}`}
+                    whileHover={{ x: 5 }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      textDecoration: 'none', padding: '0.85rem 1rem',
+                      borderRadius: '0.9rem', background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)', transition: 'border-color 0.2s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = '#ccff00'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'}
+                  >
+                    <span style={{ color: 'white', fontWeight: 700, fontSize: '0.9rem' }}>{link}</span>
+                    <ArrowUpRight size={15} color="#444" />
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Office Hours */}
+          <motion.div {...fadeUp(0.8)}>
+            <div style={{
+              background: '#111', border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: '1.6rem', padding: '2rem',
+              display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%',
+            }}>
+              <div>
+                <p style={{ color: '#555', fontSize: '0.65rem', fontWeight: 900, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 20 }}>
+                  OFFICE HOURS
+                </p>
+                {[
+                  { day: 'Mon – Fri', time: '10am – 7pm IST' },
+                  { day: 'Saturday',  time: '11am – 5pm IST' },
+                  { day: 'Sunday',    time: 'Closed'          },
+                ].map(({ day, time }) => (
+                  <div key={day} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <span style={{ color: '#666', fontSize: '0.85rem', fontWeight: 600 }}>{day}</span>
+                    <span style={{ color: time === 'Closed' ? '#444' : 'white', fontSize: '0.85rem', fontWeight: 800 }}>{time}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                padding: '0.9rem 1rem', borderRadius: '0.8rem', marginTop: '1rem',
+                background: 'rgba(204,255,0,0.07)', border: '1px solid rgba(204,255,0,0.15)',
+              }}>
+                <p style={{ color: '#ccff00', fontSize: '0.78rem', fontWeight: 900, margin: 0 }}>
+                  ⚡ Avg reply time: &lt;4 hours
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+        </div>
+      </div>
+
+    </div>
   );
 };
 

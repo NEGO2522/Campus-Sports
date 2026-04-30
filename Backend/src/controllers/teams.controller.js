@@ -11,13 +11,13 @@ export const createTeam = async (req, res, next) => {
       [eventId, name, leaderId]
     );
 
-    // Leader ko automatically member banao
+    // Automatically make leader a member
     await pool.query(
       `INSERT INTO team_members (team_id, user_id) VALUES ($1, $2)`,
       [team.rows[0].id, leaderId]
     );
 
-    // event_participants mein bhi add karo
+    // Also add to event_participants
     await pool.query(
       `INSERT INTO event_participants (event_id, user_id, team_id)
        VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
@@ -67,7 +67,7 @@ export const joinTeam = async (req, res, next) => {
 
     req.io.to(`event_${team.rows[0].event_id}`).emit('team_updated', { teamId });
 
-    res.json({ message: 'Team join ho gaya' });
+    res.json({ message: 'You have joined the team' });
   } catch (err) { next(err); }
 };
 
@@ -80,7 +80,7 @@ export const leaveTeam = async (req, res, next) => {
     if (!team.rows[0]) return res.status(404).json({ error: 'Team not found' });
 
     if (team.rows[0].leader_id === userId) {
-      return res.status(400).json({ error: 'Leader team nahi chod sakta — pehle kisi aur ko leader banao' });
+      return res.status(400).json({ error: 'Leader cannot leave the team — make someone else leader first' });
     }
 
     await pool.query('DELETE FROM team_members WHERE team_id=$1 AND user_id=$2', [teamId, userId]);
@@ -89,7 +89,7 @@ export const leaveTeam = async (req, res, next) => {
       [team.rows[0].event_id, userId]
     );
 
-    res.json({ message: 'Team chod di' });
+    res.json({ message: 'You have left the team' });
   } catch (err) { next(err); }
 };
 
@@ -108,15 +108,15 @@ export const inviteMember = async (req, res, next) => {
       [teamId, team.rows[0].event_id, inviterId, inviteeId]
     );
 
-    // Notification bhejo
+    // Send notification
     await pool.query(
       `INSERT INTO notifications (user_id, type, title, message, team_id, event_id)
-       VALUES ($1, 'team_invite', 'Team Invite', 'Tumhe ek team mein invite kiya gaya hai', $2, $3)`,
+       VALUES ($1, 'team_invite', 'Team Invite', 'You have been invited to join a team', $2, $3)`,
       [inviteeId, teamId, team.rows[0].event_id]
     );
 
     req.io.to(`user_${inviteeId}`).emit('new_notification', { type: 'team_invite' });
 
-    res.json({ message: 'Invite bhej diya' });
+    res.json({ message: 'Invite sent' });
   } catch (err) { next(err); }
 };

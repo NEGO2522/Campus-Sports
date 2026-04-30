@@ -42,11 +42,11 @@ const UserProfileForm = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Colleges fetch karo
+        // Fetch colleges
         const collegeData = await api.get('/users/colleges');
         setColleges(collegeData);
 
-        // Existing profile fetch karo — pre-fill
+        // Fetch existing profile for pre-fill
         const profile = await api.get('/users/me');
 
         setFormData({
@@ -60,14 +60,14 @@ const UserProfileForm = () => {
           sportPreferences: profile.sport_preferences || [],
         });
 
-        // College pre-select karo dropdown mein
+        // Pre-select college in dropdown
         if (profile.college_id && profile.college_name) {
           setSelectedCollege({ id: profile.college_id, name: profile.college_name });
           setCollegeSearch(profile.college_name);
         }
 
       } catch (err) {
-        // Profile nahi mila — sirf naam pre-fill karo
+        // Profile not found — just pre-fill name
         if (user?.fullName) {
           setFormData(prev => ({ ...prev, fullName: user.fullName }));
         }
@@ -114,13 +114,13 @@ const UserProfileForm = () => {
 
   const validate = () => {
     if (step === 1 && (!formData.fullName || !formData.phoneNumber || !formData.age || !formData.gender)) {
-      toast.error('Saari fields bharo'); return false;
+      toast.error('Please fill all fields'); return false;
     }
     if (step === 2 && (!formData.registrationNumber || !formData.courseName || !formData.collegeId)) {
-      toast.error('College info bharo'); return false;
+      toast.error('Please fill college information'); return false;
     }
     if (step === 3 && formData.sportPreferences.length === 0) {
-      toast.error('Ek sport toh choose karo'); return false;
+      toast.error('Please select at least one sport'); return false;
     }
     return true;
   };
@@ -150,7 +150,7 @@ const UserProfileForm = () => {
   const inputBase = "w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-600 focus:outline-none focus:border-[#ccff00] transition-all font-medium text-sm";
   const label = "block text-[10px] font-black uppercase tracking-[0.15em] text-gray-500 mb-2";
 
-  // Loading state jab profile fetch ho raha ho
+  // Loading state when profile is being fetched
   if (isLoadingProfile) return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
       <div className="text-center">
@@ -243,7 +243,7 @@ const UserProfileForm = () => {
                       <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" />
                       <input name="fullName" value={formData.fullName}
                         onChange={e => setFormData(p => ({ ...p, fullName: e.target.value }))}
-                        className={inputBase + ' pl-10'} placeholder="Apna poora naam" />
+                        className={inputBase + ' pl-10'} placeholder="Your full name" />
                     </div>
                   </div>
                   <div>
@@ -359,7 +359,7 @@ const UserProfileForm = () => {
                   <div className="flex items-start gap-2.5 bg-white/3 border border-white/5 rounded-xl px-3.5 py-3">
                     <Zap size={13} className="text-[#ccff00] flex-shrink-0 mt-0.5" />
                     <p className="text-[11px] text-gray-500 leading-relaxed">
-                      Sirf apne college ke students ke events dikhenge tumhe.
+                      You will only see events from students at your college.
                     </p>
                   </div>
                 </div>
@@ -370,7 +370,7 @@ const UserProfileForm = () => {
                 <div className="space-y-4">
                   <div>
                     <label className={label}>Sports played</label>
-                    <p className="text-[11px] text-gray-600 mb-3">Multiple choose kar sakte ho</p>
+                    <p className="text-[11px] text-gray-600 mb-3">You can select multiple</p>
                     <div className="grid grid-cols-2 gap-2">
                       {SPORTS.map(sport => {
                         const sel = formData.sportPreferences.includes(sport);

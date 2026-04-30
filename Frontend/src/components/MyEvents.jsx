@@ -22,7 +22,7 @@ const MyEvents = () => {
         const data = await api.get('/users/me/events');
         setEvents(data);
       } catch (err) {
-        setError('Events load nahi hue.');
+        setError('Failed to load events.');
       } finally {
         setLoading(false);
       }
@@ -44,7 +44,7 @@ const MyEvents = () => {
             My <span className="text-[#ccff00]">Events</span>
           </h1>
           <p className="mt-3 text-gray-500 text-sm font-medium">
-            Jin events mein tune participate kiya
+            Events you have participated in
           </p>
         </motion.div>
 
@@ -60,9 +60,9 @@ const MyEvents = () => {
         ) : events.length === 0 ? (
           <div className="border border-dashed border-white/10 rounded-3xl p-20 text-center">
             <FaRunning className="mx-auto text-gray-700 text-5xl mb-5" />
-            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Abhi koi event join nahi kiya</p>
+            <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">You haven't joined any events yet</p>
             <Link to="/dashboard" className="inline-flex items-center gap-2 mt-6 px-5 py-3 bg-[#ccff00] text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-[#d9ff33] transition-all">
-              Events Dhundho <ChevronRight size={14} />
+              Browse Events <ChevronRight size={14} />
             </Link>
           </div>
         ) : (

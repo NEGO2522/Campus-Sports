@@ -94,10 +94,32 @@ const EventDetail = () => {
       }).catch(() => {});
     };
 
+    socket.on('match_updated', (updatedMatch) => {
+      setEvent(prev => {
+        if (!prev) return prev;
+        const updatedMatches = (prev.matches || []).map(m =>
+          m.id === updatedMatch.id ? { ...m, ...updatedMatch } : m
+        );
+        return { ...prev, matches: updatedMatches };
+      });
+    });
+
+    socket.on('match_completed', ({ matchId, team1Score, team2Score }) => {
+      setEvent(prev => {
+        if (!prev) return prev;
+        const updatedMatches = (prev.matches || []).map(m =>
+          m.id === matchId ? { ...m, team1_score: team1Score, team2_score: team2Score, status: 'completed' } : m
+        );
+        return { ...prev, matches: updatedMatches };
+      });
+    });
+
     socket.on('participant_count_update', handleCountUpdate);
     socket.on('participant_joined', handleParticipantJoined);
 
     return () => {
+      socket.off('match_updated');
+      socket.off('match_completed');
       socket.off('participant_count_update', handleCountUpdate);
       socket.off('participant_joined', handleParticipantJoined);
       // Leave the room; keep socket alive for other pages
@@ -313,21 +335,27 @@ const EventDetail = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {participants.map((p, i) => (
+                  {participants.map((p, i) => {
+                    const isCurrentUser = p.id === currentUser?.id;
+                    const isPending = !p.id || p.id === '__pending__';
+                    return (
                     <motion.div
                       key={p.id || i}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03 }}
+                      onClick={() => !isCurrentUser && !isPending && navigate(`/profile/${p.id}`)}
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors ${
-                        p.id === currentUser?.id ? 'bg-[#ccff00]/5 border-[#ccff00]/20' : 'bg-white/3 border-white/5 hover:bg-white/5'
+                        isCurrentUser || isPending
+                          ? 'bg-[#ccff00]/5 border-[#ccff00]/20 cursor-default'
+                          : 'bg-white/3 border-white/5 hover:bg-white/5 cursor-pointer'
                       }`}
                     >
                       <div
                         className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black flex-shrink-0"
                         style={{
-                          background: p.id === currentUser?.id ? '#ccff0020' : '#ffffff08',
-                          color: p.id === currentUser?.id ? '#ccff00' : '#6b7280',
+                          background: isCurrentUser ? '#ccff0020' : '#ffffff08',
+                          color: isCurrentUser ? '#ccff00' : '#6b7280',
                         }}
                       >
                         {p.full_name?.charAt(0)?.toUpperCase() || '?'}
@@ -338,13 +366,13 @@ const EventDetail = () => {
                           <p className="text-[9px] text-gray-600 uppercase font-bold tracking-wide">{p.registration_number}</p>
                         )}
                       </div>
-                      {p.id === currentUser?.id && (
+                      {isCurrentUser && (
                         <span className="text-[8px] font-black text-[#ccff00] uppercase tracking-wider bg-[#ccff00]/10 px-2 py-0.5 rounded-md flex-shrink-0">
                           You
                         </span>
                       )}
                     </motion.div>
-                  ))}
+                  );})}
                 </div>
               )}
 
@@ -531,7 +559,7 @@ const EventDetail = () => {
                         </div>
                         <p className="text-base font-black text-white uppercase italic">Registered!</p>
                         <p className="text-[10px] text-gray-500 mt-1 uppercase font-bold tracking-widest">Good luck, champ 🏆</p>
-                        {/* Team event mein already joined ho to Create Team dikhao */}
+                        {/* If already joined a team event, show Create Team */}
                         {event.participation_type === 'team' && (
                           <button
                             onClick={() => navigate(`/events/${id}/create-team/${currentUser?.registrationNumber || currentUser?.registration_number}`)}
@@ -565,7 +593,7 @@ const EventDetail = () => {
                         >
                           {joining ? <FaSpinner className="animate-spin" /> : <><UserPlus size={18} /> {event.event_type === 'community' ? 'Join Pickup' : 'Join Now'}</>}
                         </button>
-                        {/* Team event hai to Create Team button bhi dikhao */}
+                        {/* If it's a team event, also show Create Team button */}
                         {event.participation_type === 'team' && hasJoined && (
                           <button
                             onClick={() => navigate(`/events/${id}/create-team/${currentUser?.registrationNumber || currentUser?.registration_number}`)}
@@ -645,6 +673,31 @@ const EventDetail = () => {
                 {event.college_name}{event.city ? ` • ${event.city}` : ''}
               </p>
             </motion.div>
+
+{(isCreator || event.status === 'ongoing' || event.status === 'completed') && (
+  <motion.div
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.3 }}
+    className="bg-[#111] border border-white/10 rounded-3xl p-5"
+  >
+    <div className="flex items-center gap-2 mb-4">
+      <div className="w-8 h-8 bg-[#ccff00]/10 rounded-xl flex items-center justify-center">
+        <FaTrophy size={14} className="text-[#ccff00]" />
+      </div>
+      <p className="text-[9px] font-black uppercase tracking-widest text-gray-500">Tournament</p>
+    </div>
+    <p className="text-xs text-gray-500 mb-4 font-bold">
+      View the live bracket, match scores, and results for this event.
+    </p>
+    <button
+      onClick={() => navigate(`/tournament-bracket/${id}`)}
+      className="w-full py-3 bg-[#ccff00] text-black font-black italic uppercase text-xs tracking-widest rounded-xl hover:bg-[#d9ff33] transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+    >
+      <FaTrophy size={14} /> View Bracket
+    </button>
+  </motion.div>
+)}
           </div>
         </div>
       </div>

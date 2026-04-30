@@ -257,7 +257,7 @@ const Dashboard = () => {
               + Create <ChevronRight size={12} />
             </Link>
           </div>
-          <p className="text-xs text-gray-500 mb-4">Casual games — join karo aur khelo</p>
+          <p className="text-xs text-gray-500 mb-4">Casual games — just show up and play</p>
           <UpcomingEvents eventType="community" />
         </section>
 

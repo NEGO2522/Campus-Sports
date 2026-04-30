@@ -21,10 +21,10 @@ export const updateProfile = async (req, res, next) => {
 
     // Validate required fields
     if (!fullName || !phone || !age || !gender || !registrationNumber || !courseName || !collegeId) {
-      return res.status(400).json({ error: 'Saari required fields bharo' });
+      return res.status(400).json({ error: 'Please fill all required fields' });
     }
 
-    // sportPreferences array hona chahiye
+    // sportPreferences should be an array
     const sports = Array.isArray(sportPreferences) ? sportPreferences : [];
 
     const result = await pool.query(
@@ -103,7 +103,7 @@ export const getUserProfile = async (req, res, next) => {
   }
 };
 
-// GET /api/users/me/events — events jo maine join kiye hain
+// GET /api/users/me/events — events that the user has joined
 export const getMyEvents = async (req, res, next) => {
   try {
     const userId = req.user.id;

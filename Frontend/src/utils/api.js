@@ -1,5 +1,5 @@
-// API utility - backend se baat karne ka ek hi jagah
-// Har component yahi use karega, firebase nahi
+// API utility - single place to communicate with backend
+// Every component will use this, no Firebase
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
