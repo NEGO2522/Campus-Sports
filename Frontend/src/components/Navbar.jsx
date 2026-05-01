@@ -182,10 +182,18 @@ const Navbar = () => {
           )}
         </div>
 
+        {/* Mobile Sign In button (shown only when not logged in) */}
+        {!loggedIn && (
+          <Link to="/login"
+            className="md:hidden bg-[#ccff00] text-black px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:bg-[#e6ff80] transition-all active:scale-95">
+            Sign In
+          </Link>
+        )}
+
         {/* Mobile hamburger */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="md:hidden p-2 text-white bg-white/5 rounded-xl border border-white/10 hover:border-white/20 transition-all"
+          className="hidden"
         >
           {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -330,7 +338,10 @@ export const BottomNav = () => {
 
   if (!loggedIn) return null;
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (path === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/';
+    return location.pathname === path;
+  };
 
   const tabs = [
     { path: '/dashboard',     icon: LayoutDashboard, label: 'Home'    },

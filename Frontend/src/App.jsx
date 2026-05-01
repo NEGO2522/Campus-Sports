@@ -7,7 +7,7 @@ import Home from './components/Home';
 import Login from './auth/Login';
 import Dashboard from './components/Dashboard';
 import UserProfileForm from './components/Form';
-import Navbar from './components/Navbar';
+import Navbar, { BottomNav } from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import CreateEvent from './components/quick-actions/CreateEvent';
 import ManageEvents from './components/quick-actions/ManageEvents';
@@ -57,7 +57,7 @@ function App() {
   return (
     <Router>
       <ScrollToTop />
-      <div className="App">
+      <div className="App pb-20 md:pb-0">
         <ToastContainer position="top-right" autoClose={5000} />
         <Routes>
           <Route path="/" element={<MainLayout><Home /></MainLayout>} />
@@ -88,6 +88,7 @@ function App() {
           <Route path="/profile/:id" element={<ProtectedRoute><MainLayout><UserProfile /></MainLayout></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <BottomNav />
       </div>
     </Router>
   );
