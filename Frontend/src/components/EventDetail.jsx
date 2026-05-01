@@ -206,7 +206,7 @@ const EventDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
           {/* ── LEFT ── */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="lg:col-span-2 space-y-5 order-last lg:order-first">
 
             {/* Hero Card */}
             <motion.div
@@ -533,7 +533,7 @@ const EventDetail = () => {
           </div>
 
           {/* ── RIGHT ── */}
-          <div className="space-y-4">
+          <div className="space-y-4 order-first lg:order-last">
 
             {/* Join Card */}
             {event.status === 'upcoming' && (
@@ -541,7 +541,7 @@ const EventDetail = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.15 }}
-                className="bg-[#111] border border-white/10 rounded-3xl p-6 sticky top-28 overflow-hidden"
+                className="bg-[#111] border border-white/10 rounded-3xl p-6 lg:sticky lg:top-28 overflow-hidden"
               >
                 <div
                   className="absolute top-0 right-0 w-32 h-32 blur-3xl rounded-full pointer-events-none opacity-20"

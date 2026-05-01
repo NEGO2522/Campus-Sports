@@ -268,7 +268,7 @@ const CreateEvent = () => {
                     <AnimatePresence mode="wait">
                       {!showOnlineGames ? (
                         <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                           {SPORTS.map(sport => {
                             const Icon = sport.icon;
                             const isSelected = formData.sport === sport.name;
@@ -278,7 +278,7 @@ const CreateEvent = () => {
                                   if (sport.name === 'Online Gaming') { setShowOnlineGames(true); return; }
                                   setFormData(p => ({ ...p, sport: sport.name }));
                                 }}
-                                className={`relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
+                                className={`relative flex flex-col items-center gap-3 p-3 sm:p-5 rounded-2xl border-2 font-black text-xs uppercase tracking-wide transition-all active:scale-95 ${
                                   isSelected
                                     ? 'border-[#ccff00] bg-[#ccff00] text-black scale-[1.03]'
                                     : `${sport.color} hover:scale-[1.02]`
@@ -307,7 +307,7 @@ const CreateEvent = () => {
                             <FaGamepad className="text-fuchsia-400" size={18} />
                             <h3 className="text-sm font-black uppercase tracking-wider text-fuchsia-400">Online Games</h3>
                           </div>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {ONLINE_GAMES.map(game => {
                               const isSelected = formData.sport === game.name;
                               return (

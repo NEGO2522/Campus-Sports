@@ -286,10 +286,10 @@ const Dashboard = () => {
           <div className="max-w-7xl mx-auto relative z-10">
 
             {/* Top row */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-8 md:gap-12 mb-10 md:mb-16">
 
               {/* Brand col */}
-              <div className="md:col-span-4 flex flex-col gap-6">
+              <div className="sm:col-span-2 md:col-span-4 flex flex-col gap-6">
                 <div className="flex items-center gap-2">
                   <div className="bg-[#ccff00] p-2 rounded-xl">
                     <Zap className="text-black" size={22} fill="currentColor" />
@@ -312,7 +312,7 @@ const Dashboard = () => {
               </div>
 
               {/* Links col 1 */}
-              <div className="md:col-span-2 flex flex-col gap-4">
+              <div className="sm:col-span-1 md:col-span-2 flex flex-col gap-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Platform</p>
                 <div className="flex flex-col gap-3">
                   <Link to="/dashboard" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">Dashboard</Link>
@@ -323,7 +323,7 @@ const Dashboard = () => {
               </div>
 
               {/* Links col 2 */}
-              <div className="md:col-span-2 flex flex-col gap-4">
+              <div className="sm:col-span-1 md:col-span-2 flex flex-col gap-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Company</p>
                 <div className="flex flex-col gap-3">
                   <Link to="/about" className="text-gray-400 hover:text-[#ccff00] text-sm font-medium transition-colors">About Us</Link>
@@ -334,7 +334,7 @@ const Dashboard = () => {
               </div>
 
               {/* Newsletter / CTA col */}
-              <div className="md:col-span-4 flex flex-col gap-4">
+              <div className="sm:col-span-2 md:col-span-4 flex flex-col gap-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600">Join the League</p>
                 <p className="text-gray-500 text-sm">Ready to compete? Create your account and start your first tournament today.</p>
                 <button onClick={() => navigate('/create-event')}

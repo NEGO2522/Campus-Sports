@@ -188,7 +188,7 @@ const About = () => {
           <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter mb-2">Before vs After</h2>
           <p className="text-gray-600 text-sm mb-8">Every college has this problem. Most just live with it.</p>
 
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div className="py-2.5 px-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
               <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">Without Campus League</span>
             </div>
@@ -201,12 +201,12 @@ const About = () => {
             {comparisons.map((row, i) => (
               <motion.div key={i} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-                className="grid grid-cols-2 gap-3 group">
+                className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 group">
                 <div className="flex items-center gap-3 bg-[#0d0d0d] border border-white/5 rounded-xl px-4 py-3">
                   <X size={13} className="text-red-500 flex-shrink-0" />
                   <span className="text-gray-600 text-xs font-semibold">{row.old}</span>
                 </div>
-                <div className="flex items-center gap-3 bg-[#0d0d0d] border border-white/5 group-hover:border-[#ccff00]/30 group-hover:bg-[#ccff00]/5 rounded-xl px-4 py-3 transition-all">
+                <div className="flex items-center gap-3 bg-[#0d0d0d] border border-white/5 group-hover:border-[#ccff00]/30 group-hover:bg-[#ccff00]/5 rounded-xl px-4 py-3 transition-all sm:border-l border-l-2 border-l-[#ccff00]/30">
                   <Check size={13} className="text-[#ccff00] flex-shrink-0" />
                   <span className="text-gray-400 group-hover:text-white text-xs font-bold transition-colors">{row.now}</span>
                 </div>

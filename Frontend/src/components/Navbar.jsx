@@ -251,6 +251,30 @@ const Navbar = () => {
                         {link.name}
                       </Link>
                     ))}
+                    <Link
+                      to="/notification"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3.5 rounded-xl font-black text-sm uppercase tracking-wider transition-all ${
+                        isActive('/notification')
+                          ? 'bg-[#ccff00]/10 text-[#ccff00] border border-[#ccff00]/20'
+                          : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span className={`relative ${isActive('/notification') ? 'text-[#ccff00]' : 'text-gray-600'}`}>
+                        <Bell size={16} />
+                        {inviteCount > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5">
+                            {inviteCount > 9 ? '9+' : inviteCount}
+                          </span>
+                        )}
+                      </span>
+                      Notifications
+                      {inviteCount > 0 && (
+                        <span className="ml-auto bg-red-500/20 text-red-400 text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
+                          {inviteCount} new
+                        </span>
+                      )}
+                    </Link>
                   </div>
 
                   {/* Bottom actions */}
@@ -278,6 +302,84 @@ const Navbar = () => {
         )}
       </AnimatePresence>
     </nav>
+  );
+};
+
+export const BottomNav = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [inviteCount, setInviteCount] = useState(0);
+
+  useEffect(() => {
+    setLoggedIn(isLoggedIn());
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isLoggedIn()) return;
+    const fetchCount = async () => {
+      try {
+        const data = await api.get('/invites/pending');
+        setInviteCount(Array.isArray(data) ? data.length : 0);
+      } catch { setInviteCount(0); }
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 30000);
+    return () => clearInterval(interval);
+  }, [loggedIn]);
+
+  if (!loggedIn) return null;
+
+  const isActive = (path) => location.pathname === path;
+
+  const tabs = [
+    { path: '/dashboard',     icon: LayoutDashboard, label: 'Home'    },
+    { path: '/create-event',  icon: PlusCircle,      label: 'Create'  },
+    { path: '/manage-events', icon: Calendar,        label: 'Manage'  },
+    { path: '/notification',  icon: Bell,            label: 'Alerts', badge: inviteCount },
+    { path: '/form',          icon: User,            label: 'Profile' },
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-[200] md:hidden">
+      {/* blur backdrop */}
+      <div className="bg-black/90 backdrop-blur-xl border-t border-white/10 px-2 pb-safe">
+        <div className="flex items-center justify-around py-2">
+          {tabs.map(({ path, icon: Icon, label, badge }) => {
+            const active = isActive(path);
+            return (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all active:scale-90 relative"
+              >
+                <div className={`relative p-1.5 rounded-xl transition-all ${active ? 'bg-[#ccff00]/15' : ''}`}>
+                  <Icon
+                    size={20}
+                    strokeWidth={active ? 2.5 : 1.8}
+                    className={active ? 'text-[#ccff00]' : 'text-gray-500'}
+                  />
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center px-0.5">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[9px] font-black uppercase tracking-wider leading-none ${active ? 'text-[#ccff00]' : 'text-gray-600'}`}>
+                  {label}
+                </span>
+                {active && (
+                  <motion.div
+                    layoutId="bottomNavIndicator"
+                    className="absolute -top-px left-1/2 -translate-x-1/2 w-6 h-0.5 bg-[#ccff00] rounded-full"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 };
 
