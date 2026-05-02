@@ -261,7 +261,7 @@ const Dashboard = () => {
           <UpcomingEvents eventType="community" />
         </section>
 
-        {/* ── PAST EVENTS ── */}
+        {/* ── PAST OFFICIAL EVENTS ── */}
         <section className="mb-14">
           <div className="flex items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
@@ -269,13 +269,30 @@ const Dashboard = () => {
                 <FaHistory size={14} className="text-gray-500" />
               </div>
               <h2 className="text-2xl font-black italic uppercase tracking-tighter">
-                Past <span className="text-gray-500">Events</span>
+                Past <span className="text-gray-500">Official Events</span>
               </h2>
             </div>
             <div className="flex-1 h-px bg-white/5" />
             <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">History</span>
           </div>
-          <PastEvents />
+          <PastEvents eventType="official" />
+        </section>
+
+        {/* ── PAST COMMUNITY PICKUPS ── */}
+        <section className="mb-14">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center">
+                <FaHistory size={14} className="text-gray-500" />
+              </div>
+              <h2 className="text-2xl font-black italic uppercase tracking-tighter">
+                Past <span className="text-gray-500">Community Pickups</span>
+              </h2>
+            </div>
+            <div className="flex-1 h-px bg-white/5" />
+            <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">History</span>
+          </div>
+          <PastEvents eventType="community" />
         </section>
 
         {/* ── FOOTER ── */}
