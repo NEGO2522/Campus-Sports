@@ -32,7 +32,7 @@ const io = new Server(httpServer, {
 });
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: process.env.FRONTEND_URL || 'https://campusleague.in',
   credentials: true,
 }));
 
