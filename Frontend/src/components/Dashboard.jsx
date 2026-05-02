@@ -245,7 +245,7 @@ const Dashboard = () => {
               + Create <ChevronRight size={12} />
             </Link>
           </div>
-          <UpcomingEvents eventType="official" />
+          <UpcomingEvents eventType="official" showEmpty={false} />
         </section>
 
         {/* ── COMMUNITY PICKUPS ── */}
@@ -258,7 +258,7 @@ const Dashboard = () => {
             </Link>
           </div>
           <p className="text-xs text-gray-500 mb-4">Casual games — just show up and play</p>
-          <UpcomingEvents eventType="community" />
+          <UpcomingEvents eventType="community" showEmpty={false} />
         </section>
 
         {/* ── PAST OFFICIAL EVENTS ── */}

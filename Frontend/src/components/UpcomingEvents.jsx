@@ -18,7 +18,7 @@ const SPORT_META = {
 
 const DEFAULT_META = { color: 'text-gray-400', bg: 'bg-white/5', border: 'border-white/10', glow: '#ccff00', emoji: '🏆' };
 
-const UpcomingEvents = ({ eventType = null }) => {
+const UpcomingEvents = ({ eventType = null, showEmpty = true }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredId, setHoveredId] = useState(null);
@@ -48,26 +48,29 @@ const UpcomingEvents = ({ eventType = null }) => {
     </div>
   );
 
-  if (events.length === 0) return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="text-center p-14 bg-[#111] border border-dashed border-white/10 rounded-3xl"
-    >
-      <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
-        <Zap size={28} className="text-gray-700" />
-      </div>
-      <p className="text-gray-600 uppercase tracking-widest text-xs font-black mb-4">
-        No upcoming events yet
-      </p>
-      <button
-        onClick={() => navigate('/create-event')}
-        className="inline-flex items-center gap-2 bg-[#ccff00] text-black text-xs font-black uppercase tracking-widest px-5 py-2.5 rounded-xl hover:bg-[#d9ff33] transition-all active:scale-[0.97]"
+  if (events.length === 0) {
+    if (!showEmpty) return null;
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center p-14 bg-[#111] border border-dashed border-white/10 rounded-3xl"
       >
-        <Zap size={12} /> Create the first event
-      </button>
-    </motion.div>
-  );
+        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Zap size={28} className="text-gray-700" />
+        </div>
+        <p className="text-gray-600 uppercase tracking-widest text-xs font-black mb-4">
+          No upcoming events yet
+        </p>
+        <button
+          onClick={() => navigate('/create-event')}
+          className="inline-flex items-center gap-2 bg-[#ccff00] text-black text-xs font-black uppercase tracking-widest px-5 py-2.5 rounded-xl hover:bg-[#d9ff33] transition-all active:scale-[0.97]"
+        >
+          <Zap size={12} /> Create the first event
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
