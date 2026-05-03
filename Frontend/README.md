@@ -1,20 +1,44 @@
-# Campus Sports Management System 🏆
+# CampusLeague Frontend
 
-A modern web application designed to connect sports enthusiasts within the campus, making it easier to find players, organize games, and manage sports activities.
+React application for CampusLeague, a college sports discovery and tournament platform.
 
-## ✨ Features
+## Tech Stack
 
-- **Player Discovery** - Find and connect with other players based on sport, skill level, and location
-- **User Profiles** - Detailed profiles with academic information, sports preferences, and playing history
-- **Real-time Updates** - Instant updates on player availability and game status
-- **Event Management** - Create and manage sports events and tournaments
-- **Responsive Design** - Works seamlessly on desktop and mobile devices
+- React 19, Vite 7
+- Tailwind CSS 4, MUI v7
+- Framer Motion
+- Socket.io client
 
+## Getting Started
 
-### Prerequisites
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
 
-- Node.js (v14 or later)
-- npm or yarn
-- Firebase account
+App starts on http://localhost:5173
 
--  By Harsh Agarwal & Kshitij Jain
+## Environment Variables
+
+```
+VITE_API_URL=/api              # Backend API base URL
+VITE_GOOGLE_CLIENT_ID=         # Google OAuth client ID
+```
+
+## Folder Structure
+
+```
+src/
+├── components/          # Pages and UI components
+├── auth/                # Login and auth flow
+├── hooks/               # Custom React hooks
+├── utils/               # Helpers and API client
+└── App.jsx              # Root routes
+```
+
+## Notes
+
+- Google OAuth requires the backend to be running
+- Socket.io connects for real-time match and participant updates
+- Mobile-first responsive design with bottom navigation
